@@ -11,7 +11,7 @@ import ForgotPassword from './src/screens/ForgotPassword';
 import KnowledgeBase from './src/screens/KnowledgeBase';
 import KnowledgeDetail from './src/screens/KnowledgeDetail';
 import More from './src/screens/More';
-import Feedback from './src/screens/Feedback';
+import Feedback from './src/screens/Feedback'; 
 import AskAlex from './src/screens/AskAlex';
 import ViewTicket from './src/screens/ViewTicket';
 import ViewTicketDetail from './src/screens/ViewTicketDetail';
