@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontWeight:'600', marginBottom: 5 },
   input: { borderWidth: 1, borderColor:'#ccc', borderRadius: 8, paddingHorizontal: 10, height: 45 },
   fieldIcon: { width: 20, height: 20, marginRight:5, },
-  iconText:{flexDirection:'row',display:'flex'},
+  iconText:{flexDirection:'row',display:'flex'}, 
 
   saveBtn: { backgroundColor:'#FFEA00', borderRadius:30, paddingVertical:12, marginTop:10, alignItems:'center' },
   saveText: { fontSize:16, fontWeight:'600', color:'#000' },
