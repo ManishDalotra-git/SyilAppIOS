@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     textAlign: 'center',
-    width: '85%',
+    width: '82%',
   },
   container: {
     flexGrow: 1,

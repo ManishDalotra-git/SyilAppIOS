@@ -53,12 +53,13 @@ export default ThankYou;
 const styles = StyleSheet.create({
   background: {
     flex: 1,
+    backgroundColor:'#fff' ,
   },
   container: {
     flexGrow: 1,
     justifyContent: 'flex-start',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 60 : 20,
+    paddingTop: Platform.OS === 'android' ? 60 : 50,
     paddingBottom: 30,
   },
   flexClass:{

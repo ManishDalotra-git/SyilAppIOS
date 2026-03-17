@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   arrowIcon: { width: 32, height: 32 },
   header: { width: '94%', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, height: 60, backgroundColor: '#fff' },
   backButton: { marginRight: 0 },
-  headerTitle: { fontSize: 24, fontWeight: '700', textAlign: 'center', flex: 1 },
+  headerTitle: { fontSize: 24, fontWeight: '700', textAlign: 'center', flex: 1, },
   container: { flex: 1 },
   content: { padding: 16, paddingBottom: 80 },
   title: { fontSize: 24, fontWeight: '700', marginBottom: 10 },

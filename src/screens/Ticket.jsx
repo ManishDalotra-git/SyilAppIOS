@@ -26,6 +26,10 @@ const Ticket = () => {
   const navigation = useNavigation();
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const [showMachineModal, setShowMachineModal] = useState(false);
+  const [showControllerModal, setShowControllerModal] = useState(false);
+  const [showPriorityModal, setShowPriorityModal] = useState(false);
   
 
   
@@ -315,7 +319,7 @@ const formatCategoryLabel = (key) => {
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
               keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0} // adjust if you have headers
             >
-      <View style={[styles.header, { height: 60, paddingTop: 0 }]}>
+      <View style={[styles.header, { height: 45, paddingTop: 0 }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -379,9 +383,10 @@ const formatCategoryLabel = (key) => {
         placeholderTextColor="#999"
       />
 
-      <Text style={styles.label}>Machine Type</Text>
+      {/* <Text style={styles.label}>Machine Type</Text>
       <View style={styles.pickerWrapper}>
       <Picker
+        mode="dropdown"
         selectedValue={machineType}
         onValueChange={setMachineType}
         style={[
@@ -399,26 +404,65 @@ const formatCategoryLabel = (key) => {
         <Picker.Item style={styles.pickerItems} label="L2" value="L2" />
         <Picker.Item style={styles.pickerItems} label="L3" value="L3" />
       </Picker>
-      </View>
+      </View> */}
+
+      <Text style={styles.label}>Machine Type</Text>
+
+      <TouchableOpacity style={styles.input} onPress={() => setShowMachineModal(true)}>
+        <Text style={{ color: machineType ? '#000' : '#999' }}>
+          {machineType || 'Please Select'}
+        </Text>
+      </TouchableOpacity>
+
+      <Modal visible={showMachineModal} transparent animationType="fade">
+        <View style={{ flex:1, backgroundColor:'#00000066', justifyContent:'center' }}>
+          <View style={{ backgroundColor:'#fff', margin:20, borderRadius:10 }}>
+
+            {['X5','X7','X9','X11','L2','L3'].map(item => (
+              <TouchableOpacity
+                key={item}
+                style={{ padding:15, borderBottomWidth:1 }}
+                onPress={() => {
+                  setMachineType(item);
+                  setShowMachineModal(false);
+                }}
+              >
+                <Text>{item}</Text>
+              </TouchableOpacity>
+            ))}
+
+          </View>
+        </View>
+      </Modal>
 
       <Text style={styles.label}>Controller</Text>
-      <View style={styles.pickerWrapper}>
-      <Picker
-        selectedValue={controller}
-        onValueChange={setController}
-        style={[
-          styles.picker,
-          {
-            color: controller === '' ? '#999' : '#000'
-          }
-        ]}
-      >
-        <Picker.Item color="#999" style={styles.pickerItems} label="Please Select" value="" />
-        <Picker.Item style={styles.pickerItems} label="SINUMERIK" value="SINUMERIK" />
-        <Picker.Item style={styles.pickerItems} label="FANUC" value="FANUC" />
-        <Picker.Item style={styles.pickerItems} label="Syntec" value="Syntec" />
-      </Picker>
-      </View> 
+
+      <TouchableOpacity style={styles.input} onPress={() => setShowControllerModal(true)}>
+        <Text style={{ color: controller ? '#000' : '#999' }}>
+          {controller || 'Please Select'}
+        </Text>
+      </TouchableOpacity>
+
+      <Modal visible={showControllerModal} transparent animationType="fade">
+        <View style={{ flex:1, backgroundColor:'#00000066', justifyContent:'center' }}>
+          <View style={{ backgroundColor:'#fff', margin:20, borderRadius:10 }}>
+
+            {['SINUMERIK','FANUC','Syntec'].map(item => (
+              <TouchableOpacity
+                key={item}
+                style={{ padding:15, borderBottomWidth:1 }}
+                onPress={() => {
+                  setController(item); // SAME VALUE
+                  setShowControllerModal(false);
+                }}
+              >
+                <Text>{item}</Text>
+              </TouchableOpacity>
+            ))}
+
+          </View>
+        </View>
+      </Modal>
 
       <Text style={styles.label}>Machine Serial Number</Text>
       <TextInput
@@ -436,7 +480,7 @@ const formatCategoryLabel = (key) => {
       />
       <Text style={styles.label}>Category</Text>
 
-      {Object.keys(categories).map(key => (
+      {/* {Object.keys(categories).map(key => (
         <View key={key} style={styles.checkboxRow}>
           <CheckBox
             style={styles.checkboxStyle}
@@ -449,6 +493,36 @@ const formatCategoryLabel = (key) => {
           <Text style={styles.checkboxText}>
             {formatCategoryLabel(key)}
           </Text>
+        </View>
+      ))} */}
+
+      {Object.keys(categories).map(key => (
+        <View key={key} style={styles.checkboxRow}>
+          
+          <TouchableOpacity
+            onPress={() =>
+              setCategories({ ...categories, [key]: !categories[key] })
+            }
+            style={{
+              width: 22,
+              height: 22,
+              borderWidth: 2,
+              borderColor: '#000',
+              marginRight: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: categories[key] ? '#000' : '#fff',
+            }}
+          >
+            {categories[key] && (
+              <Text style={{ color: '#fff', fontSize: 14 }}>✓</Text>
+            )}
+          </TouchableOpacity>
+
+          <Text style={styles.checkboxText}>
+            {formatCategoryLabel(key)}
+          </Text>
+
         </View>
       ))}
 
@@ -505,12 +579,37 @@ const formatCategoryLabel = (key) => {
         ))
       )}
 
-      <View style={styles.checkboxRow}>
+      {/* <View style={styles.checkboxRow}>
         <CheckBox value={warranty} tintColors={{ false: '#000', true: '#000' }} onValueChange={setWarranty} />
         <Text style={styles.checkboxText}>Warranty</Text>
-      </View>
+      </View> */}
 
-      <Text style={styles.label}>Priority</Text>
+        <View style={styles.checkboxRow}>
+  
+          <TouchableOpacity
+            onPress={() => setWarranty(!warranty)}
+            style={{
+              width: 22,
+              height: 22,
+              borderWidth: 2,
+              borderColor: '#000',
+              marginRight: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: warranty ? '#000' : '#fff',
+            }}
+          >
+            {warranty && (
+              <Text style={{ color: '#fff', fontSize: 14 }}>✓</Text>
+            )}
+          </TouchableOpacity>
+
+          <Text style={styles.checkboxText}>Warranty</Text>
+
+        </View>
+
+
+      {/* <Text style={styles.label}>Priority</Text>
       <View style={styles.pickerWrapper}>
       <Picker
         selectedValue={priority}
@@ -527,7 +626,40 @@ const formatCategoryLabel = (key) => {
         <Picker.Item style={styles.pickerItems} label="Medium" value="medium" />
         <Picker.Item style={styles.pickerItems} label="High" value="high" />
       </Picker>
-      </View>
+      </View> */}
+
+      <Text style={styles.label}>Priority</Text>
+
+      <TouchableOpacity style={styles.input} onPress={() => setShowPriorityModal(true)}>
+        <Text style={{ color: priority ? '#000' : '#999' }}>
+          {priority || 'Please Select'}
+        </Text>
+      </TouchableOpacity>
+
+      <Modal visible={showPriorityModal} transparent animationType="fade">
+        <View style={{ flex:1, backgroundColor:'#00000066', justifyContent:'center' }}>
+          <View style={{ backgroundColor:'#fff', margin:20, borderRadius:10 }}>
+
+            {[
+              { label: 'Low', value: 'low' },
+              { label: 'Medium', value: 'medium' },
+              { label: 'High', value: 'high' },
+            ].map(item => (
+              <TouchableOpacity
+                key={item.value}
+                style={{ padding:15, borderBottomWidth:1 }}
+                onPress={() => {
+                  setPriority(item.value); // SAME VALUE (important)
+                  setShowPriorityModal(false);
+                }}
+              >
+                <Text>{item.label}</Text>
+              </TouchableOpacity>
+            ))}
+
+          </View>
+        </View>
+      </Modal>
 
       <TouchableOpacity
         disabled={loading}
@@ -587,7 +719,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     textAlign:'center',
-    flexBasis:'87%',
+    width:'78%',
   },
 
   background: {
@@ -669,7 +801,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 6,
-    marginRight:0
+    marginRight:0,
+    
   },
   checkboxText: {
     marginLeft: 0,

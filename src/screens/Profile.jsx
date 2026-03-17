@@ -343,11 +343,11 @@ const Profile = ({ navigation }) => {
 export default Profile;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingTop: Platform.OS === 'android' ? 40 : 20 },
+  container: { flex: 1, backgroundColor: '#fff', paddingTop: Platform.OS === 'android' ? 40 : 45 },
 
   header: { height: 65, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 },
   arrowIcon: { width: 32, height: 32 },
-  headerTitle: { fontSize: 24, fontWeight: '700', textAlign: 'center', width: '94%' },
+  headerTitle: { fontSize: 24, fontWeight: '700', textAlign: 'center', width: '84%' },
 
   profileSection: { alignItems: 'center', marginTop: 20 },
   initialsAvatar:{width:104,height:104,backgroundColor:'#000',borderRadius:104,justifyContent:'center', alignItems:'center',position:'relative,'},
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
   logoutText: { fontSize: 16, fontWeight: '600', color: '#000' },
 
   // Modal
-  modalTitle: { fontSize: 24, fontWeight: '700', textAlign:'center', marginBottom: 20 },
+  modalTitle: { fontSize: 24, fontWeight: '700', textAlign:'center', marginBottom: 20 , paddingTop: 40},
   inputWrapper: { marginBottom: 15 },
   label: { fontSize: 14, fontWeight:'600', marginBottom: 5 },
   input: { borderWidth: 1, borderColor:'#ccc', borderRadius: 8, paddingHorizontal: 10, height: 45 },

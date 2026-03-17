@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   arrowIcon: { width: 32, height: 32 },
   header: { width: '100%', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, height: 60, backgroundColor: '#fff' },
   backButton: { marginRight: 0 },
-  headerTitle: { fontSize: 24, fontWeight: '700', textAlign: 'center', width: '87%', },
+  headerTitle: { fontSize: 24, fontWeight: '700', textAlign: 'center', width: '82%', },
 
 
   title: {

@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'flex-start',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 60 : 20,
+    paddingTop: Platform.OS === 'android' ? 60 : 60,
     paddingBottom: 150,
   },
   heightAuto:{
