@@ -7,9 +7,8 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  StatusBar,KeyboardAvoidingView,Platform,
+  StatusBar,KeyboardAvoidingView,Platform,Modal,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -30,6 +29,9 @@ const Feedback = () => {
   const [email, setEmail] = useState('');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  const [showSubjectModal, setShowSubjectModal] = useState(false);
+  const [showRatingModal, setShowRatingModal] = useState(false);
 
   /* ---------------- Load Email ---------------- */
   useEffect(() => {
@@ -97,7 +99,7 @@ const Feedback = () => {
     <SafeAreaView style={styles.safeArea}>
       {/* ---------- Header ---------- */}
       <KeyboardAvoidingView
-                    style={{ flex: 1 }}
+                    style={{ flex: 1,}}
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0} // adjust if you have headers
                   >
@@ -113,7 +115,7 @@ const Feedback = () => {
       
       <ScrollView contentContainerStyle={styles.container}>
         {/* ---------- Subject ---------- */}
-        <View style={[styles.input, errors.subject && styles.errorInput, { padding: 0 }]}>
+        {/* <View style={[styles.input, errors.subject && styles.errorInput, { padding: 0 }]}>
           <Picker
             selectedValue={subject}
             onValueChange={value => {
@@ -128,7 +130,49 @@ const Feedback = () => {
             <Picker.Item label="UI Issue" value="ui" />
             <Picker.Item label="Performance Issue" value="performance" />
           </Picker>
-        </View>
+        </View> */}
+
+        <TouchableOpacity
+            style={[styles.input, errors.subject && styles.errorInput]}
+            onPress={() => setShowSubjectModal(true)}
+          >
+            <Text style={{ color: subject ? '#000' : '#999' }}>
+              {
+                subject === 'bug' ? 'Bug Report' :
+                subject === 'suggestion' ? 'Suggestion' :
+                subject === 'ui' ? 'UI Issue' :
+                subject === 'performance' ? 'Performance Issue' :
+                'Choose Your Subject'
+              }
+            </Text>
+          </TouchableOpacity>
+
+          <Modal visible={showSubjectModal} transparent animationType="fade">
+            <View style={{ flex:1, backgroundColor:'#00000066', justifyContent:'center' }}>
+              <View style={{ backgroundColor:'#fff', margin:20, borderRadius:10 }}>
+
+                {[
+                  { label: 'Bug Report', value: 'bug' },
+                  { label: 'Suggestion', value: 'suggestion' },
+                  { label: 'UI Issue', value: 'ui' },
+                  { label: 'Performance Issue', value: 'performance' }
+                ].map(item => (
+                  <TouchableOpacity
+                    key={item.value}
+                    style={{ padding:15, borderBottomWidth:1 }}
+                    onPress={() => {
+                      setSubject(item.value); // ✅ SAME VALUE
+                      setErrors({ ...errors, subject: null });
+                      setShowSubjectModal(false);
+                    }}
+                  >
+                    <Text>{item.label}</Text>
+                  </TouchableOpacity>
+                ))}
+
+              </View>
+            </View>
+          </Modal>
 
         {/* ---------- Message ---------- */}
         <TextInput
@@ -144,7 +188,7 @@ const Feedback = () => {
         />
 
         {/* ---------- Rating ---------- */}
-        <View style={[styles.input, errors.rating && styles.errorInput, { padding: 0 }]}>
+        {/* <View style={[styles.input, errors.rating && styles.errorInput, { padding: 0 }]}>
           <Picker
             selectedValue={rating}
             onValueChange={value => {
@@ -160,7 +204,38 @@ const Feedback = () => {
             <Picker.Item label="⭐ 4" value="4" />
             <Picker.Item label="⭐ 5" value="5" />
           </Picker>
-        </View>
+        </View> */}
+
+        <TouchableOpacity
+            style={[styles.input, errors.rating && styles.errorInput]}
+            onPress={() => setShowRatingModal(true)}
+          >
+            <Text style={{ color: rating ? '#000' : '#999' }}>
+              {rating ? `⭐ ${rating}` : 'What rating would you give the app?'}
+            </Text>
+          </TouchableOpacity>
+
+          <Modal visible={showRatingModal} transparent animationType="fade">
+            <View style={{ flex:1, backgroundColor:'#00000066', justifyContent:'center' }}>
+              <View style={{ backgroundColor:'#fff', margin:20, borderRadius:10 }}>
+
+                {['1','2','3','4','5'].map(item => (
+                  <TouchableOpacity
+                    key={item}
+                    style={{ padding:15, borderBottomWidth:1 }}
+                    onPress={() => {
+                      setRating(item); // ✅ SAME VALUE
+                      setErrors({ ...errors, rating: null });
+                      setShowRatingModal(false);
+                    }}
+                  >
+                    <Text>⭐ {item}</Text>
+                  </TouchableOpacity>
+                ))}
+
+              </View>
+            </View>
+          </Modal>
 
         {/* ---------- Email (Locked) ---------- */}
         <TextInput
@@ -188,7 +263,9 @@ const Feedback = () => {
       )}
 
 
-      <View style={styles.footer}>
+      
+    </KeyboardAvoidingView>
+    <View style={styles.footer}>
         <TouchableOpacity style={[
             styles.footerItem,
             currentRoute === 'Home' && styles.activeFooterItem,
@@ -276,7 +353,6 @@ const Feedback = () => {
             ]}>More</Text>
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

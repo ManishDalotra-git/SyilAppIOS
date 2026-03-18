@@ -215,6 +215,8 @@ const styles = StyleSheet.create({
     fontSize: 26,
     color: '#000',
     marginLeft: 10,
+    width: 38,
+    height: 38,
   },
 
   footer: {

@@ -69,10 +69,12 @@ const ForgotPassword = () => {
       <ScrollView contentContainerStyle={styles.container}>
         
         {/* Logo */}
+        <View style={styles.logoAlign} >
         <Image
-          source={require('../../images/syillogo1.png')}
+          source={require('../../images/syil_logo_white.png')}
           style={styles.logo}
         />
+        </View>
 
         {/* Welcome Text */}
         <Text style={styles.welcome}>Welcome back!</Text>
@@ -136,16 +138,20 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'flex-start',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 60 : 20,
+    paddingTop: Platform.OS === 'android' ? 60 : 60,
     paddingBottom: 30,
+  },
+  logoAlign:{
+    alignItems:'center',  
+    width:'100%',
+    justifyContent:'center',
+    display:'flex',
   },
   logo: {
     width: 120,
     height: 50,
     resizeMode: 'contain',
     marginTop: 0,
-    alignSelf: 'flex-start',
-    marginLeft: 0,
   },
   welcome: {
     color: '#fff',
