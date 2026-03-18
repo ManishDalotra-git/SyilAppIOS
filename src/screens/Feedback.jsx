@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     alignItems: 'center',
   },
-  buttonText: {
+  buttonText: { 
     fontSize: 20,
     fontWeight: '700',
     color: '#000',
