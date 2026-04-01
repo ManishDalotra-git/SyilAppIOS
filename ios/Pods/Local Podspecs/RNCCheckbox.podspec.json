@@ -18,6 +18,8 @@
     "BEMCheckBox": [
       "~> 1.4"
     ],
-    "React-Core": []
+    "React-Core": [
+
+    ]
   }
 }

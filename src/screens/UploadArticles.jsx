@@ -21,50 +21,64 @@ const UploadArticle = ({ navigation }) => {
   StatusBar.setBackgroundColor('transparent');
   StatusBar.setBarStyle('dark-content');
 
+  const [fileUri, setFileUri] = useState('');
+
 
   const API_URL = 'https://syilapp-w8ye.onrender.com/upload-articles';
 
 
-  const handleSelectFile = async () => {
-    try {
-      const res = await DocumentPicker.pick({
-        type: ['application/json'], 
-      });
+  // const handleSelectFile = async () => {
+  //   try {
+  //     // const res = await DocumentPicker.pick({
+  //     //   type: ['application/json'], 
+  //     // });
 
-      const file = res[0];
+  //     const res = await DocumentPicker.pick({
+  //       type: [DocumentPicker.types.allFiles],
+  //     });
 
-      if (!file) {
-        Alert.alert('Error', 'File not selected');
-        return;
-      }
+  //     const file = res[0];
+      
 
-      const isJsonByName = file.name?.toLowerCase().endsWith('.json');
-      if (!isJsonByName) {
-        Alert.alert('Invalid File', 'Please select a JSON file');
-        return;
-      }
+  //     if (!file) {
+  //       Alert.alert('Error', 'File not selected');
+  //       return;
+  //     }
 
-      const fileUri = file.uri;
-      const destPath = `${RNFS.CachesDirectoryPath}/${file.name}`;
+  //     const isJsonByName = file.name?.toLowerCase().endsWith('.json');
+  //     if (!isJsonByName) {
+  //       Alert.alert('Invalid File', 'Please select a JSON file');
+  //       return;
+  //     }
 
-      await RNFS.copyFile(fileUri, destPath);
-      const content = await RNFS.readFile(destPath, 'utf8');
-      const parsed = JSON.parse(content);
+  //     // const fileUri = file.uri;
+  //     // const destPath = `${RNFS.CachesDirectoryPath}/${file.name}`;
 
-      setJsonContent(parsed);
-      setFileName(file.name);
+  //     // await RNFS.copyFile(fileUri, destPath);
+  //     // const content = await RNFS.readFile(destPath, 'utf8');
 
-      Alert.alert('Success', 'JSON file loaded successfully');
-    } catch (err) {
-      if (err?.code === 'DOCUMENT_PICKER_CANCELED') {
-        console.log('User cancelled document picker');
-        return;
-      }
+  //     const fileUri = file.uri.replace('file://', ''); // important for iOS
 
-      console.log('JSON Pick Error:', err);
-      Alert.alert('Error', 'Invalid JSON file or error occurred');
-    }
-  };
+  //     const content = await RNFS.readFile(fileUri, 'utf8');
+
+  //     console.log(file);
+
+  //     const parsed = JSON.parse(content);
+
+  //     setJsonContent(parsed);
+  //     setFileName(file.name);
+
+  //     Alert.alert('Success', 'JSON file loaded successfully');
+  //   } catch (err) {
+  //     if (err?.code === 'DOCUMENT_PICKER_CANCELED') {
+  //       console.log('User cancelled document picker');
+  //       return;
+  //     }
+
+  //     console.log('JSON Pick Error:', err);
+  //     Alert.alert('Error', 'Invalid JSON file or error occurred');
+  //   }
+  // };
 
   // ✅ REPLACE articles.json
   // const handleReplaceArticle = async () => {
@@ -91,16 +105,105 @@ const UploadArticle = ({ navigation }) => {
   //   }
   // };
 
-  const handleReplaceArticle = async () => {
-  if (!jsonContent) {
+
+const handleSelectFile = async () => {
+  try {
+    const res = await DocumentPicker.pick({
+      type: [DocumentPicker.types.allFiles],
+      copyTo: 'cachesDirectory', // try this
+    });
+
+    const file = res[0];
+
+    console.log('FILE OBJECT:', file); // 👈 IMPORTANT DEBUG
+
+    if (!file) {
+      Alert.alert('Error', 'File not selected');
+      return;
+    }
+
+    const isJsonByName = file.name?.toLowerCase().endsWith('.json');
+    if (!isJsonByName) {
+      Alert.alert('Invalid File', 'Please select a JSON file');
+      return;
+    }
+
+    // ⭐ SAFE URI HANDLING
+    const uri = file.fileCopyUri || file.uri;
+    setFileUri(uri); 
+
+    if (!uri) {
+      Alert.alert('Error', 'File URI not found');
+      return;
+    }
+
+    const filePath = uri.replace('file://', '');
+
+    console.log('Using URI:', filePath);
+    console.log(file);
+
+    const content = await RNFS.readFile(filePath, 'utf8');
+
+    const parsed = JSON.parse(content);
+
+    setJsonContent(parsed);
+    setFileName(file.name);
+
+    Alert.alert('Success', 'JSON file loaded successfully');
+
+  } catch (err) {
+    console.log('JSON Pick Error FULL:', err);
+    Alert.alert('Error', 'Invalid JSON file or error occurred');
+  }
+};
+
+
+//   const handleReplaceArticle = async () => {
+//   if (!jsonContent) {
+//     Alert.alert('Error', 'Please select a JSON file first');
+//     return;
+//   }
+
+//   try {
+//     const formData = new FormData();
+//     formData.append('file', {
+//       uri: fileUri,
+//       name: fileName,
+//       type: 'application/json',
+//     });
+
+//     const response = await fetch(API_URL, {
+//       method: 'POST',
+//       body: formData,
+//       headers: {
+//         'Content-Type': 'multipart/form-data',
+//       },
+//     });
+
+//     if (!response.ok) {
+//       throw new Error('Upload failed');
+//     }
+
+//     Alert.alert('Success', 'Articles updated for all users');
+//     navigation.goBack();
+//   } catch (err) {
+//     console.log(err);
+//     Alert.alert('Error', 'Failed to upload articles');
+//   }
+// };
+
+
+const handleReplaceArticle = async () => {
+  if (!jsonContent || !fileUri) {
     Alert.alert('Error', 'Please select a JSON file first');
     return;
   }
 
   try {
     const formData = new FormData();
+
     formData.append('file', {
-      uri: `file://${RNFS.CachesDirectoryPath}/${fileName}`,
+      uri: fileUri, // ✅ REAL FILE PATH
       name: fileName,
       type: 'application/json',
     });

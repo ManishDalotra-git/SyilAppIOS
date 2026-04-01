@@ -85,6 +85,32 @@ const ViewTicketDetail = ({ navigation }) => {
     }, [ticketId])
   );
 
+
+
+  const handleReply = async () => {
+  const subjectEncoded = encodeURIComponent(`Re: ${dynamicSubject}`);
+  const bodyEncoded = encodeURIComponent("Hello Support SYIL,");
+
+  const gmailURL = `googlegmail://co?to=${dynamicEmail}&subject=${subjectEncoded}&body=${bodyEncoded}`;
+  const appStoreURL = 'https://apps.apple.com/app/gmail-email-by-google/id422689480';
+  const mailURL = `mailto:${dynamicEmail}?subject=${subjectEncoded}&body=${bodyEncoded}`;
+
+  if (Platform.OS === 'ios') {
+    const canOpenGmail = await Linking.canOpenURL('googlegmail://');
+
+    if (canOpenGmail) {
+      Linking.openURL(gmailURL);
+    } else {
+      Linking.openURL(appStoreURL);
+    }
+    } else {
+      // Android → Gmail automatically open ho jata hai mostly
+      Linking.openURL(mailURL);
+    }
+  };
+
+
+
   const onRefresh = useCallback(async () => {
   setRefreshing(true);
   try {
@@ -234,11 +260,12 @@ const ViewTicketDetail = ({ navigation }) => {
           ) : hasOutgoing ? (
             <Text
               style={styles.ReplyStyle}
-              onPress={() =>
-                Linking.openURL(
-                  `mailto:${dynamicEmail}?subject=Re:%20${encodeURIComponent(dynamicSubject)}&body=${encodeURIComponent("Hello Support SYIL,")}`
-                )
-              }
+              onPress={handleReply}
+              // onPress={() =>
+              //   Linking.openURL(
+              //     `mailto:${dynamicEmail}?subject=Re:%20${encodeURIComponent(dynamicSubject)}&body=${encodeURIComponent("Hello Support SYIL,")}`
+              //   )
+              // }
             >
               Reply to Support Team
             </Text>

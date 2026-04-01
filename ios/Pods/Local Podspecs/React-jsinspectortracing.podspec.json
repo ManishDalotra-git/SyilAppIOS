@@ -29,18 +29,44 @@
     "DEFINES_MODULE": "YES"
   },
   "dependencies": {
-    "React-jsinspectornetwork": [],
-    "React-jsi": [],
-    "React-oscompat": [],
-    "React-timing": [],
-    "hermes-engine": [],
-    "glog": [],
-    "boost": [],
-    "DoubleConversion": [],
-    "fast_float": [],
-    "fmt": [],
-    "RCT-Folly": [],
-    "SocketRocket": [],
-    "RCT-Folly/Fabric": []
+    "React-jsinspectornetwork": [
+
+    ],
+    "React-jsi": [
+
+    ],
+    "React-oscompat": [
+
+    ],
+    "React-timing": [
+
+    ],
+    "hermes-engine": [
+
+    ],
+    "glog": [
+
+    ],
+    "boost": [
+
+    ],
+    "DoubleConversion": [
+
+    ],
+    "fast_float": [
+
+    ],
+    "fmt": [
+
+    ],
+    "RCT-Folly": [
+
+    ],
+    "SocketRocket": [
+
+    ],
+    "RCT-Folly/Fabric": [
+
+    ]
   }
 }

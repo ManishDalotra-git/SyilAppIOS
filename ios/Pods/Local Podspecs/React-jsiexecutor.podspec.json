@@ -35,23 +35,59 @@
   },
   "header_dir": "jsireact",
   "dependencies": {
-    "React-cxxreact": [],
-    "React-jsi": [],
-    "React-perflogger": [],
-    "React-debug": [],
-    "React-runtimeexecutor": [],
-    "React-jsinspector": [],
-    "React-jsinspectorcdp": [],
-    "React-jsinspectortracing": [],
-    "React-utils": [],
-    "hermes-engine": [],
-    "glog": [],
-    "boost": [],
-    "DoubleConversion": [],
-    "fast_float": [],
-    "fmt": [],
-    "RCT-Folly": [],
-    "SocketRocket": [],
-    "RCT-Folly/Fabric": []
+    "React-cxxreact": [
+
+    ],
+    "React-jsi": [
+
+    ],
+    "React-perflogger": [
+
+    ],
+    "React-debug": [
+
+    ],
+    "React-runtimeexecutor": [
+
+    ],
+    "React-jsinspector": [
+
+    ],
+    "React-jsinspectorcdp": [
+
+    ],
+    "React-jsinspectortracing": [
+
+    ],
+    "React-utils": [
+
+    ],
+    "hermes-engine": [
+
+    ],
+    "glog": [
+
+    ],
+    "boost": [
+
+    ],
+    "DoubleConversion": [
+
+    ],
+    "fast_float": [
+
+    ],
+    "fmt": [
+
+    ],
+    "RCT-Folly": [
+
+    ],
+    "SocketRocket": [
+
+    ],
+    "RCT-Folly/Fabric": [
+
+    ]
   }
 }

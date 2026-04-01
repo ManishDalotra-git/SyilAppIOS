@@ -42,19 +42,47 @@
     "React-jsi": [
       "0.83.1"
     ],
-    "React-debug": [],
-    "React-runtimeexecutor": [],
-    "React-jsinspector": [],
-    "React-jsinspectorcdp": [],
-    "React-jsinspectortracing": [],
-    "React-utils": [],
-    "glog": [],
-    "boost": [],
-    "DoubleConversion": [],
-    "fast_float": [],
-    "fmt": [],
-    "RCT-Folly": [],
-    "SocketRocket": [],
-    "RCT-Folly/Fabric": []
+    "React-debug": [
+
+    ],
+    "React-runtimeexecutor": [
+
+    ],
+    "React-jsinspector": [
+
+    ],
+    "React-jsinspectorcdp": [
+
+    ],
+    "React-jsinspectortracing": [
+
+    ],
+    "React-utils": [
+
+    ],
+    "glog": [
+
+    ],
+    "boost": [
+
+    ],
+    "DoubleConversion": [
+
+    ],
+    "fast_float": [
+
+    ],
+    "fmt": [
+
+    ],
+    "RCT-Folly": [
+
+    ],
+    "SocketRocket": [
+
+    ],
+    "RCT-Folly/Fabric": [
+
+    ]
   }
 }

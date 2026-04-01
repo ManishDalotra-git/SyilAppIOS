@@ -21,25 +21,65 @@
     "DEFINES_MODULE": "YES"
   },
   "dependencies": {
-    "Yoga": [],
-    "React-jsi": [],
-    "React-jsiexecutor": [],
-    "hermes-engine": [],
-    "glog": [],
-    "boost": [],
-    "DoubleConversion": [],
-    "fast_float": [],
-    "fmt": [],
-    "RCT-Folly": [],
-    "SocketRocket": [],
-    "RCT-Folly/Fabric": [],
-    "React-domnativemodule": [],
-    "React-microtasksnativemodule": [],
-    "React-idlecallbacksnativemodule": [],
-    "React-intersectionobservernativemodule": [],
-    "React-webperformancenativemodule": [],
-    "React-RCTFBReactNativeSpec": [],
-    "React-featureflags": [],
-    "React-featureflagsnativemodule": []
+    "Yoga": [
+
+    ],
+    "React-jsi": [
+
+    ],
+    "React-jsiexecutor": [
+
+    ],
+    "hermes-engine": [
+
+    ],
+    "glog": [
+
+    ],
+    "boost": [
+
+    ],
+    "DoubleConversion": [
+
+    ],
+    "fast_float": [
+
+    ],
+    "fmt": [
+
+    ],
+    "RCT-Folly": [
+
+    ],
+    "SocketRocket": [
+
+    ],
+    "RCT-Folly/Fabric": [
+
+    ],
+    "React-domnativemodule": [
+
+    ],
+    "React-microtasksnativemodule": [
+
+    ],
+    "React-idlecallbacksnativemodule": [
+
+    ],
+    "React-intersectionobservernativemodule": [
+
+    ],
+    "React-webperformancenativemodule": [
+
+    ],
+    "React-RCTFBReactNativeSpec": [
+
+    ],
+    "React-featureflags": [
+
+    ],
+    "React-featureflagsnativemodule": [
+
+    ]
   }
 }

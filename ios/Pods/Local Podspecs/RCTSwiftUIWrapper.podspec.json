@@ -17,7 +17,9 @@
   "module_name": "RCTSwiftUIWrapper",
   "header_dir": "RCTSwiftUIWrapper",
   "dependencies": {
-    "RCTSwiftUI": []
+    "RCTSwiftUI": [
+
+    ]
   },
   "pod_target_xcconfig": {
     "SWIFT_VERSION": "5.0"

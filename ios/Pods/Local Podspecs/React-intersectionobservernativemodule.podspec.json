@@ -21,25 +21,65 @@
     "DEFINES_MODULE": "YES"
   },
   "dependencies": {
-    "Yoga": [],
-    "React-jsi": [],
-    "React-jsiexecutor": [],
-    "React-cxxreact": [],
-    "hermes-engine": [],
-    "glog": [],
-    "boost": [],
-    "DoubleConversion": [],
-    "fast_float": [],
-    "fmt": [],
-    "RCT-Folly": [],
-    "SocketRocket": [],
-    "RCT-Folly/Fabric": [],
-    "ReactCommon/turbomodule/core": [],
-    "React-Fabric": [],
-    "React-Fabric/bridging": [],
-    "React-runtimescheduler": [],
-    "React-RCTFBReactNativeSpec": [],
-    "React-runtimeexecutor": [],
-    "React-graphics": []
+    "Yoga": [
+
+    ],
+    "React-jsi": [
+
+    ],
+    "React-jsiexecutor": [
+
+    ],
+    "React-cxxreact": [
+
+    ],
+    "hermes-engine": [
+
+    ],
+    "glog": [
+
+    ],
+    "boost": [
+
+    ],
+    "DoubleConversion": [
+
+    ],
+    "fast_float": [
+
+    ],
+    "fmt": [
+
+    ],
+    "RCT-Folly": [
+
+    ],
+    "SocketRocket": [
+
+    ],
+    "RCT-Folly/Fabric": [
+
+    ],
+    "ReactCommon/turbomodule/core": [
+
+    ],
+    "React-Fabric": [
+
+    ],
+    "React-Fabric/bridging": [
+
+    ],
+    "React-runtimescheduler": [
+
+    ],
+    "React-RCTFBReactNativeSpec": [
+
+    ],
+    "React-runtimeexecutor": [
+
+    ],
+    "React-graphics": [
+
+    ]
   }
 }

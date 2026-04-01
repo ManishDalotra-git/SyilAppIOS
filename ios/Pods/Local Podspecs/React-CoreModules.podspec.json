@@ -74,23 +74,59 @@
     "React-jsi": [
       "0.83.1"
     ],
-    "React-RCTBlob": [],
-    "React-debug": [],
-    "React-runtimeexecutor": [],
-    "React-jsinspector": [],
-    "React-jsinspectorcdp": [],
-    "React-jsinspectortracing": [],
-    "React-RCTFBReactNativeSpec": [],
-    "ReactCommon": [],
-    "React-NativeModulesApple": [],
-    "React-utils": [],
-    "glog": [],
-    "boost": [],
-    "DoubleConversion": [],
-    "fast_float": [],
-    "fmt": [],
-    "RCT-Folly": [],
-    "SocketRocket": [],
-    "RCT-Folly/Fabric": []
+    "React-RCTBlob": [
+
+    ],
+    "React-debug": [
+
+    ],
+    "React-runtimeexecutor": [
+
+    ],
+    "React-jsinspector": [
+
+    ],
+    "React-jsinspectorcdp": [
+
+    ],
+    "React-jsinspectortracing": [
+
+    ],
+    "React-RCTFBReactNativeSpec": [
+
+    ],
+    "ReactCommon": [
+
+    ],
+    "React-NativeModulesApple": [
+
+    ],
+    "React-utils": [
+
+    ],
+    "glog": [
+
+    ],
+    "boost": [
+
+    ],
+    "DoubleConversion": [
+
+    ],
+    "fast_float": [
+
+    ],
+    "fmt": [
+
+    ],
+    "RCT-Folly": [
+
+    ],
+    "SocketRocket": [
+
+    ],
+    "RCT-Folly/Fabric": [
+
+    ]
   }
 }

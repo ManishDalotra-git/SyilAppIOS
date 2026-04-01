@@ -46,23 +46,53 @@
     "React-jsiexecutor": [
       "0.83.1"
     ],
-    "React-jsinspector": [],
-    "React-jsinspectorcdp": [],
-    "React-jsinspectortracing": [],
+    "React-jsinspector": [
+
+    ],
+    "React-jsinspectorcdp": [
+
+    ],
+    "React-jsinspectortracing": [
+
+    ],
     "React-perflogger": [
       "0.83.1"
     ],
-    "hermes-engine": [],
-    "React-jsi": [],
-    "React-runtimeexecutor": [],
-    "React-oscompat": [],
-    "glog": [],
-    "boost": [],
-    "DoubleConversion": [],
-    "fast_float": [],
-    "fmt": [],
-    "RCT-Folly": [],
-    "SocketRocket": [],
-    "RCT-Folly/Fabric": []
+    "hermes-engine": [
+
+    ],
+    "React-jsi": [
+
+    ],
+    "React-runtimeexecutor": [
+
+    ],
+    "React-oscompat": [
+
+    ],
+    "glog": [
+
+    ],
+    "boost": [
+
+    ],
+    "DoubleConversion": [
+
+    ],
+    "fast_float": [
+
+    ],
+    "fmt": [
+
+    ],
+    "RCT-Folly": [
+
+    ],
+    "SocketRocket": [
+
+    ],
+    "RCT-Folly/Fabric": [
+
+    ]
   }
 }
