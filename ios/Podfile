@@ -43,14 +43,6 @@ target 'syilReact' do
       end
     end
   end
-
-  installer.pods_project.targets.each do |target|
-    if target.name == 'react-native-image-picker'
-      target.build_configurations.each do |config|
-        config.build_settings['EXCLUDED_SOURCE_FILE_NAMES'] = 'PrivacyInfo.xcprivacy'
-      end
-    end
-  end
     
   end
 end
