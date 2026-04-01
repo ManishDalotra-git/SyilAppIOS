@@ -23,6 +23,7 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = syilReact/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = syilReact/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		B81ECDEECE8485C56B214668 /* Pods-syilReact.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-syilReact.release.xcconfig"; path = "Target Support Files/Pods-syilReact/Pods-syilReact.release.xcconfig"; sourceTree = "<group>"; };
+		C2EB442F2F7D34650014D97E /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		CF38539813AB92782ADDB930 /* libPods-syilReact.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-syilReact.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -70,6 +71,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				C2EB442F2F7D34650014D97E /* PrivacyInfo.xcprivacy */,
 				13B07FAE1A68108700A75B9A /* syilReact */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
@@ -191,9 +193,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-syilReact/Pods-syilReact-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-syilReact/Pods-syilReact-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -208,9 +214,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-syilReact/Pods-syilReact-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-syilReact/Pods-syilReact-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -299,6 +309,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GU97M8A459;
 				INFOPLIST_FILE = syilReact/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
