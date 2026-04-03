@@ -13,9 +13,11 @@
     "tag": "v8.2.1"
   },
   "source_files": "ios/*.{h,m,mm}",
-  "resources": [
-    "ios/PrivacyInfo.xcprivacy"
-  ],
+  "resource_bundles": {
+    "RNImagePickerPrivacyInfo": [
+      "ios/PrivacyInfo.xcprivacy"
+    ]
+  },
   "frameworks": [
     "Photos",
     "PhotosUI",
