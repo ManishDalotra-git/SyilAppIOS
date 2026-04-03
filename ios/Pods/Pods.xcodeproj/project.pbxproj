@@ -28632,6 +28632,7 @@
 				46EB2E00020400 /* Headers */,
 				46EB2E00020410 /* Sources */,
 				46EB2E00020420 /* Frameworks */,
+				46EB2E00029D40 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -29933,6 +29934,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				46EB2E000204B0 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		46EB2E00029D40 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

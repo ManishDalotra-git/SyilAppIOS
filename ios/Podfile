@@ -42,6 +42,15 @@ target 'syilReact' do
         config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FMT_USE_CONSTEXPR=0'
       end
     end
+    if target.name == 'react-native-image-picker'
+
+      target.resources_build_phase.files.each do |file|
+        if file.display_name == 'PrivacyInfo.xcprivacy'
+          file.remove_from_project
+        end
+      end
+
+    end
   end
     
   end
