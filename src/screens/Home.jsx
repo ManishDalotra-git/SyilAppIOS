@@ -9,7 +9,7 @@ const Home = () => {
   StatusBar.setBackgroundColor('transparent');
   StatusBar.setBarStyle('light-content'); 
    
-
+ 
   const navigation = useNavigation();
   const route = useRoute();
   const currentRoute = route.name;  
@@ -57,7 +57,7 @@ const Home = () => {
                 <TouchableOpacity style={[
                     styles.footerItem,
                     currentRoute === 'Home' && styles.activeFooterItem,
-                ]} 
+                ]}
                 onPress={() => navigation.navigate('Home')}
                 >
                 <Image source={require('../../images/home.png')} style={[
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     tintColor: '#666666',
   },
   footerText: {
-    fontSize: 12,
+    fontSize: '12px',
     color: '#666666',
   },
   activeFooterItem:{
