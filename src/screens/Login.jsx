@@ -128,18 +128,19 @@ const handleSubmit = async () => {
         </View> 
 
         {/* Welcome Text */}
-        <Text style={styles.welcome}>Welcome back!</Text>
+        <Text allowFontScaling={false} style={styles.welcome}>Welcome back!</Text>
 
         {/* White Card */}
         <View style={styles.card}>
-          <Text style={styles.signIn}>Sign In</Text>
-          <Text style={styles.subText}>
+          <Text allowFontScaling={false} style={styles.signIn}>Sign In</Text>
+          <Text allowFontScaling={false} style={styles.subText}>
             Enter Your email address and password to sign in the Customer Portal.
           </Text>
 
           {/* Username */}
-          <Text style={styles.label}>Email Address</Text>
+          <Text allowFontScaling={false} style={styles.label}>Email Address</Text>
           <TextInput
+          allowFontScaling={false}
             style={styles.input}
             placeholder="Enter Your Email Address"
             value={username}
@@ -148,9 +149,10 @@ const handleSubmit = async () => {
           />
 
           {/* Password */}
-          <Text style={styles.label}>Password</Text>
+          <Text allowFontScaling={false} style={styles.label}>Password</Text>
           <View style={styles.passwordContainer}>
             <TextInput
+            allowFontScaling={false}
                 style={styles.passwordInput}
                 placeholder="Enter Your Password"
                 secureTextEntry={secure}
@@ -174,20 +176,20 @@ const handleSubmit = async () => {
             </TouchableOpacity>
           </View>
 
-          <Text onPress={() => navigation.navigate('ForgotPassword')} style={styles.forgot}>Forgot Password?</Text>
+          <Text allowFontScaling={false} onPress={() => navigation.navigate('ForgotPassword')} style={styles.forgot}>Forgot Password?</Text>
 
           {/* Login Button */}
           <TouchableOpacity disabled={loading} 
           style={[
             styles.button, loading && { opacity: 0.6 }
           ]} onPress={handleSubmit}>
-            <Text style={styles.buttonText}>Log In</Text>
+            <Text allowFontScaling={false} style={styles.buttonText}>Log In</Text>
           </TouchableOpacity>
         </View>
 
         {/* Footer */}
-        <Text style={styles.footer} onPress={() => Linking.openURL('mailto:support@syil.com')} >
-          Need Help? <Text style={styles.support}>Contact Support</Text>
+        <Text allowFontScaling={false} style={styles.footer} onPress={() => Linking.openURL('mailto:support@syil.com')} >
+          Need Help? <Text allowFontScaling={false} style={styles.support}>Contact Support</Text>
         </Text>
 
 
@@ -199,7 +201,7 @@ const handleSubmit = async () => {
         <View style={styles.loadingOverlay}>
           {/* You can uncomment the GIF if you want */}
           {/* <Image source={require('../../images/loading.gif')} style={styles.loadingGif} /> */}
-          <Text style={styles.loadingText}>Please wait...</Text>
+          <Text allowFontScaling={false} style={styles.loadingText}>Please wait...</Text>
         </View>
       </Modal>
       </KeyboardAvoidingView>

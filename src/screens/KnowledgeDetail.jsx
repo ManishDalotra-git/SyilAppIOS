@@ -225,7 +225,7 @@ const KnowledgeDetail = ({ route, navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Image source={require('../../images/circle_arrow.png')} style={styles.arrowIcon} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Articles</Text>
+        <Text allowFontScaling={false} style={styles.headerTitle}>Articles</Text>
       </View>
 
       <ScrollView
@@ -238,26 +238,26 @@ const KnowledgeDetail = ({ route, navigation }) => {
 
          {/* META */}
         <View style={styles.metaContainer}>
-          <Text style={styles.title}>{article?.['Article title']}</Text>
+          <Text allowFontScaling={false} style={styles.title}>{article?.['Article title']}</Text>
 
           {!!article?.Category && (
-            <Text style={styles.metaText}>
+            <Text allowFontScaling={false} style={styles.metaText}>
               Category:{' '}
-              <Text style={styles.metaValue}>{article.Category}</Text>
+              <Text allowFontScaling={false} style={styles.metaValue}>{article.Category}</Text>
             </Text>
           )}
 
           {!!article?.Subcategory && (
-            <Text style={styles.metaText}>
+            <Text allowFontScaling={false} style={styles.metaText}>
               Subcategory:{' '}
-              <Text style={styles.metaValue}>{article.Subcategory}</Text>
+              <Text allowFontScaling={false} style={styles.metaValue}>{article.Subcategory}</Text>
             </Text>
           )}
 
           {!!article?.['Last modified date'] && (
-            <Text style={styles.metaText}>
+            <Text allowFontScaling={false} style={styles.metaText}>
               Last Updated:{' '}
-              <Text style={styles.metaValue}>
+              <Text allowFontScaling={false} style={styles.metaValue}>
                 {formatDate(article['Last modified date'])}
               </Text>
             </Text>
@@ -267,14 +267,14 @@ const KnowledgeDetail = ({ route, navigation }) => {
         {/* TOC */}
         {toc.length > 0 && (
           <View style={styles.tocWrapper}>
-            <Text style={styles.tocTitle}>Table of Contents</Text>
+            <Text allowFontScaling={false} style={styles.tocTitle}>Table of Contents</Text>
 
             <TouchableOpacity
               style={styles.tocDropdown}
               onPress={() => setShowToc(!showToc)}
             >
-              <Text style={styles.tocPlaceholder}>Select section</Text>
-              <Text>⌄</Text>
+              <Text allowFontScaling={false} style={styles.tocPlaceholder}>Select section</Text>
+              <Text allowFontScaling={false}>⌄</Text>
             </TouchableOpacity>
 
             {showToc &&
@@ -284,7 +284,7 @@ const KnowledgeDetail = ({ route, navigation }) => {
                   style={styles.tocItem}
                   onPress={() => scrollToSection(item.index)}
                 >
-                  <Text>{item.title}</Text>
+                  <Text allowFontScaling={false}>{item.title}</Text>
                 </TouchableOpacity>
               ))}
           </View>

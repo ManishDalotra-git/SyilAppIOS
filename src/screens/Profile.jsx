@@ -198,14 +198,14 @@ const Profile = ({ navigation }) => {
             style={styles.arrowIcon}
           />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text allowFontScaling={false} style={styles.headerTitle}>Profile</Text>
       </View>
 
       {/* Profile Section (SAME) */}
       <View style={styles.profileSection}>
         <View style={styles.avatarWrapper}>
           <View style={styles.initialsAvatar}>
-            <Text style={styles.initialsText}>
+            <Text allowFontScaling={false} style={styles.initialsText}>
               {getInitials(firstName, lastName)}
             </Text>
           </View>
@@ -222,10 +222,10 @@ const Profile = ({ navigation }) => {
           </Pressable>
         </View>
 
-        <Text style={styles.name}>
+        <Text allowFontScaling={false} style={styles.name}>
           {firstName} {lastName}
         </Text>
-        <Text style={styles.email}>{email}</Text>
+        <Text allowFontScaling={false} style={styles.email}>{email}</Text>
       </View>
 
       {/* Logout Button (SAME) */}
@@ -234,21 +234,22 @@ const Profile = ({ navigation }) => {
           source={require('../../images/logout.png')}
           style={styles.logoutIcon}
         />
-        <Text style={styles.logoutText}>Log Out</Text>
+        <Text allowFontScaling={false} style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>
 
       {/* 🔽 EDIT PROFILE MODAL */}
       <Modal visible={editVisible} animationType="slide">
         <ScrollView contentContainerStyle={{ padding: 20 }}>
-          <Text style={styles.modalTitle}>Edit Profile</Text>
+          <Text allowFontScaling={false} style={styles.modalTitle}>Edit Profile</Text>
 
           {/* FIELD: First Name */}
           <View style={styles.inputWrapper}>
             <View style={styles.iconText}>
               <Image source={require('../../images/user_icon.png')} style={styles.fieldIcon}/>
-              <Text style={styles.label}>First Name</Text>
+              <Text allowFontScaling={false} style={styles.label}>First Name</Text>
             </View>
             <TextInput
+            allowFontScaling={false}
               placeholder="First Name"
               style={styles.input}
               value={firstName}
@@ -261,9 +262,10 @@ const Profile = ({ navigation }) => {
           <View style={styles.inputWrapper}>
             <View style={styles.iconText}>
               <Image source={require('../../images/user_icon.png')} style={styles.fieldIcon}/>
-              <Text style={styles.label}>Last Name</Text>
+              <Text allowFontScaling={false} style={styles.label}>Last Name</Text>
             </View>
             <TextInput
+            allowFontScaling={false}
               placeholder="Last Name"
               style={styles.input}
               value={lastName}
@@ -276,9 +278,10 @@ const Profile = ({ navigation }) => {
           <View style={styles.inputWrapper}>
             <View style={styles.iconText}>
               <Image source={require('../../images/bio_icon.png')} style={styles.fieldIcon}/>
-              <Text style={styles.label}>Bio</Text>
+              <Text allowFontScaling={false} style={styles.label}>Bio</Text>
             </View>
             <TextInput
+            allowFontScaling={false}
               placeholder="Bio"
               style={styles.input}
               value={bio}
@@ -291,9 +294,10 @@ const Profile = ({ navigation }) => {
           <View style={styles.inputWrapper}>
             <View style={styles.iconText}>
               <Image source={require('../../images/phone_icon.png')} style={styles.fieldIcon}/>
-              <Text style={styles.label}>Phone</Text>
+              <Text allowFontScaling={false} style={styles.label}>Phone</Text>
             </View>
             <TextInput
+            allowFontScaling={false}
               placeholder="Phone"
               style={styles.input}
               value={phone}
@@ -306,9 +310,10 @@ const Profile = ({ navigation }) => {
           <View style={styles.inputWrapper}>
             <View style={styles.iconText}>
               <Image source={require('../../images/gender_icon.png')} style={styles.fieldIcon}/>
-              <Text style={styles.label}>Gender</Text>
+              <Text allowFontScaling={false} style={styles.label}>Gender</Text>
             </View>
             <TextInput
+            allowFontScaling={false}
               placeholder="Gender"
               style={styles.input}
               value={gender}
@@ -319,11 +324,11 @@ const Profile = ({ navigation }) => {
 
           {/* SAVE BUTTON */}
           <Pressable style={styles.saveBtn} onPress={handleSaveProfile}>
-            <Text style={styles.saveText}>Save</Text>
+            <Text allowFontScaling={false} style={styles.saveText}>Save</Text>
           </Pressable>
 
           <Pressable style={styles.saveBtnCancel} onPress={() => setEditVisible(false)}>
-            <Text style={styles.saveTextCancel}>Cancel</Text>
+            <Text allowFontScaling={false} style={styles.saveTextCancel}>Cancel</Text>
           </Pressable>
 
         </ScrollView>
@@ -332,7 +337,7 @@ const Profile = ({ navigation }) => {
       {/* 🔽 LOADING MODAL */}
       <Modal visible={loading} transparent animationType="fade">
         <View style={styles.loadingContainer}>
-          <Text style={{ fontSize: 24, fontWeight: '700' }}>Please wait...</Text>
+          <Text allowFontScaling={false} style={{ fontSize: 24, fontWeight: '700' }}>Please wait...</Text>
         </View>
       </Modal>
 

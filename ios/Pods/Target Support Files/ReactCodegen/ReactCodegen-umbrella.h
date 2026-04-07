@@ -36,6 +36,8 @@
 #import "rnasyncstorageJSI.h"
 #import "rndocumentpickerCGen/rndocumentpickerCGen.h"
 #import "rndocumentpickerCGenJSI.h"
+#import "RNImagePickerSpec/RNImagePickerSpec.h"
+#import "RNImagePickerSpecJSI.h"
 #import "rnscreens/rnscreens.h"
 #import "rnscreensJSI.h"
 #import "RNVectorIconsSpec/RNVectorIconsSpec.h"

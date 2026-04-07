@@ -234,31 +234,31 @@ const handleReplaceArticle = async () => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Image source={require('../../images/circle_arrow.png')} style={styles.arrowIcon} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add New Article</Text>
+        <Text allowFontScaling={false} style={styles.headerTitle}>Add New Article</Text>
       </View>
 
     <View style={styles.container}>
 
       
 
-      {/* <Text style={styles.title}>Upload Articles JSON</Text> */}
+      {/* <Text allowFontScaling={false} style={styles.title}>Upload Articles JSON</Text> */}
 
       <TouchableOpacity style={styles.button} onPress={handleSelectFile}>
-        <Text style={styles.buttonText}>Select JSON File</Text>
+        <Text allowFontScaling={false} style={styles.buttonText}>Select JSON File</Text>
       </TouchableOpacity>
 
       {fileName ? (
-        <Text style={styles.fileInfo}>Selected: {fileName}</Text>
+        <Text allowFontScaling={false} style={styles.fileInfo}>Selected: {fileName}</Text>
       ) : null}
 
       <TouchableOpacity
         style={[styles.button, styles.greenButton]}
         onPress={handleReplaceArticle}
       >
-        <Text style={styles.buttonText}>Replace articles.json</Text>
+        <Text allowFontScaling={false} style={styles.buttonText}>Replace articles.json</Text>
       </TouchableOpacity>
 
-      <Text style={styles.note}>⚠️ Only valid JSON file is allowed</Text>
+      <Text allowFontScaling={false} style={styles.note}>⚠️ Only valid JSON file is allowed</Text>
     </View>
     </SafeAreaView>
   );

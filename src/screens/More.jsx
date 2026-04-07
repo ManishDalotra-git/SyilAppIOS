@@ -85,7 +85,7 @@ const More = ({ navigation }) => {
                         style={styles.profileImage}
                     /> */}
                     <View style={styles.initialsAvatar}>
-                        <Text style={styles.initialsText}>
+                        <Text allowFontScaling={false} style={styles.initialsText}>
                         {getInitials(firstName, lastName)}
                         </Text>
                     </View>
@@ -111,7 +111,7 @@ const More = ({ navigation }) => {
             <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('UploadArticles')} >
                 <View style={styles.left}>
                 <Image source={require('../../images/ArticleIcon.png')} style={styles.icon} />
-                <Text style={styles.text}>Add New Article</Text>
+                <Text allowFontScaling={false} style={styles.text}>Add New Article</Text>
                 </View>
                 <Image source={require('../../images/left_arrow.png')} style={styles.Leftarrow} />
             </TouchableOpacity>
@@ -121,7 +121,7 @@ const More = ({ navigation }) => {
             <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('AskAlex')} >
                 <View style={styles.left}>
                 <Image source={require('../../images/ask.png')} style={styles.icon} />
-                <Text style={styles.text}>Ask Alex</Text>
+                <Text allowFontScaling={false} style={styles.text}>Ask Alex</Text>
                 </View>
                 <Image source={require('../../images/left_arrow.png')} style={styles.Leftarrow} />
             </TouchableOpacity>
@@ -130,7 +130,7 @@ const More = ({ navigation }) => {
             <TouchableOpacity onPress={() => navigation.navigate('Feedback')} style={styles.row}>
                 <View style={styles.left}>
                 <Image source={require('../../images/feedback.png')} style={styles.icon} />
-                <Text style={styles.text}>Feedback</Text>
+                <Text allowFontScaling={false} style={styles.text}>Feedback</Text>
                 </View>
                 <Image source={require('../../images/left_arrow.png')} style={styles.Leftarrow} />
             </TouchableOpacity>
@@ -151,7 +151,7 @@ const More = ({ navigation }) => {
                 }}>
                 <View style={styles.left}>
                 <Image source={require('../../images/quote.png')} style={styles.icon} />
-                <Text style={styles.text}>Request Quote</Text>
+                <Text allowFontScaling={false} style={styles.text}>Request Quote</Text>
                 </View>
                 <Image source={require('../../images/left_arrow.png')} style={styles.Leftarrow} />
             </TouchableOpacity>
@@ -171,7 +171,7 @@ const More = ({ navigation }) => {
                 }}>
                 <View style={styles.left}>
                 <Image source={require('../../images/customer.png')} style={styles.icon} />
-                <Text style={styles.text}>Customer Stories</Text>
+                <Text allowFontScaling={false} style={styles.text}>Customer Stories</Text>
                 </View>
                 <Image source={require('../../images/left_arrow.png')} style={styles.Leftarrow} />
             </TouchableOpacity>
@@ -190,7 +190,7 @@ const More = ({ navigation }) => {
                 styles.footerIcon,
                 currentRoute === 'Home' && styles.activeFooterIcon,
             ]} />
-            <Text style={[
+            <Text allowFontScaling={false} style={[
                 styles.footerText,
                 currentRoute === 'Home' && styles.activeFooterText,
             ]}>Home</Text>
@@ -211,6 +211,7 @@ const More = ({ navigation }) => {
             ]}
             />
             <Text
+            allowFontScaling={false}
             style={[
                 styles.footerText,
                 currentRoute === 'KnowledgeBase' && styles.activeFooterText,
@@ -231,7 +232,7 @@ const More = ({ navigation }) => {
                 styles.footerIcon,
                 currentRoute === 'Ticket' && styles.activeFooterIcon,
             ]} />
-            <Text style={[
+            <Text allowFontScaling={false} style={[
                 styles.footerText,
                 currentRoute === 'Ticket' && styles.activeFooterText,
             ]}>Submit Ticket</Text>
@@ -247,7 +248,7 @@ const More = ({ navigation }) => {
                 styles.footerIcon,
                 currentRoute === 'ViewTicket' && styles.activeFooterIcon,
             ]} />
-            <Text style={[
+            <Text allowFontScaling={false} style={[
                 styles.footerText,
                 currentRoute === 'ViewTicket' && styles.activeFooterText,
             ]}>View Tickets</Text>
@@ -261,7 +262,7 @@ const More = ({ navigation }) => {
                 styles.footerIcon,
                 currentRoute === 'More' && styles.activeFooterIcon,
             ]} />
-            <Text style={[
+            <Text allowFontScaling={false} style={[
                 styles.footerText,
                 currentRoute === 'More' && styles.activeFooterText,
             ]}>More</Text>

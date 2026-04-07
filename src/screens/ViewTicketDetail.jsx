@@ -14,6 +14,7 @@ import {
   RefreshControl ,
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
+import Video from 'react-native-video';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -159,7 +160,7 @@ const ViewTicketDetail = ({ navigation }) => {
         <View style={styles.flexClass}>
           <Pressable onPress={() => navigation.navigate('Profile')}>
             <View style={styles.initialsAvatar}>
-              <Text style={styles.initialsText}>
+              <Text allowFontScaling={false} style={styles.initialsText}>
                 {getInitials(firstName, lastName)}
               </Text>
             </View>
@@ -197,12 +198,12 @@ const ViewTicketDetail = ({ navigation }) => {
             <Image
               source={require('../../images/refresh.png')}
               style={styles.refreshIcon}
-            /><Text style={{ color: '#000000', fontWeight: '500' }}>Refresh</Text>
+            /><Text allowFontScaling={false} style={{ color: '#000000', fontWeight: '500' }}>Refresh</Text>
           </TouchableOpacity>
-          <Text style={styles.subject}>{subject}</Text>
-          <Text style={styles.ticket}>#{ticketId}</Text>
+          <Text allowFontScaling={false} style={styles.subject}>{subject}</Text>
+          <Text allowFontScaling={false} style={styles.ticket}>#{ticketId}</Text>
 
-          {loading && <Text style={{ textAlign:'center' , padding:10, }}>Loading conversation...</Text>}
+          {loading && <Text allowFontScaling={false} style={{ textAlign:'center' , padding:10, }}>Loading conversation...</Text>}
 
           <FlatList
             data={messages}
@@ -219,14 +220,14 @@ const ViewTicketDetail = ({ navigation }) => {
                     : styles.incoming,
                 ]}
               >
-                <Text style={styles.senderName}>{getSenderName(item)}</Text>
-                <Text style={styles.messageText}>{item.text || ''}</Text>
+                <Text allowFontScaling={false} style={styles.senderName}>{getSenderName(item)}</Text>
+                <Text allowFontScaling={false} style={styles.messageText}>{item.text || ''}</Text>
 
                  {/* Attachments */}
-                  {/* <Text >{item.attachments}</Text> */}
+                  {/* <Text allowFontScaling={false} >{item.attachments}</Text> */}
                 
 
-                {item.attachments && item.attachments.length > 0 && (
+                {/* {item.attachments && item.attachments.length > 0 && (
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 5,  }}>
                     {item.attachments.map((attachment, index) => (
                       <Image
@@ -237,7 +238,40 @@ const ViewTicketDetail = ({ navigation }) => {
                       // <Text>{attachment.url}</Text>
                     ))}
                   </View>
-                )}
+                )} */}
+
+
+                {item.attachments && item.attachments.length > 0 && (
+  <View style={{ marginTop: 5 }}>
+    {item.attachments.map((attachment, index) => {
+      
+      if (attachment.fileUsageType === 'IMAGE') {
+        return (
+          <Image
+            key={index}
+            source={{ uri: attachment.url }}
+            style={styles.attachmentImage}
+          />
+        );
+      }
+
+      if (attachment.fileUsageType === 'OTHER') {
+        return (
+          <Video
+            key={index}
+            source={{ uri: attachment.url }}
+            style={styles.video}
+            controls={true}
+            resizeMode="contain"
+            paused={true} 
+          />
+        );
+      }
+
+      return null;
+    })}
+  </View>
+)}
 
               </View>
             )}
@@ -250,15 +284,16 @@ const ViewTicketDetail = ({ navigation }) => {
           
 
           {!loading && messages.length === 0 && (
-            <Text style={styles.noTicketText}>No conversation found</Text>
+            <Text allowFontScaling={false} style={styles.noTicketText}>No conversation found</Text>
           )}
 
           {messages.length === 1 ? (
-            <Text style={[styles.ReplyStyle, { backgroundColor: '#999' }]}>
+            <Text allowFontScaling={false} style={[styles.ReplyStyle, { backgroundColor: '#999' }]}>
               Please wait for the support reply.
             </Text>
           ) : hasOutgoing ? (
             <Text
+            allowFontScaling={false}
               style={styles.ReplyStyle}
               onPress={handleReply}
               // onPress={() =>
@@ -293,7 +328,7 @@ const ViewTicketDetail = ({ navigation }) => {
             source={require('../../images/home.png')}
             style={[styles.footerIcon, currentRoute === 'Home' && styles.activeFooterIcon]}
           />
-          <Text style={[styles.footerText, currentRoute === 'Home' && styles.activeFooterText]}>
+          <Text allowFontScaling={false} style={[styles.footerText, currentRoute === 'Home' && styles.activeFooterText]}>
             Home
           </Text>
         </TouchableOpacity>
@@ -307,7 +342,7 @@ const ViewTicketDetail = ({ navigation }) => {
             source={require('../../images/knowledge.png')}
             style={[styles.footerIcon, currentRoute === 'KnowledgeBase' && styles.activeFooterIcon]}
           />
-          <Text style={[styles.footerText, currentRoute === 'KnowledgeBase' && styles.activeFooterText]}>
+          <Text allowFontScaling={false} style={[styles.footerText, currentRoute === 'KnowledgeBase' && styles.activeFooterText]}>
             Knowledge
           </Text>
         </TouchableOpacity>
@@ -321,7 +356,7 @@ const ViewTicketDetail = ({ navigation }) => {
             source={require('../../images/submit.png')}
             style={[styles.footerIcon, currentRoute === 'Ticket' && styles.activeFooterIcon]}
           />
-          <Text style={[styles.footerText, currentRoute === 'Ticket' && styles.activeFooterText]}>
+          <Text allowFontScaling={false} style={[styles.footerText, currentRoute === 'Ticket' && styles.activeFooterText]}>
             Submit Ticket
           </Text>
         </TouchableOpacity>
@@ -335,7 +370,7 @@ const ViewTicketDetail = ({ navigation }) => {
             source={require('../../images/view.png')}
             style={[styles.footerIcon, currentRoute === 'ViewTicket' && styles.activeFooterIcon]}
           />
-          <Text style={[styles.footerText, currentRoute === 'ViewTicket' && styles.activeFooterText]}>
+          <Text allowFontScaling={false} style={[styles.footerText, currentRoute === 'ViewTicket' && styles.activeFooterText]}>
             View Tickets
           </Text>
         </TouchableOpacity>
@@ -349,7 +384,7 @@ const ViewTicketDetail = ({ navigation }) => {
             source={require('../../images/more.png')}
             style={[styles.footerIcon, currentRoute === 'More' && styles.activeFooterIcon]}
           />
-          <Text style={[styles.footerText, currentRoute === 'More' && styles.activeFooterText]}>
+          <Text allowFontScaling={false} style={[styles.footerText, currentRoute === 'More' && styles.activeFooterText]}>
             More
           </Text>
         </TouchableOpacity>
@@ -453,5 +488,13 @@ const styles = StyleSheet.create({
     objectFit:'contain',
     resizeMode: 'contain',
   },
+
+
+  video: {
+  width: '100%',
+  height: 220,
+  borderRadius: 8,
+  marginTop: 5,
+},
 
 });

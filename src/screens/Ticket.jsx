@@ -10,8 +10,7 @@ import {
 import { Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import CheckBox from '@react-native-community/checkbox';
-// import { launchImageLibrary } from 'react-native-image-picker';
-import * as DocumentPicker from '@react-native-documents/picker';
+import { launchImageLibrary } from 'react-native-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -82,55 +81,25 @@ const Ticket = () => {
 //   );
 // };
 
-// const pickFiles = () => {
-//   launchImageLibrary(
-//     {
-//       mediaType: 'mixed',
-//       selectionLimit: 0,
-//     },
-//     response => {
-//       if (response.didCancel) return;
+const pickFiles = () => {
+  launchImageLibrary(
+    {
+      mediaType: 'mixed',
+      selectionLimit: 0,
+    },
+    response => {
+      if (response.didCancel) return;
 
-//       if (response.errorCode) {
-//         Alert.alert('Error', response.errorMessage || 'Something went wrong');
-//         return;
-//       }
+      if (response.errorCode) {
+        Alert.alert('Error', response.errorMessage || 'Something went wrong');
+        return;
+      }
 
-//       if (response.assets) {
-//         setFiles(response.assets);
-//       }
-//     }
-//   );
-// };
-
-
-const pickFiles = async () => {
-  try {
-    const res = await DocumentPicker.pick({
-      type: [DocumentPicker.types.images, DocumentPicker.types.video],
-      allowMultiSelection: true,
-      copyTo: 'cachesDirectory', 
-    });
-
-    if (!res || res.length === 0) return;
-
-    // 🔥 Convert DocumentPicker response → image-picker जैसा format
-    const formattedFiles = res.map(file => ({
-      uri: file.fileCopyUri || file.uri,
-      fileName: file.name,
-      type: file.type || 'application/octet-stream',
-    }));
-
-    setFiles(formattedFiles);
-
-  } catch (err) {
-    if (err?.code === 'DOCUMENT_PICKER_CANCELED') {
-      return;
+      if (response.assets) {
+        setFiles(response.assets);
+      }
     }
-
-    console.log('File Pick Error:', err);
-    Alert.alert('Error', 'Unable to pick files');
-  }
+  );
 };
 
 
@@ -361,7 +330,7 @@ const formatCategoryLabel = (key) => {
               style={styles.arrowIcon}
           />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>New Ticket</Text>
+        <Text allowFontScaling={false} style={styles.headerTitle}>New Ticket</Text>
       </View>
         
     <ScrollView contentContainerStyle={styles.container} >
@@ -378,14 +347,15 @@ const formatCategoryLabel = (key) => {
           source={require('../../images/right_arrow.png')}
           style={styles.arrowIcon}
         />
-        <Text style={styles.labelText}>New Ticket</Text>
+        <Text allowFontScaling={false} style={styles.labelText}>New Ticket</Text>
       </View>
       </Pressable> */}
       
       <View style={styles.containerStyle}>
-      <Text style={styles.label}>Your Email <Text style={styles.errorColor}>*</Text></Text>
-      <Text>Enter the email of the partner contact person creating the ticket</Text>
+      <Text allowFontScaling={false} style={styles.label}>Your Email <Text allowFontScaling={false} style={styles.errorColor}>*</Text></Text>
+      <Text allowFontScaling={false} >Enter the email of the partner contact person creating the ticket</Text>
       <TextInput
+      allowFontScaling={false}
         style={[
           styles.inputEmail,
           errors.email && styles.errorInput
@@ -401,12 +371,13 @@ const formatCategoryLabel = (key) => {
         placeholder="Enter your email"
       />
       {errors.email && (
-        <Text style={styles.errorText}>{errors.email}</Text>
+        <Text allowFontScaling={false} style={styles.errorText}>{errors.email}</Text>
       )}
 
-      <Text style={styles.label}>On Behalf of End-Customer (Company) Name</Text>
-      <Text>Enter the (company) name of the end-customer that is having the issue</Text>
+      <Text allowFontScaling={false} style={styles.label}>On Behalf of End-Customer (Company) Name</Text>
+      <Text allowFontScaling={false}>Enter the (company) name of the end-customer that is having the issue</Text>
       <TextInput
+      allowFontScaling={false}
         style={styles.input}
         value={company}
         onChangeText={setCompany}
@@ -414,7 +385,7 @@ const formatCategoryLabel = (key) => {
         placeholderTextColor="#999"
       />
 
-      {/* <Text style={styles.label}>Machine Type</Text>
+      {/* <Text allowFontScaling={false} style={styles.label}>Machine Type</Text>
       <View style={styles.pickerWrapper}>
       <Picker
         mode="dropdown"
@@ -437,10 +408,10 @@ const formatCategoryLabel = (key) => {
       </Picker>
       </View> */}
 
-      <Text style={styles.label}>Machine Type</Text>
+      <Text allowFontScaling={false} style={styles.label}>Machine Type</Text>
 
       <TouchableOpacity style={styles.input} onPress={() => setShowMachineModal(true)}>
-        <Text style={{ color: machineType ? '#000' : '#999' }}>
+        <Text allowFontScaling={false} style={{ color: machineType ? '#000' : '#999' }}>
           {machineType || 'Please Select'}
         </Text>
       </TouchableOpacity>
@@ -458,7 +429,7 @@ const formatCategoryLabel = (key) => {
                   setShowMachineModal(false);
                 }}
               >
-                <Text>{item}</Text>
+                <Text allowFontScaling={false}>{item}</Text>
               </TouchableOpacity>
             ))}
 
@@ -466,10 +437,10 @@ const formatCategoryLabel = (key) => {
         </View>
       </Modal>
 
-      <Text style={styles.label}>Controller</Text>
+      <Text allowFontScaling={false} style={styles.label}>Controller</Text>
 
       <TouchableOpacity style={styles.input} onPress={() => setShowControllerModal(true)}>
-        <Text style={{ color: controller ? '#000' : '#999' }}>
+        <Text allowFontScaling={false} style={{ color: controller ? '#000' : '#999' }}>
           {controller || 'Please Select'}
         </Text>
       </TouchableOpacity>
@@ -487,7 +458,7 @@ const formatCategoryLabel = (key) => {
                   setShowControllerModal(false);
                 }}
               >
-                <Text>{item}</Text>
+                <Text allowFontScaling={false}>{item}</Text>
               </TouchableOpacity>
             ))}
 
@@ -495,21 +466,24 @@ const formatCategoryLabel = (key) => {
         </View>
       </Modal>
 
-      <Text style={styles.label}>Machine Serial Number</Text>
+      <Text allowFontScaling={false} style={styles.label}>Machine Serial Number</Text>
       <TextInput
+      
+      allowFontScaling={false}
         style={styles.input}
         value={serialNo}
         onChangeText={setSerialNo}
       />
 
-      <Text style={styles.label}>Sales Order Number</Text>
+      <Text allowFontScaling={false} style={styles.label}>Sales Order Number</Text>
       <TextInput
+      allowFontScaling={false}
         style={styles.input}
         value={salesOrder}
         onChangeText={setSalesOrder}
         
       />
-      <Text style={styles.label}>Category</Text>
+      <Text allowFontScaling={false} style={styles.label}>Category</Text>
 
       {/* {Object.keys(categories).map(key => (
         <View key={key} style={styles.checkboxRow}>
@@ -521,7 +495,7 @@ const formatCategoryLabel = (key) => {
             }
             tintColors={{ false: '#000', true: '#000' }}
           />
-          <Text style={styles.checkboxText}>
+          <Text allowFontScaling={false} style={styles.checkboxText}>
             {formatCategoryLabel(key)}
           </Text>
         </View>
@@ -546,19 +520,20 @@ const formatCategoryLabel = (key) => {
             }}
           >
             {categories[key] && (
-              <Text style={{ color: '#fff', fontSize: 14 }}>✓</Text>
+              <Text allowFontScaling={false} style={{ color: '#fff', fontSize: 14 }}>✓</Text>
             )}
           </TouchableOpacity>
 
-          <Text style={styles.checkboxText}>
+          <Text allowFontScaling={false} style={styles.checkboxText}>
             {formatCategoryLabel(key)}
           </Text>
 
         </View>
       ))}
 
-      <Text style={styles.label}>Subject <Text style={styles.errorColor}>*</Text></Text>
+      <Text allowFontScaling={false} style={styles.label}>Subject <Text allowFontScaling={false} style={styles.errorColor}>*</Text></Text>
       <TextInput
+      allowFontScaling={false}
         style={[
           styles.input,
           errors.subject && styles.errorInput
@@ -570,11 +545,12 @@ const formatCategoryLabel = (key) => {
         }}
       />
       {errors.subject && (
-        <Text style={styles.errorText}>{errors.subject}</Text>
+        <Text allowFontScaling={false} style={styles.errorText}>{errors.subject}</Text>
       )}
 
-      <Text style={styles.label}>Describe the Problem <Text style={styles.errorColor}>*</Text></Text>
+      <Text allowFontScaling={false} style={styles.label}>Describe the Problem <Text allowFontScaling={false} style={styles.errorColor}>*</Text></Text>
       <TextInput
+      allowFontScaling={false}
         style={[
           styles.input,
           styles.textArea,
@@ -589,22 +565,22 @@ const formatCategoryLabel = (key) => {
         }}
       />
       {errors.description && (
-        <Text style={styles.errorText}>{errors.description}</Text>
+        <Text allowFontScaling={false} style={styles.errorText}>{errors.description}</Text>
       )}
 
 
-      <Text style={styles.label}>Upload Photos / Videos</Text>
+      <Text allowFontScaling={false} style={styles.label}>Upload Photos / Videos</Text>
       <TouchableOpacity style={styles.uploadBtn} onPress={pickFiles}>
-        <Text style={styles.uploadText}>Choose files</Text>
+        <Text allowFontScaling={false} style={styles.uploadText}>Choose files</Text>
       </TouchableOpacity>
 
 
 
       {files.length === 0 ? (
-        <Text style={styles.noFile}>No file chosen</Text>
+        <Text allowFontScaling={false} style={styles.noFile}>No file chosen</Text>
       ) : (
         files.map((file, index) => (
-          <Text key={index} style={styles.fileName}>
+          <Text allowFontScaling={false} key={index} style={styles.fileName}>
             {file.fileName}
           </Text>
         ))
@@ -612,7 +588,7 @@ const formatCategoryLabel = (key) => {
 
       {/* <View style={styles.checkboxRow}>
         <CheckBox value={warranty} tintColors={{ false: '#000', true: '#000' }} onValueChange={setWarranty} />
-        <Text style={styles.checkboxText}>Warranty</Text>
+        <Text allowFontScaling={false} style={styles.checkboxText}>Warranty</Text>
       </View> */}
 
         <View style={styles.checkboxRow}>
@@ -631,16 +607,16 @@ const formatCategoryLabel = (key) => {
             }}
           >
             {warranty && (
-              <Text style={{ color: '#fff', fontSize: 14 }}>✓</Text>
+              <Text allowFontScaling={false} style={{ color: '#fff', fontSize: 14 }}>✓</Text>
             )}
           </TouchableOpacity>
 
-          <Text style={styles.checkboxText}>Warranty</Text>
+          <Text allowFontScaling={false} style={styles.checkboxText}>Warranty</Text>
 
         </View>
 
 
-      {/* <Text style={styles.label}>Priority</Text>
+      {/* <Text allowFontScaling={false} style={styles.label}>Priority</Text>
       <View style={styles.pickerWrapper}>
       <Picker
         selectedValue={priority}
@@ -659,10 +635,10 @@ const formatCategoryLabel = (key) => {
       </Picker>
       </View> */}
 
-      <Text style={styles.label}>Priority</Text>
+      <Text allowFontScaling={false} style={styles.label}>Priority</Text>
 
       <TouchableOpacity style={styles.input} onPress={() => setShowPriorityModal(true)}>
-        <Text style={{ color: priority ? '#000' : '#999' }}>
+        <Text allowFontScaling={false} style={{ color: priority ? '#000' : '#999' }}>
           {priority || 'Please Select'}
         </Text>
       </TouchableOpacity>
@@ -684,7 +660,7 @@ const formatCategoryLabel = (key) => {
                   setShowPriorityModal(false);
                 }}
               >
-                <Text>{item.label}</Text>
+                <Text allowFontScaling={false}>{item.label}</Text>
               </TouchableOpacity>
             ))}
 
@@ -700,7 +676,7 @@ const formatCategoryLabel = (key) => {
           ]}
           onPress={handleSubmit}
         >
-        <Text style={styles.buttonText}>Submit</Text>
+        <Text allowFontScaling={false} style={styles.buttonText}>Submit</Text>
       </TouchableOpacity>
       </View>
 
@@ -711,7 +687,7 @@ const formatCategoryLabel = (key) => {
             source={require('../../images/loading.gif')}
             style={styles.loadingGif}
           /> */}
-          <Text style={{ fontSize:24,fontWeight:700 }}>Please wait...</Text>
+          <Text allowFontScaling={false} style={{ fontSize:24,fontWeight:700 }}>Please wait...</Text>
         </View>
       </Modal>
 

@@ -22,24 +22,24 @@ const { ticketId } = route.params || {};
           source={require('../../images/circle_arrow.png')}
           style={styles.arrowIcon}
         />
-        <Text style={styles.labelText}>Done</Text>
+        <Text allowFontScaling={false} style={styles.labelText}>Done</Text>
       </View>
       </Pressable>
 
       <Image source={require('../../images/thankyou_image.png')} style={styles.logo} />
-      <Text style={styles.title}>Your Ticket Has Been  Submitted</Text>
-      <Text style={styles.text}>
+      <Text allowFontScaling={false} style={styles.title}>Your Ticket Has Been  Submitted</Text>
+      <Text allowFontScaling={false} style={styles.text}>
         Our team will reply to your ticket soon. You can track the conversation in View Tickets.
       </Text>
         {ticketId && (
-            <Text style={styles.ticketId}>
+            <Text allowFontScaling={false} style={styles.ticketId}>
             Reference Number : {ticketId}
             </Text>
         )} 
 
         <Pressable onPress={() => navigation.navigate('KnowledgeBase')} style={styles.card}>
             <View style={styles.button} >
-            <Text style={styles.buttonText}>Explore Knowledge Base</Text>
+            <Text allowFontScaling={false} style={styles.buttonText}>Explore Knowledge Base</Text>
             </View>
         </Pressable>
     </View>

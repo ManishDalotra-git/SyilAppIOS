@@ -100,7 +100,7 @@ const checkLoginStatus = async () => {
         >
     </Animated.View>
       <Image source={require('../../images/syil_logo.png')} style={styles.logo} />
-      <Text style={styles.loadingText}>Loading......</Text>
+      <Text allowFontScaling={false} style={styles.loadingText}>Loading......</Text>
       <View style={styles.progressBar}>
         <Animated.View
           style={[

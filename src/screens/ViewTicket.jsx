@@ -253,7 +253,7 @@ const ViewTicket = ({ navigation }) => {
                         style={styles.profileImage}
                     /> */}
                     <View style={styles.initialsAvatar}>
-                        <Text style={styles.initialsText}>
+                        <Text allowFontScaling={false} style={styles.initialsText}>
                         {getInitials(firstName, lastName)}
                         </Text>
                     </View>
@@ -276,12 +276,12 @@ const ViewTicket = ({ navigation }) => {
             <View style={styles.ticketContainer}>
                 {/* TABLE HEADER */}
                 <View style={styles.tableHeader}>
-                    <Text style={[styles.cell, styles.headerText]}>Ticket ID</Text>
-                    <Text style={[styles.cell, styles.headerText]}>Subject</Text>
-                    <Text style={[styles.cell, styles.headerText]}>Created</Text>
-                    <Text style={[styles.cell, styles.headerText]}>Ticket Owner</Text>
+                    <Text allowFontScaling={false} style={[styles.cell, styles.headerText]}>Ticket ID</Text>
+                    <Text allowFontScaling={false} style={[styles.cell, styles.headerText]}>Subject</Text>
+                    <Text allowFontScaling={false} style={[styles.cell, styles.headerText]}>Created</Text>
+                    <Text allowFontScaling={false} style={[styles.cell, styles.headerText]}>Ticket Owner</Text>
                 </View>
-                {loading && <Text style={{ textAlign:'center' , padding:10, }}>Loading ticket...</Text>}
+                {loading && <Text allowFontScaling={false} style={{ textAlign:'center' , padding:10, }}>Loading ticket...</Text>}
                 {/* TICKET LIST */}
                 <FlatList
                     data={tickets}
@@ -300,10 +300,11 @@ const ViewTicket = ({ navigation }) => {
                         }
                     >
                         <View style={styles.tableRow}>
-                            <Text style={styles.cellID}>#{item.ticketId}</Text>
-                            <Text style={styles.cell}>{item.subject}</Text>
-                            <Text style={styles.cell}>{formatDate(item.createdDate)}</Text>
+                            <Text allowFontScaling={false} style={styles.cellID}>#{item.ticketId}</Text>
+                            <Text allowFontScaling={false} style={styles.cell}>{item.subject}</Text>
+                            <Text allowFontScaling={false} style={styles.cell}>{formatDate(item.createdDate)}</Text>
                             <Text
+                            allowFontScaling={false}
                             style={styles.cell}
                             // style={[
                             //     styles.cell,
@@ -319,7 +320,7 @@ const ViewTicket = ({ navigation }) => {
                 />
 
                 {!loading && tickets.length === 0 && (
-                    <Text style={styles.noTicketText}>No tickets found</Text>
+                    <Text allowFontScaling={false} style={styles.noTicketText}>No tickets found</Text>
                 )}
 
 
@@ -343,7 +344,7 @@ const ViewTicket = ({ navigation }) => {
                 styles.footerIcon,
                 currentRoute === 'Home' && styles.activeFooterIcon,
             ]} />
-            <Text style={[
+            <Text allowFontScaling={false} style={[
                 styles.footerText,
                 currentRoute === 'Home' && styles.activeFooterText,
             ]}>Home</Text>
@@ -364,6 +365,7 @@ const ViewTicket = ({ navigation }) => {
             ]}
             />
             <Text
+            allowFontScaling={false}
             style={[
                 styles.footerText,
                 currentRoute === 'KnowledgeBase' && styles.activeFooterText,
@@ -384,7 +386,7 @@ const ViewTicket = ({ navigation }) => {
                 styles.footerIcon,
                 currentRoute === 'Ticket' && styles.activeFooterIcon,
             ]} />
-            <Text style={[
+            <Text allowFontScaling={false} style={[
                 styles.footerText,
                 currentRoute === 'Ticket' && styles.activeFooterText,
             ]}>Submit Ticket</Text>
@@ -400,7 +402,7 @@ const ViewTicket = ({ navigation }) => {
                 styles.footerIcon,
                 currentRoute === 'ViewTicket' && styles.activeFooterIcon,
             ]} />
-            <Text style={[
+            <Text allowFontScaling={false} style={[
                 styles.footerText,
                 currentRoute === 'ViewTicket' && styles.activeFooterText,
             ]}>View Tickets</Text>
@@ -414,7 +416,7 @@ const ViewTicket = ({ navigation }) => {
                 styles.footerIcon,
                 currentRoute === 'More' && styles.activeFooterIcon,
             ]} />
-            <Text style={[
+            <Text allowFontScaling={false} style={[
                 styles.footerText,
                 currentRoute === 'More' && styles.activeFooterText,
             ]}>More</Text>

@@ -28,7 +28,7 @@ const defaultMessages = [
 const renderFormattedText = (text, isTyping = false) => {
   if (!text) return null;
   if (isTyping) {
-    return <Text style={{ height: 0 }} />;
+    return <Text allowFontScaling={false} style={{ height: 0 }} />;
   }
   const lines = text.split('\n');
   const bulletIndices = lines
@@ -59,7 +59,7 @@ const renderFormattedText = (text, isTyping = false) => {
 
     if (index === 0 && trimmed.startsWith('📘')) {
       return (
-        <Text key={index} style={{ fontWeight: '700' }}>
+        <Text allowFontScaling={false} key={index} style={{ fontWeight: '700' }}>
           {line + suffix}
         </Text>
       );
@@ -67,7 +67,7 @@ const renderFormattedText = (text, isTyping = false) => {
 
     if (boldIndices.has(index)) {
       return (
-        <Text key={index} style={{ fontWeight: '700', color: '#000' }}>
+        <Text allowFontScaling={false} key={index} style={{ fontWeight: '700', color: '#000' }}>
           {line + suffix}
         </Text>
       );
@@ -75,7 +75,7 @@ const renderFormattedText = (text, isTyping = false) => {
 
     if (trimmed.startsWith('- ')) {
       return (
-        <Text key={index} style={{ fontWeight: '400', color: '#000' }}>
+        <Text allowFontScaling={false} key={index} style={{ fontWeight: '400', color: '#000' }}>
           {line + suffix}
         </Text>
       );
@@ -83,7 +83,7 @@ const renderFormattedText = (text, isTyping = false) => {
 
     // Normal lines
     return (
-      <Text key={index} style={{ fontWeight: '400', color: '#000' }}>
+      <Text allowFontScaling={false} key={index} style={{ fontWeight: '400', color: '#000' }}>
         {line + suffix}
       </Text>
     );
@@ -243,7 +243,7 @@ const AskAlex = () => {
             source={require('../../images/Alexa.png')} 
             style={styles.loadingIcon}
           />
-          <Text style={styles.alexaText}>Alex</Text>
+          <Text allowFontScaling={false} style={styles.alexaText}>Alex</Text>
         </View>
       )}
 
@@ -251,11 +251,11 @@ const AskAlex = () => {
         {isUser && (
           <View style={styles.loadingIndicatorUser}>
             <View style={styles.initialsAvatar}>
-                <Text style={styles.initialsText}>
+                <Text allowFontScaling={false} style={styles.initialsText}>
                 {getInitials(firstName, lastName)}
                 </Text>
             </View>
-              <Text style={styles.alexaText}>{firstName}</Text>
+              <Text allowFontScaling={false} style={styles.alexaText}>{firstName}</Text>
           </View>
         )}
 
@@ -267,11 +267,11 @@ const AskAlex = () => {
         >
 
         {isBot && item.id === typingMessageId && isLoading ? (
-          <Text style={{ fontSize: 14, fontWeight: '500', color: '#999', fontStyle: 'italic' }}>
+          <Text allowFontScaling={false} style={{ fontSize: 14, fontWeight: '500', color: '#999', fontStyle: 'italic' }}>
             Alex is typing {loadingDots}
           </Text>
         ) : (
-          <Text style={styles.messageText}>
+          <Text allowFontScaling={false} style={styles.messageText}>
             {renderFormattedText(item.text)}
           </Text>
         )}
@@ -297,7 +297,7 @@ const AskAlex = () => {
             style={styles.arrowIcon}
           />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Ask Alex</Text>
+        <Text allowFontScaling={false} style={styles.headerTitle}>Ask Alex</Text>
       </View>
 
       <View style={styles.container}>
@@ -315,6 +315,7 @@ const AskAlex = () => {
 
         <View style={styles.inputContainer}>
           <TextInput
+          allowFontScaling={false} 
             placeholder="Type your message..."
             value={input}
             onChangeText={setInput}
@@ -331,7 +332,7 @@ const AskAlex = () => {
             styles.sendButton,
             isLoading && styles.inputDisabled
           ]} disabled={isLoading} onPress={sendMessage}>
-            <Text style={styles.sendText}>➤</Text>
+            <Text allowFontScaling={false} style={styles.sendText}>➤</Text>
           </TouchableOpacity>
         </View>
       </View>

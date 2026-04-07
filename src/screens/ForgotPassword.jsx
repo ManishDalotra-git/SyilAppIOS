@@ -77,18 +77,19 @@ const ForgotPassword = () => {
         </View>
 
         {/* Welcome Text */}
-        <Text style={styles.welcome}>Welcome back!</Text>
+        <Text allowFontScaling={false} style={styles.welcome}>Welcome back!</Text>
 
         {/* White Card */}
         <View style={styles.card}>
-          <Text style={styles.title}>Forgot Password</Text>
-          <Text style={styles.subtitle}>
+          <Text allowFontScaling={false} style={styles.title}>Forgot Password</Text>
+          <Text allowFontScaling={false} style={styles.subtitle}>
             Enter your email address to receive a password reset email.
           </Text>
 
           {/* Email Input */}
-          <Text style={styles.label}>Email Address</Text>
+          <Text allowFontScaling={false} style={styles.label}>Email Address</Text>
           <TextInput
+          allowFontScaling={false}
             style={styles.input}
             placeholder="Enter Your Email Address"
             value={email}
@@ -103,14 +104,14 @@ const ForgotPassword = () => {
           style={[
             styles.button, loading && { opacity: 0.6 }
           ]} onPress={handleForgotPassword}>
-            <Text style={styles.buttonText}>Submit</Text>
+            <Text allowFontScaling={false} style={styles.buttonText}>Submit</Text>
           </TouchableOpacity>
         </View>
 
         {/* Footer */}
         
-        <Text style={styles.footer} onPress={() => Linking.openURL('mailto:support@syil.com')} >
-          Need Help? <Text style={styles.support}>Contact Support</Text>
+        <Text allowFontScaling={false} style={styles.footer} onPress={() => Linking.openURL('mailto:support@syil.com')} >
+          Need Help? <Text allowFontScaling={false} style={styles.support}>Contact Support</Text>
         </Text>
 
         <Modal visible={loading} transparent animationType="fade">
@@ -119,7 +120,7 @@ const ForgotPassword = () => {
                 source={require('../../images/loading.gif')}
                 style={styles.loadingGif}
                 /> */}
-                <Text style={{ fontSize:24,fontWeight:700 }}>Please wait...</Text>
+                <Text allowFontScaling={false} style={{ fontSize:24,fontWeight:700 }}>Please wait...</Text>
             </View>
         </Modal>
         

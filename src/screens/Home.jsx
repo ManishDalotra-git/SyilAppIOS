@@ -21,7 +21,7 @@ const Home = () => {
       <View>
         <Image source={require('../../images/syil_logo_white.png')} style={styles.logo} />
       </View>
-      <Text style={styles.welcome}>Dealer News</Text>
+      <Text allowFontScaling={false} style={styles.welcome} allowFontScaling={false}>Dealer News</Text>
 
       <Pressable onPress={() => navigation.navigate('KnowledgeBase')} style={styles.card}>
         <View style={styles.cardFlex} >
@@ -30,8 +30,8 @@ const Home = () => {
         </View>
 
         <View style={styles.cardContent}>
-          <Text style={styles.cardTitle}>Knowledge Base</Text>
-          <Text style={styles.cardDesc}>
+          <Text allowFontScaling={false} style={styles.cardTitle}>Knowledge Base</Text>
+          <Text allowFontScaling={false} style={styles.cardDesc}>
             Sales presentations, Manuals, Technical Files and more.
           </Text>
         </View>
@@ -44,8 +44,8 @@ const Home = () => {
         </View>
 
         <View style={styles.cardContent}>
-          <Text style={styles.cardTitle}>Contact Support</Text>
-          <Text style={styles.cardDesc}>
+          <Text allowFontScaling={false} style={styles.cardTitle}>Contact Support</Text>
+          <Text allowFontScaling={false} style={styles.cardDesc}>
             Submit a support ticket and get a fast response.
           </Text>
         </View>
@@ -67,7 +67,7 @@ const Home = () => {
                 <Text style={[
                     styles.footerText,
                     currentRoute === 'Home' && styles.activeFooterText,
-                    ]}>Home</Text>
+                    ]} allowFontScaling={false}>Home</Text>
                 </TouchableOpacity>
       
                 <TouchableOpacity
@@ -88,7 +88,7 @@ const Home = () => {
                     style={[
                     styles.footerText,
                     currentRoute === 'KnowledgeBase' && styles.activeFooterText,
-                    ]}
+                    ]} allowFontScaling={false}
                 >
                     Knowledge
                 </Text>
@@ -105,7 +105,7 @@ const Home = () => {
                     styles.footerIcon,
                     currentRoute === 'Ticket' && styles.activeFooterIcon,
                     ]} />
-                <Text style={[
+                <Text allowFontScaling={false} style={[
                     styles.footerText,
                     currentRoute === 'Ticket' && styles.activeFooterText,
                     ]}>Submit Ticket</Text>
@@ -121,10 +121,10 @@ const Home = () => {
                     styles.footerIcon,
                     currentRoute === 'ViewTicket' && styles.activeFooterIcon,
                     ]} />
-                <Text style={[
+                <Text allowFontScaling={false} style={[
                     styles.footerText,
                     currentRoute === 'ViewTicket' && styles.activeFooterText,
-                    ]}>View Tickets</Text>
+                    ]} >View Tickets</Text>
                 </TouchableOpacity>
       
                 <TouchableOpacity style={[
@@ -135,10 +135,10 @@ const Home = () => {
                     styles.footerIcon,
                     currentRoute === 'More' && styles.activeFooterIcon,
                     ]} />
-                <Text style={[
+                <Text allowFontScaling={false} style={[
                     styles.footerText,
                     currentRoute === 'More' && styles.activeFooterText,
-                    ]}>More</Text>
+                    ]} >More</Text>
                 </TouchableOpacity>
             </View>
 
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     tintColor: '#666666',
   },
   footerText: {
-    fontSize: '12px',
+    fontSize: 12,
     color: '#666666',
   },
   activeFooterItem:{

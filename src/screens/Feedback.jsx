@@ -110,7 +110,7 @@ const Feedback = () => {
             style={styles.arrowIcon}
           />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Feedback</Text>
+        <Text allowFontScaling={false} style={styles.headerTitle}>Feedback</Text>
       </View>
       
       <ScrollView contentContainerStyle={styles.container}>
@@ -136,7 +136,7 @@ const Feedback = () => {
             style={[styles.input, errors.subject && styles.errorInput]}
             onPress={() => setShowSubjectModal(true)}
           >
-            <Text style={{ color: subject ? '#000' : '#999' }}>
+            <Text allowFontScaling={false} style={{ color: subject ? '#000' : '#999' }}>
               {
                 subject === 'bug' ? 'Bug Report' :
                 subject === 'suggestion' ? 'Suggestion' :
@@ -166,7 +166,7 @@ const Feedback = () => {
                       setShowSubjectModal(false);
                     }}
                   >
-                    <Text>{item.label}</Text>
+                    <Text allowFontScaling={false}>{item.label}</Text>
                   </TouchableOpacity>
                 ))}
 
@@ -176,6 +176,7 @@ const Feedback = () => {
 
         {/* ---------- Message ---------- */}
         <TextInput
+        allowFontScaling={false}
           style={[styles.input, styles.textArea, errors.message && styles.errorInput]}
           placeholder="What went wrong?"
           placeholderTextColor="#999"
@@ -210,7 +211,7 @@ const Feedback = () => {
             style={[styles.input, errors.rating && styles.errorInput]}
             onPress={() => setShowRatingModal(true)}
           >
-            <Text style={{ color: rating ? '#000' : '#999' }}>
+            <Text allowFontScaling={false} style={{ color: rating ? '#000' : '#999' }}>
               {rating ? `⭐ ${rating}` : 'What rating would you give the app?'}
             </Text>
           </TouchableOpacity>
@@ -229,7 +230,7 @@ const Feedback = () => {
                       setShowRatingModal(false);
                     }}
                   >
-                    <Text>⭐ {item}</Text>
+                    <Text allowFontScaling={false}>⭐ {item}</Text>
                   </TouchableOpacity>
                 ))}
 
@@ -239,6 +240,7 @@ const Feedback = () => {
 
         {/* ---------- Email (Locked) ---------- */}
         <TextInput
+        allowFontScaling={false}
           style={styles.inputEmail}
           value={email}
           editable={false}
@@ -251,14 +253,14 @@ const Feedback = () => {
           style={[styles.button, loading && { opacity: 0.6 }]}
           onPress={handleSubmit}
         >
-          <Text style={styles.buttonText}>{loading ? 'Sending...' : 'Send'}</Text>
+          <Text allowFontScaling={false} style={styles.buttonText}>{loading ? 'Sending...' : 'Send'}</Text>
         </TouchableOpacity>
       </ScrollView>
 
       {/* ---------- Loader ---------- */}
       {loading && (
         <View style={styles.loadingOverlay}>
-          <Text style={styles.loadingText}>Please wait...</Text>
+          <Text allowFontScaling={false} style={styles.loadingText}>Please wait...</Text>
         </View>
       )}
 
@@ -276,7 +278,7 @@ const Feedback = () => {
             styles.footerIcon,
             currentRoute === 'Home' && styles.activeFooterIcon,
             ]} />
-        <Text style={[
+        <Text allowFontScaling={false} style={[
             styles.footerText,
             currentRoute === 'Home' && styles.activeFooterText,
             ]}>Home</Text>
@@ -297,6 +299,7 @@ const Feedback = () => {
             ]}
         />
         <Text
+        allowFontScaling={false}
             style={[
             styles.footerText,
             currentRoute === 'KnowledgeBase' && styles.activeFooterText,
@@ -317,7 +320,7 @@ const Feedback = () => {
             styles.footerIcon,
             currentRoute === 'Ticket' && styles.activeFooterIcon,
             ]} />
-        <Text style={[
+        <Text allowFontScaling={false} style={[
             styles.footerText,
             currentRoute === 'Ticket' && styles.activeFooterText,
             ]}>Submit Ticket</Text>
@@ -333,7 +336,7 @@ const Feedback = () => {
             styles.footerIcon,
             currentRoute === 'ViewTicket' && styles.activeFooterIcon,
             ]} />
-        <Text style={[
+        <Text allowFontScaling={false} style={[
             styles.footerText,
             currentRoute === 'ViewTicket' && styles.activeFooterText,
             ]}>View Tickets</Text>
@@ -347,7 +350,7 @@ const Feedback = () => {
             styles.footerIcon,
             currentRoute === 'More' && styles.activeFooterIcon,
             ]} />
-        <Text style={[
+        <Text allowFontScaling={false} style={[
             styles.footerText,
             currentRoute === 'More' && styles.activeFooterText,
             ]}>More</Text>

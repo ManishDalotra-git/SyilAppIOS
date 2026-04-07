@@ -21,10 +21,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import RNFS from 'react-native-fs';
 
+if (Text.defaultProps == null) {
+  Text.defaultProps = {};
+}
+Text.defaultProps.allowFontScaling = false;
+
+if (TextInput.defaultProps == null) {
+  TextInput.defaultProps = {};
+}
+TextInput.defaultProps.allowFontScaling = false;
+
 const KnowledgeBase = ({ navigation }) => {
   StatusBar.setTranslucent(true);
   StatusBar.setBackgroundColor('transparent');
   StatusBar.setBarStyle('dark-content');
+
+
 
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -207,10 +219,10 @@ useEffect(() => {
       />
 
       <View style={{ flex: 1 }}>
-        <Text style={styles.articleTitle}>
+        <Text allowFontScaling={false} style={styles.articleTitle}>
           {item['Article title']}
         </Text>
-        <Text style={styles.articleSub}>
+        <Text allowFontScaling={false} style={styles.articleSub}>
           {item.Subcategory?.trim()
             ? item.Subcategory
             : item.Category}
@@ -228,7 +240,7 @@ useEffect(() => {
     return (
       <View style={styles.loaderContainer}>
         <ActivityIndicator size="large" />
-        <Text>Loading...</Text>
+        <Text allowFontScaling={false} >Loading...</Text>
       </View>
     );
   }
@@ -260,7 +272,7 @@ useEffect(() => {
                 /> */}
                 
                 <View style={styles.initialsAvatar}>
-                  <Text style={styles.initialsText}>
+                  <Text allowFontScaling={false} style={styles.initialsText}>
                     {getInitials(firstName, lastName)}
                   </Text>
                 </View>
@@ -281,11 +293,12 @@ useEffect(() => {
 
           {/* SEARCH */}
           <View style={styles.searchBox}>
-            <Image
+            <Image 
               source={require('../../images/search_icon.png')}
               style={styles.searchIcon}
             />
             <TextInput
+            allowFontScaling={false}
               placeholder="Search Knowledge Base"
               value={search}
               onChangeText={setSearch}
@@ -318,7 +331,7 @@ useEffect(() => {
                     source={require('../../images/catg_icon.png')}
                     style={styles.categoryIcon}
                   />
-                  <Text style={styles.categoryText} numberOfLines={2}>
+                  <Text allowFontScaling={false} style={styles.categoryText} numberOfLines={2}>
                     {item}
                   </Text>
                 </TouchableOpacity>
@@ -326,7 +339,7 @@ useEffect(() => {
             />
           </View>
 
-          <Text style={styles.popularTitle}>Popular Articles</Text>
+          <Text allowFontScaling={false} style={styles.popularTitle}>Popular Articles</Text>
 
           {/* ARTICLE LIST */}
           <View style={styles.articleListWrapper}>
@@ -353,7 +366,7 @@ useEffect(() => {
               styles.footerIcon,
               currentRoute === 'Home' && styles.activeFooterIcon,
             ]} />
-          <Text style={[
+          <Text allowFontScaling={false} style={[
               styles.footerText,
               currentRoute === 'Home' && styles.activeFooterText,
             ]}>Home</Text>
@@ -373,7 +386,7 @@ useEffect(() => {
               currentRoute === 'KnowledgeBase' && styles.activeFooterIcon,
             ]}
           />
-          <Text
+          <Text allowFontScaling={false} 
             style={[
               styles.footerText,
               currentRoute === 'KnowledgeBase' && styles.activeFooterText,
@@ -394,7 +407,7 @@ useEffect(() => {
               styles.footerIcon,
               currentRoute === 'Ticket' && styles.activeFooterIcon,
             ]} />
-          <Text style={[
+          <Text allowFontScaling={false} style={[
               styles.footerText,
               currentRoute === 'Ticket' && styles.activeFooterText,
             ]}>Submit Ticket</Text>
@@ -410,7 +423,7 @@ useEffect(() => {
               styles.footerIcon,
               currentRoute === 'ViewTicket' && styles.activeFooterIcon,
             ]} />
-          <Text style={[
+          <Text allowFontScaling={false} style={[
               styles.footerText,
               currentRoute === 'ViewTicket' && styles.activeFooterText,
             ]}>View Tickets</Text>
@@ -424,7 +437,7 @@ useEffect(() => {
               styles.footerIcon,
               currentRoute === 'More' && styles.activeFooterIcon,
             ]} />
-          <Text style={[
+          <Text allowFontScaling={false} style={[
               styles.footerText,
               currentRoute === 'More' && styles.activeFooterText,
             ]}>More</Text>
@@ -494,7 +507,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFF',
   },
   articleIcon: { width: 41, height: 41, marginRight: 8 },
-  Leftarrow: { width: 11.86, height: 21.21 },
+  Leftarrow: { width: 11.86, height: 21.21, marginLeft: 16 },
   articleTitle: { fontSize: 14, fontWeight: '600', color: '#000' },
   articleSub: { fontSize: 12, color: '#777' },
 
