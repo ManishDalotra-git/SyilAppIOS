@@ -10,7 +10,8 @@ import {
 import { Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import CheckBox from '@react-native-community/checkbox';
-import { launchImageLibrary } from 'react-native-image-picker';
+// import { launchImageLibrary } from 'react-native-image-picker';
+import * as DocumentPicker from '@react-native-documents/picker';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -81,25 +82,55 @@ const Ticket = () => {
 //   );
 // };
 
-const pickFiles = () => {
-  launchImageLibrary(
-    {
-      mediaType: 'mixed',
-      selectionLimit: 0,
-    },
-    response => {
-      if (response.didCancel) return;
+// const pickFiles = () => {
+//   launchImageLibrary(
+//     {
+//       mediaType: 'mixed',
+//       selectionLimit: 0,
+//     },
+//     response => {
+//       if (response.didCancel) return;
 
-      if (response.errorCode) {
-        Alert.alert('Error', response.errorMessage || 'Something went wrong');
-        return;
-      }
+//       if (response.errorCode) {
+//         Alert.alert('Error', response.errorMessage || 'Something went wrong');
+//         return;
+//       }
 
-      if (response.assets) {
-        setFiles(response.assets);
-      }
+//       if (response.assets) {
+//         setFiles(response.assets);
+//       }
+//     }
+//   );
+// };
+
+
+const pickFiles = async () => {
+  try {
+    const res = await DocumentPicker.pick({
+      type: [DocumentPicker.types.images, DocumentPicker.types.video],
+      allowMultiSelection: true,
+      copyTo: 'cachesDirectory', 
+    });
+
+    if (!res || res.length === 0) return;
+
+    // 🔥 Convert DocumentPicker response → image-picker जैसा format
+    const formattedFiles = res.map(file => ({
+      uri: file.fileCopyUri || file.uri,
+      fileName: file.name,
+      type: file.type || 'application/octet-stream',
+    }));
+
+    setFiles(formattedFiles);
+
+  } catch (err) {
+    if (err?.code === 'DOCUMENT_PICKER_CANCELED') {
+      return;
     }
-  );
+
+    console.log('File Pick Error:', err);
+    Alert.alert('Error', 'Unable to pick files');
+  }
 };
 
 
