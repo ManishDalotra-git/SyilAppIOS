@@ -43,6 +43,14 @@ target 'syilReact' do
       end
     end
 
+    if target.name == 'react-native-image-picker'
+      target.build_phases.each do |phase|
+        if phase.respond_to?(:name) && phase.name == '[CP] Copy Pods Resources'
+          phase.add_file_reference('$(SRCROOT)/Pods/Target Support Files/react-native-image-picker/PrivacyInfo.xcprivacy')
+        end
+      end
+    end
+
     
 
   end
