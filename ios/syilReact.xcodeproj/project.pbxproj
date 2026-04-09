@@ -222,7 +222,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-syilReact/Pods-syilReact-resources.sh\"\n\"${PODS_ROOT}/Target Support Files/react-native-image-picker/PrivacyInfo.xcprivacy\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-syilReact/Pods-syilReact-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		F41CF4F6896C4F8AF7A54ABE /* [CP] Check Pods Manifest.lock */ = {
