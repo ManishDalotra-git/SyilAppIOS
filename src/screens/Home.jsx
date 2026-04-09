@@ -21,7 +21,7 @@ const Home = () => {
       <View>
         <Image source={require('../../images/syil_logo_white.png')} style={styles.logo} />
       </View>
-      <Text allowFontScaling={false} style={styles.welcome} allowFontScaling={false}>Dealer News</Text>
+      <Text allowFontScaling={false} style={styles.welcome} >Dealer News</Text>
 
       <Pressable onPress={() => navigation.navigate('KnowledgeBase')} style={styles.card}>
         <View style={styles.cardFlex} >
