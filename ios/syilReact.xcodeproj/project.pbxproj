@@ -191,9 +191,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-syilReact/Pods-syilReact-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-syilReact/Pods-syilReact-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -208,13 +212,17 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-syilReact/Pods-syilReact-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-syilReact/Pods-syilReact-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
+			outputPaths = (
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-syilReact/Pods-syilReact-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-syilReact/Pods-syilReact-resources.sh\"\n\"${PODS_ROOT}/Target Support Files/react-native-image-picker/PrivacyInfo.xcprivacy\"\n";
 			showEnvVarsInLog = 0;
 		};
 		F41CF4F6896C4F8AF7A54ABE /* [CP] Check Pods Manifest.lock */ = {
