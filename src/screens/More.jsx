@@ -117,6 +117,25 @@ const More = ({ navigation }) => {
             </TouchableOpacity>
             )}
 
+            {email === 'manish.dalotra@techstriker.com' && (
+            <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('OwnerTickets')} >
+                <View style={styles.left}>
+                <Image source={require('../../images/ArticleIcon.png')} style={styles.icon} />
+                <Text allowFontScaling={false} style={styles.text}>Owner Tickets</Text>
+                </View>
+                <Image source={require('../../images/left_arrow.png')} style={styles.Leftarrow} />
+            </TouchableOpacity>
+            )}
+
+
+            <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('Chatscreen')} >
+                <View style={styles.left}>
+                <Image source={require('../../images/ArticleIcon.png')} style={styles.icon} />
+                <Text allowFontScaling={false} style={styles.text}>Chatscreen</Text>
+                </View>
+                <Image source={require('../../images/left_arrow.png')} style={styles.Leftarrow} />
+            </TouchableOpacity>
+
             {/* Ask Alex */}
             <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('AskAlex')} >
                 <View style={styles.left}>

@@ -7,7 +7,7 @@ require Pod::Executable.execute_command('node', ['-p',
 
 ENV['RCT_NEW_ARCH_ENABLED'] = '0'
 
-platform :ios, '12.0'
+platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
 linkage = ENV['USE_FRAMEWORKS']
@@ -42,19 +42,7 @@ target 'syilReact' do
         config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FMT_USE_CONSTEXPR=0'
       end
     end
-
-    if target.name == 'react-native-image-picker'
-  target.build_phases.each do |phase|
-    if phase.respond_to?(:name) && phase.name == '[CP] Copy Pods Resources'
-      file_path = File.join(installer.sandbox.root, 'Target Support Files/react-native-image-picker/PrivacyInfo.xcprivacy')
-      phase.add_file_reference(file_path) if File.exist?(file_path)
-    end
+  end
+    
   end
 end
-
-    
-
-  end
-      
-  end
-end 

@@ -54,6 +54,8 @@ const ViewTicketDetail = ({ navigation }) => {
     }, [])
   );
 
+  const isChen = email === 'manish.dalotra@techstriker.com';
+
   /* ================= CONVERSATION ================= */
   useFocusEffect(
     useCallback(() => {
@@ -144,6 +146,27 @@ const ViewTicketDetail = ({ navigation }) => {
   const dynamicEmail = outgoingMessage?.senderName;
   console.log('dynamicSubject---- ', dynamicSubject);
   console.log('dynamicEmail---- ', dynamicEmail);
+
+  const hasIncoming = messages.some(msg => msg.direction === 'INCOMING');
+const incomingMessage = [...messages]
+  .reverse()
+  .find(
+    msg =>
+      msg.direction === 'INCOMING' &&
+      msg.senderName?.includes('@')
+  );
+
+const incomingEmail = incomingMessage?.senderName;
+  const incomingSubject = incomingMessage?.subject;
+
+  console.log('incomingSubject---- ', incomingSubject);
+  console.log('incomingEmail---- ', incomingEmail);
+
+  const hasOutgoings = messages.filter(
+  msg => msg.direction === 'OUTGOING'
+).length;
+console.log('hasOutgoings--- ' , hasOutgoings);
+const subjectPrefix = hasOutgoings > 1 ? 'Re: ' : '';
 
   const getSenderName = (item) => item?.senderName || email;
 
@@ -287,7 +310,7 @@ const ViewTicketDetail = ({ navigation }) => {
             <Text allowFontScaling={false} style={styles.noTicketText}>No conversation found</Text>
           )}
 
-          {messages.length === 1 ? (
+          {/* {messages.length === 1 ? (
             <Text allowFontScaling={false} style={[styles.ReplyStyle, { backgroundColor: '#999' }]}>
               Please wait for the support reply.
             </Text>
@@ -304,9 +327,41 @@ const ViewTicketDetail = ({ navigation }) => {
             >
               Reply to Support Team
             </Text>
-          ) : null}
+          ) : null} */}
 
-          
+          {isChen ? (
+          // 🆕 ONLY for chen@syil.com → Reply to Customer
+          <Text
+          allowFontScaling={false} 
+            style={[styles.ReplyStyle]}
+            onPress={() =>
+              Linking.openURL(
+                `mailto:${incomingEmail}?subject=${encodeURIComponent(
+        subjectPrefix + (dynamicSubject || '')
+      )}&body=${encodeURIComponent("Hello,")}`
+              )
+            }
+          >
+            Reply to Customer
+          </Text>
+        ) : messages.length === 1 ? (
+          <Text allowFontScaling={false} style={[styles.ReplyStyle, { backgroundColor: '#999' }]}>
+            Please wait for the support reply.
+          </Text>
+        ) : hasOutgoing ? (
+          // ✅ Existing support reply
+          <Text
+            allowFontScaling={false}
+            style={styles.ReplyStyle}
+            onPress={() =>
+              Linking.openURL(
+                `mailto:${dynamicEmail}?subject=Re:%20${encodeURIComponent(dynamicSubject)}&body=${encodeURIComponent("Hello Support SYIL,")}`
+              )
+            }
+          >
+            Reply to Support Team
+          </Text>
+        ) : null}
 
           
         </View>

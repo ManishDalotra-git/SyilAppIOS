@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { StyleSheet, Text, View, Image, TouchableOpacity, ImageBackground, StatusBar,
-  Platform, Pressable, FlatList, } from 'react-native'
+  Platform, Pressable, FlatList, Modal, } from 'react-native'
 import { useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
+import { Picker } from '@react-native-picker/picker';
 
 const ViewTicket = ({ navigation }) => {
 
@@ -19,6 +20,10 @@ const ViewTicket = ({ navigation }) => {
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(false);
 
+    const [ticketType, setTicketType] = useState('me');
+
+    const [showTicketTypeModal, setShowTicketTypeModal] = useState(false);
+    
 
     useFocusEffect(
         useCallback(() => {
@@ -40,6 +45,37 @@ const ViewTicket = ({ navigation }) => {
         }, [])
     );
 
+    // useFocusEffect(
+    //     useCallback(() => {
+    //         const fetchTickets = async () => {
+    //             if (!contactID) return;
+
+    //             try {
+    //                 setLoading(true);
+    //                 const response = await fetch('https://syilapp-w8ye.onrender.com/get_contact_tickets', {
+    //                 method: 'POST',
+    //                 headers: {
+    //                     'Content-Type': 'application/json',
+    //                 },
+    //                 body: JSON.stringify({
+    //                     contactId: contactID,
+    //                 }),
+    //                 });
+
+    //                 const data = await response.json();
+    //                 setTickets(data.tickets || []);
+    //                 setLoading(false);
+    //             } catch (error) {
+    //                 console.log('Ticket fetch error', error);
+    //                 setLoading(false);
+    //             }
+    //         };
+
+    //         fetchTickets();
+    //     }, [contactID])
+    // );
+
+
     useFocusEffect(
         useCallback(() => {
             const fetchTickets = async () => {
@@ -47,13 +83,18 @@ const ViewTicket = ({ navigation }) => {
 
                 try {
                     setLoading(true);
-                    const response = await fetch('https://syilapp-w8ye.onrender.com/get_contact_tickets', {
+
+                    //https://syilapp-w8ye.onrender.com/get_contact_tickets
+                    //http://192.168.0.84:3000
+
+                    const response = await fetch('https://syilapp-w8ye.onrender.com/get_tickets', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
                         contactId: contactID,
+                        type: ticketType,
                     }),
                     });
 
@@ -67,7 +108,7 @@ const ViewTicket = ({ navigation }) => {
             };
 
             fetchTickets();
-        }, [contactID])
+        }, [contactID, ticketType])
     );
 
     console.log('tickets--- ' , tickets);
@@ -272,6 +313,70 @@ const ViewTicket = ({ navigation }) => {
                 </Pressable>
             </View>
 
+            {/* <View style={{ marginBottom: 10 }}>
+                <View style={{
+                    borderWidth: 1,
+                    borderColor: '#ddd',
+                    borderRadius: 6,
+                    height: 50,
+                    justifyContent: 'center',
+                    fontSize: 10,
+                }}>
+                    <Picker
+                    selectedValue={ticketType}
+                    onValueChange={(itemValue) => setTicketType(itemValue)}
+                    >
+                    <Picker.Item allowFontScaling={false} label="Owned by me" value="me" />
+                    <Picker.Item allowFontScaling={false} label="Owned by organization" value="org" />
+                    </Picker>
+                </View>
+            </View> */}
+
+            <View style={{ marginBottom: 10 }}>
+  <TouchableOpacity
+    style={{
+      borderWidth: 1,
+      borderColor: '#ddd',
+      borderRadius: 6,
+      height: 50,
+      justifyContent: 'center',
+      paddingHorizontal: 10,
+    }}
+    onPress={() => setShowTicketTypeModal(true)}
+  >
+    <Text style={{ color: ticketType ? '#000' : '#999' }}>
+      {ticketType === 'me'
+        ? 'Owned by me'
+        : ticketType === 'org'
+        ? 'Owned by organization'
+        : 'Please Select'}
+    </Text>
+  </TouchableOpacity>
+</View>
+
+            <Modal visible={showTicketTypeModal} transparent animationType="fade">
+  <View style={{ flex:1, backgroundColor:'#00000066', justifyContent:'center' }}>
+    <View style={{ backgroundColor:'#fff', margin:20, borderRadius:10 }}>
+
+      {[
+        { label: 'Owned by me', value: 'me' },
+        { label: 'Owned by organization', value: 'org' },
+      ].map(item => (
+        <TouchableOpacity
+          key={item.value}
+          style={{ padding:15, borderBottomWidth:1 }}
+          onPress={() => {
+            setTicketType(item.value);
+            setShowTicketTypeModal(false);
+          }}
+        >
+          <Text>{item.label}</Text>
+        </TouchableOpacity>
+      ))}
+
+    </View>
+  </View>
+</Modal>
 
             <View style={styles.ticketContainer}>
                 {/* TABLE HEADER */}
@@ -288,7 +393,7 @@ const ViewTicket = ({ navigation }) => {
                     showsVerticalScrollIndicator={false}
                     keyExtractor={(item) => item.ticketId}
                     //contentContainerStyle={{ paddingBottom: 200, }}
-                    contentContainerStyle={{ paddingBottom: 300, paddingTop: 0, flexDirection: 'column-reverse',}}
+                    contentContainerStyle={{ paddingBottom: 420, paddingTop: 0, flexDirection: 'column-reverse',}}
                     //ListFooterComponent={<View style={{ height: 290 }} />}
                     renderItem={({ item }) => (
                     <Pressable
