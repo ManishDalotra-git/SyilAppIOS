@@ -30,6 +30,8 @@ const Login = () => {
 const handleSubmit = async () => {
   setLoading(true);
 
+  // https://syilapp-w8ye.onrender.com/check_login_detail
+
   try {
       const response = await fetch(
         'https://syilapp-w8ye.onrender.com/check_login_detail',
@@ -75,6 +77,7 @@ const handleSubmit = async () => {
     await AsyncStorage.setItem('userBio', String(result.user?.bio ?? ''));
     await AsyncStorage.setItem('userPhone', String(result.user?.phone ?? ''));
     await AsyncStorage.setItem('userGender', String(result.user?.gender ?? ''));
+    await AsyncStorage.setItem('app_support_team_member', String(result.user?.app_support_team_member ?? ''));
 
     console.log('result.user----- ', result.user);
 
@@ -100,8 +103,6 @@ const handleSubmit = async () => {
     alert('Network error');
   }
 };
-
-
 
 
   return (

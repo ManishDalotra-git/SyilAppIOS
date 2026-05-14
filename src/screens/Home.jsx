@@ -1,8 +1,9 @@
 import { StyleSheet, Text, View, ImageBackground , Pressable, Image, ScrollView, StatusBar, Platform,TouchableOpacity,  } from 'react-native'
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 //import { useNavigation } from '@react-navigation/native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect  } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Footer from './components/Footer';
 
 const Home = () => {
 
@@ -10,13 +11,14 @@ const Home = () => {
   StatusBar.setBackgroundColor('transparent');
   StatusBar.setBarStyle('light-content'); 
    
- 
+
   const navigation = useNavigation();
   const route = useRoute();
   const currentRoute = route.name;  
   const [newCount, setNewCount] = useState(0);
-  const [showBell, setShowBell] = useState(true);
+  const [showBell, setShowBell] = useState(false);
   const [latestId, setLatestId] = useState(null);
+  const [appSupportTeamMember, setAppSupportTeamMember] = useState(false);
 
   useEffect(() => {
   const fetchArticles = async () => {
@@ -54,21 +56,88 @@ const Home = () => {
   fetchArticles();
 }, []);
 
-useEffect(() => {
-  const checkBellStatus = async () => {
-    const storedId = await AsyncStorage.getItem('lastSeenArticleId');
 
-    if (!latestId) return;
 
-    if (storedId !== latestId) {
-      setShowBell(true);
-    } else {
-      setShowBell(false);
-    }
-  };
+useFocusEffect(
+  useCallback(() => {
+    const init = async () => {
+      try {
+        
+        const email = await AsyncStorage.getItem('userEmail');
+        if (!email) return;
 
-  checkBellStatus();
-}, [latestId]);
+        const res = await fetch(
+          'https://syilapp-w8ye.onrender.com/get-user-data',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+          }
+        );
+
+        const data = await res.json();
+
+        console.log('API AppSupportTeamMember:', data.app_support_team_member);
+
+        let supportValue = 'No';
+
+        if (data.app_support_team_member === 'Yes') {
+          setAppSupportTeamMember(true);
+          supportValue = 'Yes';
+        } else {
+          setAppSupportTeamMember(false);
+        }
+
+        await AsyncStorage.setItem('app_support_team_member', supportValue);
+
+        
+        const storedId = await AsyncStorage.getItem('lastSeenArticleId');
+
+        if (!latestId) return;
+
+        if (storedId !== latestId) {
+          setShowBell(true);
+        } else {
+          setShowBell(false);
+        }
+
+      } catch (err) {
+        console.log('Init error:', err);
+      }
+    };
+
+    init();
+  }, [latestId]) // 👈 important
+);
+
+
+
+// useEffect(() => { 
+//   const checkBellStatus = async () => {
+
+//     const storedId = await AsyncStorage.getItem('lastSeenArticleId');
+//     const AppSupportTeamMember = await AsyncStorage.getItem('app_support_team_member');
+//     console.log('AppSupportTeamMember:', AppSupportTeamMember);
+    
+
+//     if(AppSupportTeamMember === 'Yes'){
+//       setAppSupportTeamMember(true);
+//       console.log('AppSupportTeamMember---yes:', AppSupportTeamMember);
+//     }
+
+    
+
+//     if (!latestId) return;
+
+//     if (storedId !== latestId) {
+//       setShowBell(true);
+//     } else {
+//       setShowBell(false);
+//     }
+//   };
+
+//   checkBellStatus();
+// }, [latestId]);
 
   return (
     <ImageBackground source={require('../../images/Login_System.png')}  style={styles.background}
@@ -140,94 +209,7 @@ useEffect(() => {
 
       </ScrollView>
 
-      <View style={styles.footer}>
-                <TouchableOpacity style={[
-                    styles.footerItem,
-                    currentRoute === 'Home' && styles.activeFooterItem,
-                ]}
-                onPress={() => navigation.navigate('Home')}
-                >
-                <Image source={require('../../images/home.png')} style={[
-                    styles.footerIcon,
-                    currentRoute === 'Home' && styles.activeFooterIcon,
-                    ]} />
-                <Text style={[
-                    styles.footerText,
-                    currentRoute === 'Home' && styles.activeFooterText,
-                    ]} allowFontScaling={false}>Home</Text>
-                </TouchableOpacity>
-      
-                <TouchableOpacity
-                style={[
-                    styles.footerItem,
-                    currentRoute === 'KnowledgeBase' && styles.activeFooterItem,
-                ]}
-                onPress={() => navigation.navigate('KnowledgeBase')}
-                >
-                <Image
-                    source={require('../../images/knowledge.png')}
-                    style={[
-                    styles.footerIcon,
-                    currentRoute === 'KnowledgeBase' && styles.activeFooterIcon,
-                    ]}
-                />
-                <Text
-                    style={[
-                    styles.footerText,
-                    currentRoute === 'KnowledgeBase' && styles.activeFooterText,
-                    ]} allowFontScaling={false}
-                >
-                    Knowledge
-                </Text>
-                </TouchableOpacity>
-      
-      
-                <TouchableOpacity style={[
-                    styles.footerItem,
-                    currentRoute === 'Ticket' && styles.activeFooterItem,
-                ]}
-                onPress={() => navigation.navigate('Ticket')}
-                >
-                <Image source={require('../../images/submit.png')} style={[
-                    styles.footerIcon,
-                    currentRoute === 'Ticket' && styles.activeFooterIcon,
-                    ]} />
-                <Text allowFontScaling={false} style={[
-                    styles.footerText,
-                    currentRoute === 'Ticket' && styles.activeFooterText,
-                    ]}>Submit Ticket</Text>
-                </TouchableOpacity>
-      
-                <TouchableOpacity style={[
-                    styles.footerItem,
-                    currentRoute === 'ViewTicket' && styles.activeFooterItem,
-                ]} 
-                onPress={() => navigation.navigate('ViewTicket')}
-                >
-                <Image source={require('../../images/view.png')} style={[
-                    styles.footerIcon,
-                    currentRoute === 'ViewTicket' && styles.activeFooterIcon,
-                    ]} />
-                <Text allowFontScaling={false} style={[
-                    styles.footerText,
-                    currentRoute === 'ViewTicket' && styles.activeFooterText,
-                    ]} >View Tickets</Text>
-                </TouchableOpacity>
-      
-                <TouchableOpacity style={[
-                    styles.footerItem,
-                    currentRoute === 'More' && styles.activeFooterItem,
-                ]} onPress={() => navigation.navigate('More')}> 
-                <Image source={require('../../images/more.png')} style={[
-                    styles.footerIcon,
-                    currentRoute === 'More' && styles.activeFooterIcon,
-                    ]} />
-                <Text allowFontScaling={false} style={[
-                    styles.footerText,
-                    currentRoute === 'More' && styles.activeFooterText,
-                    ]} >More</Text>
-                </TouchableOpacity>
-            </View>
+      <Footer appSupportTeamMember={appSupportTeamMember} currentRoute={currentRoute} />
 
     </ImageBackground>
   )
@@ -344,45 +326,5 @@ badgeText: {
 },
 
 
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    //height: 80,
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingHorizontal:16,
-    boxShadow:'0 0 5px 0px #dfdfdf'
-  },
-  footerItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical:16,
-    paddingBottom:25,
-  },
-  footerIcon: {
-    width: 22,
-    height: 22,
-    marginBottom: 4,
-    tintColor: '#666666',
-  },
-  footerText: {
-    fontSize: 12,
-    color: '#666666',
-  },
-  activeFooterItem:{
-    boxShadow:'0px -2px 0px 0px #FFEA00'
-  },
-  activeFooterIcon:{
-    tintColor: '#000',
-  },
-  activeFooterText:{
-    color:'#000',
-    fontWeight:500,
-  },
+  
 })

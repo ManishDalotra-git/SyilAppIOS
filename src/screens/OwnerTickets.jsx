@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Footer from './components/Footer';
 
 const OwnerTickets = ({ navigation }) => {
 
@@ -28,6 +29,7 @@ const OwnerTickets = ({ navigation }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [appSupportTeamMember, setAppSupportTeamMember] = useState(false);
 
   // 👉 you can pass dynamically later
   const ownerId = route.params?.ownerId || '35998790';
@@ -47,6 +49,16 @@ const OwnerTickets = ({ navigation }) => {
             setFirstName(userFirstName || '');
             setLastName(userLastName || '');
             setEmail(savedEmail || '');
+
+            const AppSupportTeamMember = await AsyncStorage.getItem('app_support_team_member');
+    console.log('AppSupportTeamMember:', AppSupportTeamMember);
+    
+
+    if(AppSupportTeamMember === 'Yes'){
+      setAppSupportTeamMember(true);
+      console.log('AppSupportTeamMember---yes:', AppSupportTeamMember);
+    }
+
             };
 
             loadUserName();
@@ -61,17 +73,57 @@ const OwnerTickets = ({ navigation }) => {
 
   useFocusEffect(
     useCallback(() => {
+
+      if (!email) return;
+
+
       const fetchTickets = async () => {
         try {
           setLoading(true);
+
+console.log('email-----email---- ' , email);
+
+          const ownerRes = await fetch(
+      'https://syilapp-w8ye.onrender.com/get-owner-id',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email }),
+      }
+);
+
+const ownerRaw = await ownerRes.text();
+console.log('Owner RAW response:', ownerRaw);
+console.log('Owner status:', ownerRes.status);
+
+const ownerData = JSON.parse(ownerRaw);
+console.log('ownerId mila:', ownerData.OwnerUserID);
+
+const senderActorId = ownerData.OwnerUserID
+  ? `${ownerData.OwnerUserID}`
+  : '35998790';
+
+console.log('Final senderActorId:', senderActorId);
+
+// setSenderActorId(senderActorId)
+// console.log('SenderActorId---- ', senderActorId);
+
+
+
+
+          //http://192.168.0.84:3000/
+          //https://syilapp-w8ye.onrender.com/get_owner_tickets
+
           const response = await fetch(
-            'http://syilapp-w8ye.onrender.com/get_owner_ticket',
+            'https://syilapp-w8ye.onrender.com/get_owner_ticket',
             {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({}),
+              body: JSON.stringify({
+                ownerId: senderActorId || '35998790',
+                }),
             }
           );
 
@@ -88,7 +140,7 @@ const OwnerTickets = ({ navigation }) => {
       };
 
       fetchTickets();
-    }, [ownerId])
+    }, [ownerId, email])
   );
 
   const formatDate = (dateString) => {
@@ -339,94 +391,7 @@ const OwnerTickets = ({ navigation }) => {
       </View>
 
       {/* FOOTER SAME */}
-      <View style={styles.footer}>
-        <TouchableOpacity style={[
-            styles.footerItem,
-            currentRoute === 'Home' && styles.activeFooterItem,
-            ]} 
-        onPress={() => navigation.navigate('Home')}
-        >
-            <Image source={require('../../images/home.png')} style={[
-                styles.footerIcon,
-                currentRoute === 'Home' && styles.activeFooterIcon,
-            ]} />
-            <Text style={[
-                styles.footerText,
-                currentRoute === 'Home' && styles.activeFooterText,
-            ]}>Home</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-            style={[
-            styles.footerItem,
-            currentRoute === 'KnowledgeBase' && styles.activeFooterItem,
-            ]}
-            onPress={() => navigation.navigate('KnowledgeBase')}
-        >
-            <Image
-            source={require('../../images/knowledge.png')}
-            style={[
-                styles.footerIcon,
-                currentRoute === 'KnowledgeBase' && styles.activeFooterIcon,
-            ]}
-            />
-            <Text
-            style={[
-                styles.footerText,
-                currentRoute === 'KnowledgeBase' && styles.activeFooterText,
-            ]}
-            >
-            Knowledge
-            </Text>
-        </TouchableOpacity>
-
-
-        <TouchableOpacity style={[
-            styles.footerItem,
-            currentRoute === 'Ticket' && styles.activeFooterItem,
-            ]}
-        onPress={() => navigation.navigate('Ticket')}
-        >
-            <Image source={require('../../images/submit.png')} style={[
-                styles.footerIcon,
-                currentRoute === 'Ticket' && styles.activeFooterIcon,
-            ]} />
-            <Text style={[
-                styles.footerText,
-                currentRoute === 'Ticket' && styles.activeFooterText,
-            ]}>Submit Ticket</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[
-            styles.footerItem,
-            currentRoute === 'ViewTicket' && styles.activeFooterItem,
-            ]} 
-        onPress={() => navigation.navigate('ViewTicket')}
-        >
-            <Image source={require('../../images/view.png')} style={[
-                styles.footerIcon,
-                currentRoute === 'ViewTicket' && styles.activeFooterIcon,
-            ]} />
-            <Text style={[
-                styles.footerText,
-                currentRoute === 'ViewTicket' && styles.activeFooterText,
-            ]}>View Tickets</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[
-            styles.footerItem,
-            currentRoute === 'More' && styles.activeFooterItem,
-            ]} onPress={() => navigation.navigate('More')}> 
-            <Image source={require('../../images/more.png')} style={[
-                styles.footerIcon,
-                currentRoute === 'More' && styles.activeFooterIcon,
-            ]} />
-            <Text style={[
-                styles.footerText,
-                currentRoute === 'More' && styles.activeFooterText,
-            ]}>More</Text>
-        </TouchableOpacity>
-    </View>
+      <Footer appSupportTeamMember={appSupportTeamMember} currentRoute={currentRoute} />
     </ImageBackground>
   );
 };
@@ -508,48 +473,4 @@ const styles = StyleSheet.create({
         color: '#999',
     },
 
-
-
-
-footer: {
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  right: 0,
-  //height: 80,
-  flexDirection: 'row',
-  backgroundColor: '#fff',
-  borderTopWidth: 1,
-  borderTopColor: '#eee',
-  justifyContent: 'space-around',
-  alignItems: 'center',
-  paddingHorizontal:16,
-  boxShadow:'0 0 5px 0px #dfdfdf'
-},
-footerItem: {
-  alignItems: 'center',
-  justifyContent: 'center',
-  paddingVertical:16,
-  paddingBottom:25,
-},
-footerIcon: {
-  width: 22,
-  height: 22,
-  marginBottom: 4,
-  tintColor: '#666666',
-},
-footerText: {
-  fontSize: 12,
-  color: '#666666',
-},
-activeFooterItem:{
-  boxShadow:'0px -2px 0px 0px #FFEA00'
-},
-activeFooterIcon:{
-  tintColor: '#000',
-},
-activeFooterText:{
-  color:'#000',
-  fontWeight:500,
-},
 })

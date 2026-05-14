@@ -11,12 +11,19 @@ import {
   Pressable,
   FlatList,
   Linking,
-  RefreshControl ,
-} from 'react-native';
+  RefreshControl,
+  Modal,
+  TextInput,
+  ScrollView,
+  Alert,
+  ActivityIndicator, KeyboardAvoidingView,
+}  from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import Video from 'react-native-video';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
+import Footer from './components/Footer';
+import { launchImageLibrary } from 'react-native-image-picker';
 
 const ViewTicketDetail = ({ navigation }) => {
   StatusBar.setTranslucent(true);
@@ -27,6 +34,7 @@ const ViewTicketDetail = ({ navigation }) => {
   const { ticketId } = route.params || {};
   const { subject } = route.params || {};
   const currentRoute = route.name;
+  const [appSupportTeamMember, setAppSupportTeamMember] = useState(false);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -36,6 +44,13 @@ const ViewTicketDetail = ({ navigation }) => {
   const [email, setEmail] = useState('');
 
   const [refreshing, setRefreshing] = useState(false);
+
+
+  const [replyModalVisible, setReplyModalVisible] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [sending, setSending] = useState(false);
+  const [senderActorId, setSenderActorId] = useState('');
 
   /* ================= USER INFO ================= */
   useFocusEffect(
@@ -49,22 +64,30 @@ const ViewTicketDetail = ({ navigation }) => {
         setFirstName(userFirstName || '');
         setLastName(userLastName || '');
         setContactID(userContactID || '');
+
+        const AppSupportTeamMember = await AsyncStorage.getItem('app_support_team_member');
+    console.log('AppSupportTeamMember:', AppSupportTeamMember);
+    
+
+    if(AppSupportTeamMember === 'Yes'){
+      setAppSupportTeamMember(true);
+      console.log('AppSupportTeamMember---yes:', AppSupportTeamMember);
+    }
+
       };
       loadUserName();
     }, [])
   );
 
-  const isChen = email === 'manish.dalotra@techstriker.com';
+  //const isChen = email === 'manish.dalotra@techstriker.com';
 
   /* ================= CONVERSATION ================= */
   useFocusEffect(
     useCallback(() => {
       const fetchTicketConversation = async () => {
         if (!ticketId) return;
-
         try {
           setLoading(true);
-
           const response = await fetch(
             'https://syilapp-w8ye.onrender.com/get_ticket_conversation',
             {
@@ -73,100 +96,90 @@ const ViewTicketDetail = ({ navigation }) => {
               body: JSON.stringify({ ticketId }),
             }
           );
-
           const data = await response.json();
+          console.log('Conversation data----- ', data);
           setMessages(data.messages || []);
-          setLoading(false);
         } catch (error) {
           console.log('Conversation fetch error', error);
         } finally {
           setLoading(false);
         }
       };
-
       fetchTicketConversation();
     }, [ticketId])
   );
 
 
 
-  const handleReply = async () => {
-  const subjectEncoded = encodeURIComponent(`Re: ${dynamicSubject}`);
-  const bodyEncoded = encodeURIComponent("Hello Support SYIL,");
+  // const handleReply = async () => {
+  // const subjectEncoded = encodeURIComponent(`Re: ${dynamicSubject}`);
+  // const bodyEncoded = encodeURIComponent("Hello Support SYIL,");
 
-  const gmailURL = `googlegmail://co?to=${dynamicEmail}&subject=${subjectEncoded}&body=${bodyEncoded}`;
-  const appStoreURL = 'https://apps.apple.com/app/gmail-email-by-google/id422689480';
-  const mailURL = `mailto:${dynamicEmail}?subject=${subjectEncoded}&body=${bodyEncoded}`;
+  // const gmailURL = `googlegmail://co?to=${dynamicEmail}&subject=${subjectEncoded}&body=${bodyEncoded}`;
+  // const appStoreURL = 'https://apps.apple.com/app/gmail-email-by-google/id422689480';
+  // const mailURL = `mailto:${dynamicEmail}?subject=${subjectEncoded}&body=${bodyEncoded}`;
 
-  if (Platform.OS === 'ios') {
-    const canOpenGmail = await Linking.canOpenURL('googlegmail://');
+  // if (Platform.OS === 'ios') {
+  //   const canOpenGmail = await Linking.canOpenURL('googlegmail://');
 
-    if (canOpenGmail) {
-      Linking.openURL(gmailURL);
-    } else {
-      Linking.openURL(appStoreURL);
-    }
-    } else {
-      // Android → Gmail automatically open ho jata hai mostly
-      Linking.openURL(mailURL);
-    }
-  };
+  //   if (canOpenGmail) {
+  //     Linking.openURL(gmailURL);
+  //   } else {
+  //     Linking.openURL(appStoreURL);
+  //   }
+  //   } else {
+  //     // Android → Gmail automatically open ho jata hai mostly
+  //     Linking.openURL(mailURL);
+  //   }
+  // };
 
 
 
   const onRefresh = useCallback(async () => {
-  setRefreshing(true);
-  try {
-    if (!ticketId) return;
-
-    const response = await fetch(
-      'https://syilapp-w8ye.onrender.com/get_ticket_conversation',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketId }),
-      }
-    );
-
-    const data = await response.json();
-    setMessages(data.messages || []);
-  } catch (error) {
-    console.log('Refresh error', error);
-  } finally {
-    setRefreshing(false);
-  }
-}, [ticketId]);
-
-  console.log('messages---- ' , messages);
+    setRefreshing(true);
+    try {
+      if (!ticketId) return;
+      const response = await fetch(
+        'https://syilapp-w8ye.onrender.com/get_ticket_conversation',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify({ ticketId }),
+        }
+      );
+      const data = await response.json();
+      console.log('data----- ', data);
+      setMessages(data.messages || []);
+    } catch (error) {
+      console.log('Refresh error', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [ticketId]);
 
   const initialMessage = messages[messages.length - 1];
   const dynamicSubject = initialMessage?.subject;
   const outgoingMessage = messages.find(msg => msg.direction === 'OUTGOING');
   const hasOutgoing = messages.some(msg => msg.direction === 'OUTGOING');
   const dynamicEmail = outgoingMessage?.senderName;
-  console.log('dynamicSubject---- ', dynamicSubject);
-  console.log('dynamicEmail---- ', dynamicEmail);
+  const channelAccountId = outgoingMessage?.channelAccountId;
+  const channelId = outgoingMessage?.channelId;
+  const conversationsThreadId = initialMessage?.conversationsThreadId;
+  //const initialMessageemail = initialMessage?.senderName; 
 
-  const hasIncoming = messages.some(msg => msg.direction === 'INCOMING');
-const incomingMessage = [...messages]
-  .reverse()
-  .find(
-    msg =>
-      msg.direction === 'INCOMING' &&
-      msg.senderName?.includes('@')
-  );
+  console.log('Initial Message:', conversationsThreadId);
+ 
+  const incomingMessage = [...messages]
+    .reverse()
+    .find(msg => msg.direction === 'INCOMING' && msg.senderName?.includes('@'));
 
-const incomingEmail = incomingMessage?.senderName;
+  const incomingEmail = initialMessage?.senderName;
+  // const incomingSubject = incomingMessage?.subject;
+
   const incomingSubject = incomingMessage?.subject;
 
-  console.log('incomingSubject---- ', incomingSubject);
-  console.log('incomingEmail---- ', incomingEmail);
-
-  const hasOutgoings = messages.filter(
-  msg => msg.direction === 'OUTGOING'
-).length;
-console.log('hasOutgoings--- ' , hasOutgoings);
-const subjectPrefix = hasOutgoings > 1 ? 'Re: ' : '';
+  const hasOutgoings = messages.filter(msg => msg.direction === 'OUTGOING').length;
+  const subjectPrefix = hasOutgoings > 1 ? 'Re: ' : '';
 
   const getSenderName = (item) => item?.senderName || email;
 
@@ -176,8 +189,155 @@ const subjectPrefix = hasOutgoings > 1 ? 'Re: ' : '';
     return `${f}${l}`;
   };
 
+  /* ================= FILE PICKER ================= */
+  const pickFiles = () => {
+    launchImageLibrary(
+      {
+        mediaType: 'mixed',
+        selectionLimit: 0,
+        quality: 0.8,
+      },
+      (response) => {
+        if (response.didCancel) return;
+        if (response.errorCode) {
+          Alert.alert('Error', response.errorMessage);
+          return;
+        }
+        if (response.assets && response.assets.length > 0) {
+          const files = response.assets.map((asset) => ({
+            uri: asset.uri,
+            name: asset.fileName || `file_${Date.now()}`,
+            type: asset.type || 'image/jpeg',
+          }));
+          setSelectedFiles((prev) => [...prev, ...files]);
+          setSelectedFiles(files);
+          console.log('Selected files:', files);
+        }
+      }
+    );
+  };
+
+  const removeFile = (index) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  /* ================= SEND TO CUSTOMER ================= */
+  const sendToCustomer = async () => {
+    if (!messageText.trim()) {
+      Alert.alert('Error', 'Message likhna zaroori hai');
+      return;
+    }
+
+    setSending(true);
+    try {
+      let attachmentIds = [];
+
+
+      const ownerRes = await fetch(
+      'https://syilapp-w8ye.onrender.com/get-owner-id',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email }),
+      }
+);
+
+const ownerRaw = await ownerRes.text();
+console.log('Owner RAW response:', ownerRaw);
+console.log('Owner status:', ownerRes.status);
+
+const ownerData = JSON.parse(ownerRaw);
+console.log('ownerId mila:', ownerData.ownerId);
+
+const senderActorId = ownerData.ownerId
+  ? `A-${ownerData.ownerId}`
+  : 'A-7712092';
+
+console.log('Final senderActorId:', senderActorId);
+
+setSenderActorId(senderActorId)
+console.log('SenderActorId---- ', senderActorId);
+
+console.log('Selected files before upload:', selectedFiles);
+
+      if (selectedFiles.length > 0) {
+        const formData = new FormData();
+        selectedFiles.forEach((file) => {
+          formData.append('files', {
+            uri: file.uri,
+            name: file.name,
+            type: file.type,
+          });
+        });
+
+        console.log('formData-----  ', formData)
+
+
+        const uploadRes = await fetch(
+          'https://syilapp-w8ye.onrender.com/upload-to-hubspot-view',
+          {
+            method: 'POST',
+            body: formData,
+            headers: { 'Content-Type': 'multipart/form-data' },
+          }
+        );
+
+        console.log('Selected files before upload:--- upload-to-hubspotss---  ', selectedFiles);
+        const uploadData = await uploadRes.json();
+
+        console.log('Upload response', uploadData);
+
+        attachmentIds = uploadData.files.map((f) => f.id); 
+
+
+      }
+
+      
+
+      
+      const sendRes = await fetch(
+        'https://syilapp-w8ye.onrender.com/send-hubspot-message',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            threadId: conversationsThreadId,
+            text: messageText,
+            recipientEmail: incomingEmail,
+            attachmentIds,
+            senderActorId: senderActorId,
+          }),
+        }
+      );
+
+      const sendData = await sendRes.json();
+
+      console.log('Send response', sendData);
+
+      if (sendData.success) {
+        Alert.alert('Success', 'Message sent successfully!');
+        setReplyModalVisible(false);
+        setMessageText('');
+        setSelectedFiles([]);
+        attachmentIds = [];
+        onRefresh();
+      } else {
+        Alert.alert('Error', 'Message not sent. Please try again.');
+      }
+    } catch (err) {
+      console.log('Send error', err);
+      Alert.alert('Error', 'An error occurred while sending the message. Please try again.');
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <ImageBackground style={styles.background} resizeMode="cover">
+      
+
+      
+
       <View style={styles.container}>
         {/* HEADER */}
         <View style={styles.flexClass}>
@@ -285,8 +445,10 @@ const subjectPrefix = hasOutgoings > 1 ? 'Re: ' : '';
             source={{ uri: attachment.url }}
             style={styles.video}
             controls={true}
+            paused={true}
             resizeMode="contain"
-            paused={true} 
+            repeat={false}
+            fullscreen={false}
           />
         );
       }
@@ -329,39 +491,35 @@ const subjectPrefix = hasOutgoings > 1 ? 'Re: ' : '';
             </Text>
           ) : null} */}
 
-          {isChen ? (
-          // 🆕 ONLY for chen@syil.com → Reply to Customer
-          <Text
-          allowFontScaling={false} 
-            style={[styles.ReplyStyle]}
-            onPress={() =>
-              Linking.openURL(
-                `mailto:${incomingEmail}?subject=${encodeURIComponent(
-        subjectPrefix + (dynamicSubject || '')
-      )}&body=${encodeURIComponent("Hello,")}`
-              )
-            }
-          >
-            Reply to Customer
-          </Text>
-        ) : messages.length === 1 ? (
-          <Text allowFontScaling={false} style={[styles.ReplyStyle, { backgroundColor: '#999' }]}>
-            Please wait for the support reply.
-          </Text>
-        ) : hasOutgoing ? (
-          // ✅ Existing support reply
-          <Text
-            allowFontScaling={false}
-            style={styles.ReplyStyle}
-            onPress={() =>
-              Linking.openURL(
-                `mailto:${dynamicEmail}?subject=Re:%20${encodeURIComponent(dynamicSubject)}&body=${encodeURIComponent("Hello Support SYIL,")}`
-              )
-            }
-          >
-            Reply to Support Team
-          </Text>
-        ) : null}
+          {appSupportTeamMember === true ? (
+           
+            <TouchableOpacity
+              style={styles.ReplyStyle}
+              onPress={() => setReplyModalVisible(true)}
+            >
+              <Text style={{ color: '#fff', textAlign: 'center', fontWeight: '500', fontSize: 16 }}>
+                Reply to Customer
+              </Text>
+            </TouchableOpacity>
+          ) : messages.length === 1 ? (
+            <Text style={[styles.ReplyStyle, { backgroundColor: '#999' }]}>
+              Please wait for the support reply.
+            </Text>
+          ) : hasOutgoing ? (
+            
+            <Text
+              style={styles.ReplyStyle}
+              onPress={() =>
+                Linking.openURL(
+                  `mailto:${dynamicEmail}?subject=Re:%20${encodeURIComponent(
+                    dynamicSubject
+                  )}&body=${encodeURIComponent('Hello Support SYIL,')}`
+                )
+              }
+            >
+              Reply to Support Team
+            </Text>
+          ) : null}
 
           
         </View>
@@ -370,80 +528,110 @@ const subjectPrefix = hasOutgoings > 1 ? 'Re: ' : '';
 
       
 
+      <Modal
+        visible={replyModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => {
+          setReplyModalVisible(false);
+          setMessageText('');
+          setSelectedFiles([]);
+        }}
+      >
+        <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0} // adjust if you have headers
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+           
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Reply to Customer</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setReplyModalVisible(false);
+                  setMessageText('');
+                  setSelectedFiles([]);
+                }}
+              >
+                <Text style={styles.modalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            
+            <Text style={styles.toLabel}>
+              To:{' '}
+              <Text style={styles.toEmail}>{incomingEmail}</Text>
+            </Text>
+
+            
+            <TextInput
+              style={styles.messageInput}
+              placeholder="Type your message here..."
+              placeholderTextColor="#999"
+              multiline
+              numberOfLines={5}
+              value={messageText}
+              onChangeText={setMessageText}
+              textAlignVertical="top"
+            />
+
+            
+            {selectedFiles.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.filePreviewScroll}
+              >
+                {selectedFiles.map((file, index) => (
+                  <View key={index} style={styles.filePreviewItem}>
+                    <Image
+                      source={{ uri: file.uri }}
+                      style={styles.filePreviewImage}
+                    />
+                    <TouchableOpacity
+                      style={styles.removeFileBtn}
+                      onPress={() => removeFile(index)}
+                    >
+                      <Text style={styles.removeFileBtnText}>✕</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.filePreviewName} numberOfLines={1}>
+                      {file.name}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+
+            
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.uploadBtn} onPress={pickFiles}>
+                <Text style={styles.uploadBtnText}>📎 Attach Files</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.sendBtn, sending && { opacity: 0.6 }]}
+                onPress={sendToCustomer}
+                disabled={sending}
+              >
+                {sending ? (
+                  <ActivityIndicator color="#000" />
+                ) : (
+                  <Text style={styles.sendBtnText}>Send to Customer</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       
 
       {/* FOOTER */}
-      <View style={styles.footer}>
-        {/** Home */}
-        <TouchableOpacity
-          style={[styles.footerItem, currentRoute === 'Home' && styles.activeFooterItem]}
-          onPress={() => navigation.navigate('Home')}
-        >
-          <Image
-            source={require('../../images/home.png')}
-            style={[styles.footerIcon, currentRoute === 'Home' && styles.activeFooterIcon]}
-          />
-          <Text allowFontScaling={false} style={[styles.footerText, currentRoute === 'Home' && styles.activeFooterText]}>
-            Home
-          </Text>
-        </TouchableOpacity>
-
-        {/** KnowledgeBase */}
-        <TouchableOpacity
-          style={[styles.footerItem, currentRoute === 'KnowledgeBase' && styles.activeFooterItem]}
-          onPress={() => navigation.navigate('KnowledgeBase')}
-        >
-          <Image
-            source={require('../../images/knowledge.png')}
-            style={[styles.footerIcon, currentRoute === 'KnowledgeBase' && styles.activeFooterIcon]}
-          />
-          <Text allowFontScaling={false} style={[styles.footerText, currentRoute === 'KnowledgeBase' && styles.activeFooterText]}>
-            Knowledge
-          </Text>
-        </TouchableOpacity>
-
-        {/** Submit Ticket */}
-        <TouchableOpacity
-          style={[styles.footerItem, currentRoute === 'Ticket' && styles.activeFooterItem]}
-          onPress={() => navigation.navigate('Ticket')}
-        >
-          <Image
-            source={require('../../images/submit.png')}
-            style={[styles.footerIcon, currentRoute === 'Ticket' && styles.activeFooterIcon]}
-          />
-          <Text allowFontScaling={false} style={[styles.footerText, currentRoute === 'Ticket' && styles.activeFooterText]}>
-            Submit Ticket
-          </Text>
-        </TouchableOpacity>
-
-        {/** View Tickets */}
-        <TouchableOpacity
-          style={[styles.footerItem, currentRoute === 'ViewTicket' && styles.activeFooterItem]}
-          onPress={() => navigation.navigate('ViewTicket')}
-        >
-          <Image
-            source={require('../../images/view.png')}
-            style={[styles.footerIcon, currentRoute === 'ViewTicket' && styles.activeFooterIcon]}
-          />
-          <Text allowFontScaling={false} style={[styles.footerText, currentRoute === 'ViewTicket' && styles.activeFooterText]}>
-            View Tickets
-          </Text>
-        </TouchableOpacity>
-
-        {/** More */}
-        <TouchableOpacity
-          style={[styles.footerItem, currentRoute === 'More' && styles.activeFooterItem]}
-          onPress={() => navigation.navigate('More')}
-        >
-          <Image
-            source={require('../../images/more.png')}
-            style={[styles.footerIcon, currentRoute === 'More' && styles.activeFooterIcon]}
-          />
-          <Text allowFontScaling={false} style={[styles.footerText, currentRoute === 'More' && styles.activeFooterText]}>
-            More
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <Footer appSupportTeamMember={appSupportTeamMember} currentRoute={currentRoute} />
+      
     </ImageBackground>
   );
 };
@@ -546,10 +734,98 @@ const styles = StyleSheet.create({
 
 
   video: {
-  width: '100%',
-  height: 220,
+  width: '300',
+  height: 270,
   borderRadius: 8,
   marginTop: 5,
 },
+
+
+modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 40,
+    maxHeight: '85%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  modalClose: { fontSize: 18, color: '#666', padding: 4 },
+  toLabel: { fontSize: 13, color: '#666', marginBottom: 10 },
+  toEmail: { color: '#000', fontWeight: '600' },
+  messageInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 14,
+    color: '#000',
+    minHeight: 120,
+    marginBottom: 12,
+  },
+  filePreviewScroll: { marginBottom: 12 },
+  filePreviewItem: {
+    marginRight: 10,
+    position: 'relative',
+    alignItems: 'center',
+  },
+  filePreviewImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: '#eee',
+  },
+  removeFileBtn: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#ff4444',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  removeFileBtnText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  filePreviewName: {
+    fontSize: 10,
+    color: '#666',
+    marginTop: 4,
+    maxWidth: 80,
+  },
+  modalActions: {
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 10,
+  },
+  uploadBtn: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#000',
+    borderRadius: 8,
+    padding: 14,
+    alignItems: 'center',
+  },
+  uploadBtnText: { color: '#000', fontWeight: '600', fontSize: 14 },
+  sendBtn: {
+    width: '100%',
+    backgroundColor: '#FFEA00',
+    borderRadius: 8,
+    padding: 14,
+    alignItems: 'center',
+  },
+  sendBtnText: { color: '#000', fontWeight: '700', fontSize: 14 },
 
 });

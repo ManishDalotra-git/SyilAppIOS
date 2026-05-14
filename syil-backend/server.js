@@ -14,6 +14,7 @@ const FormData = require('form-data');
 const fs = require('fs');
 
 const multer = require('multer');
+const { send } = require('process');
 const hubspotUpload = multer({
   dest: 'uploads/'
 });
@@ -167,136 +168,6 @@ app.post('/ask-alex', async (req, res) => {
     });
   }
 });
-
-
-
-
-// app.post('/ask-alex', async (req, res) => {
-//   const { question } = req.body;
-
-//   if (!question) {
-//     return res.status(400).json({ error: 'Question is required' });
-//   }
-
-//   try {
-//     // ==============================
-//     // 📄 STEP 1: Read Articles
-//     // ==============================
-//     const articlesPath = path.join(__dirname, 'assets', 'articles.json');
-
-//     let articlesData = [];
-
-//     try {
-//       const rawData = fs.readFileSync(articlesPath, 'utf8');
-//       articlesData = JSON.parse(rawData);
-//     } catch (err) {
-//       console.error('Error reading articles:', err);
-//     }
-
-//     // ==============================
-//     // 🔍 STEP 2: Find Relevant Article
-//     // ==============================
-//     function findRelevantArticle(question, articles) {
-//       const lowerQ = question.toLowerCase();
-
-//       let bestMatch = null;
-//       let maxScore = 0;
-
-//       articles.forEach(article => {
-//         const title = article.title?.toLowerCase() || '';
-//         const content = article.content?.toLowerCase() || '';
-
-//         let score = 0;
-
-//         lowerQ.split(' ').forEach(word => {
-//           if (title.includes(word)) score += 2;
-//           if (content.includes(word)) score += 1;
-//         });
-
-//         if (score > maxScore) {
-//           maxScore = score;
-//           bestMatch = article;
-//         }
-//       });
-
-//       return bestMatch;
-//     }
-
-//     const matchedArticle = findRelevantArticle(question, articlesData);
-
-//     const articleContent = matchedArticle
-//       ? matchedArticle.content
-//       : '';
-
-//     console.log('Matched Article:', matchedArticle?.title || 'None');
-
-//     // ==============================
-//     // 🤖 STEP 3: Call OpenAI
-//     // ==============================
-//     const response = await axios.post(
-//       'https://api.openai.com/v1/responses',
-//       {
-//         model: 'gpt-5-mini',
-//         input: [
-//           {
-//             role: 'system',
-//             content: `
-// You are an AI assistant.
-
-// STRICT RULES:
-// - Answer ONLY from the provided article content.
-// - Do NOT use any external knowledge.
-// - Do NOT guess.
-// - If answer is not in the article, reply:
-//   "Answer not found in the provided article."
-// - Always rewrite in your own words.
-//             `
-//           },
-//           {
-//             role: 'user',
-//             content: `
-// Question: ${question}
-
-// Article Content:
-// ${articleContent}
-//             `
-//           }
-//         ],
-//         text: {
-//           format: { type: 'text' }
-//         }
-//       },
-//       {
-//         headers: {
-//           'Content-Type': 'application/json',
-//           Authorization: `Bearer ${OPENAI_API_KEY}`
-//         }
-//       }
-//     );
-
-//     // ==============================
-//     // 🧾 STEP 4: Extract Response
-//     // ==============================
-//     const messageBlock = response.data.output.find(
-//       o => o.type === 'message'
-//     );
-
-//     const content = messageBlock?.content?.[0] || {};
-//     const text = content.text || '';
-
-//     return res.json({
-//       title: matchedArticle?.title || '',
-//       text
-//     });
-
-//   } catch (error) {
-//     console.error('OpenAI Error:', error.response?.data || error.message);
-
-//     return res.status(500).json({
-//       error: 'Failed to fetch answer from OpenAI'
-//     });
-//   }
-// });
 
 
 app.get('/articles', (req, res) => {
@@ -501,19 +372,18 @@ app.post('/upload-to-hubspot', hubspotUpload.array('files'), async (req, res) =>
       success: true,
       files: uploadedFiles,
     });
-    console.log('uploadedFiles----- ' , uploadedFiles);
   } catch (err) {
     console.log(err.response?.data || err);
     res.status(500).json({ error: 'File upload failed' });
   }
 });
 
-// 2️⃣ Create ticket via HubSpot form submission
+
 app.post('/create-ticket', async (req, res) => {
   try {
     const { contactId, ticketData } = req.body;
 
-    // 🔥 IMPORTANT: ticketData ke andar se values nikalo
+    
     if (!ticketData) {
       return res.status(400).json({ error: 'ticketData missing' });
     }
@@ -533,10 +403,10 @@ app.post('/create-ticket', async (req, res) => {
       files,
     } = ticketData;
 
-    // 🟡 safety
+    
     const categoryArray = Array.isArray(categories) ? categories : [];
 
-    // ✅ HubSpot FORM FIELDS (value kabhi undefined nahi)
+    
     const fields = [
       { objectTypeId: '0-1', name: 'email', value: email || '' },
 
@@ -579,7 +449,7 @@ app.post('/create-ticket', async (req, res) => {
 
           fields.push({
             objectTypeId: '0-5',
-            name: 'hs_file_upload', // HubSpot form file field name
+            name: 'hs_file_upload', 
             value: fileIds.join(';'),
           });
         }
@@ -664,188 +534,54 @@ app.post('/create-ticket', async (req, res) => {
   }
 });
 
-
-// app.post('/create-ticket', async (req, res) => {
-//   const { contactId, ticketData } = req.body;
-//   if (!contactId) {
-//     return res.status(400).json({ error: 'Contact ID is required' });
-//   }
-//   try {
-//     const fetch = (...args) =>
-//       import('node-fetch').then(({ default: fetch }) => fetch(...args));
-//       const properties = {
-//         subject: ticketData.subject,
-//         content: ticketData.description,
-//         hs_pipeline: '94161297',
-//         hs_pipeline_stage: '173580710',
-//         hs_ticket_priority: ticketData.priority?.toUpperCase() || 'LOW',
-//         end_customer_name: ticketData.company,
-//         machine_type: ticketData.machineType,
-//         controller: ticketData.controller,
-//         machine_serial_number: ticketData.serialNo,
-//         sales_order_number: ticketData.salesOrder,
-//         warranty: ticketData.warranty,
-//         hs_ticket_category: ticketData.categories?.join(';'),
-//         hubspot_owner_id: '86106481',
-//         hs_assigned_team_ids: '46557382',
-//       };
-
-//       if ( uploadedFiles && uploadedFiles.length > 0 ) 
-//         {
-//           const fileIds = uploadedFiles.map(f => f.id);
-//           properties.hs_file_upload = fileIds.join(';');
-//           console.log('uploadedFiles--- ticket----- ', uploadedFiles);
-//         }
-
-//         console.log('properties----- ' , properties);
-
-//       const response = await fetch(
-//         'https://api.hubapi.com/crm/v3/objects/tickets',
-//         {
-//           method: 'POST',
-//           headers: {
-//             'Content-Type': 'application/json',
-//             Authorization: `Bearer ${HUBSPOT_API_KEY}`,
-//           },
-//           body: JSON.stringify({
-//             properties,
-//             associations: [
-//               {
-//                 to: { id: contactId },
-//                 types: [
-//                   {
-//                     associationCategory: 'HUBSPOT_DEFINED',
-//                     associationTypeId: 16,
-//                   },
-//                 ],
-//               },
-//             ],
-//           }),
-//         }
-//       );
-//     const data = await response.json();
-//     res.status(response.ok ? 201 : response.status).json(data);
-//   } catch (error) {
-//     console.error('Create Ticket Error:', error);
-//     res.status(500).json({ error: 'Internal server error' });  
-//   }
-// });
-
-
-
-
-// app.post('/upload-to-hubspot', upload.array('files'), async (req, res) => {
-//   try {
-//     const uploadedFiles = [];
-
-//     if (req.files && req.files.length > 0) {
-//       for (const file of req.files) {
-//         const formData = new FormData();
-//         formData.append('file', fs.createReadStream(file.path));
-//         formData.append('fileName', file.originalname);
-//         formData.append('folderId', '204201997753'); // Change to your folder ID
-//         formData.append('options', JSON.stringify({ access: 'PUBLIC_INDEXABLE' }));
-
-//         const response = await axios.post(
-//           'https://api.hubapi.com/files/v3/files',
-//           formData,
-//           { headers: { Authorization: `Bearer ${HUBSPOT_API_KEY}`, ...formData.getHeaders() } }
-//         );
-
-//         uploadedFiles.push({ id: response.data.id, url: response.data.url });
-
-//         fs.unlinkSync(file.path);
-//       }
-//     }
-
-//     res.status(200).json({ files: uploadedFiles });
-//   } catch (err) {
-//     console.error(err.response?.data || err.message || err);
-//     res.status(500).json({ error: 'File upload failed' });
-//   }
-// });
-
-
-
-
-
-
-
-
-
-// app.post('/create-ticket', async (req, res) => {
-//   const { contactId, ticketData } = req.body;
-//   console.log('ticketData--- ', ticketData);
-//   if (!contactId || !ticketData?.subject) {
-//     return res.status(400).json({
-//       error: 'Contact ID and subject are required',
-//     });
-//   }
-
-//   try {
-//     const fetch = (...args) =>
-//       import('node-fetch').then(({ default: fetch }) => fetch(...args));
-
-//     // 🔹 HubSpot Form Submission API
-//     const response = await fetch(
-//       'https://api.hsforms.com/submissions/v3/integration/submit/4392290/d3c790a4-c601-4a54-b826-0a5ca3f57428',
-//       {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({
-//           fields: [
-//             { name: 'subject', value: ticketData.subject },
-//             { name: 'content', value: ticketData.description },
-//             { name: 'hs_ticket_priority', value: ticketData.priority },
-//             { name: 'company', value: ticketData.company },
-//             { name: 'machine_type', value: ticketData.machineType },
-//             { name: 'controller', value: ticketData.controller },
-//             { name: 'machine_serial_number', value: ticketData.serialNo },
-//             { name: 'sales_order_number', value: ticketData.salesOrder },
-//             { name: 'warranty', value: ticketData.warranty },
-//             { name: 'email', value: ticketData.email },
-//             {
-//               name: 'hs_ticket_category',
-//               value: ticketData.categories?.join(';'),
-//             },
-//           ],
-//         }),
-//       }
-//     );
-
-//     const data = await response.json();
-
-//     if (!response.ok) {
-//       console.error('Form submission failed:', data);
-//       return res.status(500).json({
-//         error: 'Ticket submission failed',
-//         data,
-//       });
-//     }
-
-//     // ✅ SAME response variable name
-//     return res.status(201).json({
-//       success: true,
-//       message: 'Ticket created successfully',
-//       data,
-//     });
-
-//   } catch (error) {
-//     console.error('Create Ticket Error:', error);
-//     return res.status(500).json({
-//       error: 'Internal server error',
-//     });
-//   }
-// });
-
-
  
+app.post('/get-user-data', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const searchResponse = await fetch(
+      'https://api.hubapi.com/crm/v3/objects/contacts/search',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${HUBSPOT_API_KEY}`,
+        },
+        body: JSON.stringify({
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName: 'email',
+                  operator: 'EQ',
+                  value: email,
+                },
+              ],
+            },
+          ],
+          properties: ['app_support_team_member'],
+        }),
+      }
+    );
+
+    const data = await searchResponse.json();
+
+    if (!data.results.length) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    return res.json({
+      app_support_team_member:
+        data.results[0].properties.app_support_team_member || '',
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 
 
-// Step 3: check login details in hubspot
 app.post('/check_login_detail', async (req, res) => {
   const { email, password } = req.body;
   console.log('email---- ' , email);
@@ -860,7 +596,7 @@ app.post('/check_login_detail', async (req, res) => {
     const fetch = (...args) =>
       import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-    // 1️⃣ SEARCH CONTACT BY EMAIL
+    
     const searchResponse = await fetch(
       'https://api.hubapi.com/crm/v3/objects/contacts/search',
       {
@@ -881,7 +617,7 @@ app.post('/check_login_detail', async (req, res) => {
               ],
             },
           ],
-          properties: ['email', 'mobile_password', 'firstname', 'lastname', 'profile_image', 'bio', 'phone', 'gender'],
+          properties: ['email', 'mobile_password', 'firstname', 'lastname', 'profile_image', 'bio', 'phone', 'gender', 'app_support_team_member'],
         }),
       }
     );
@@ -926,6 +662,7 @@ app.post('/check_login_detail', async (req, res) => {
         bio: contact.properties.bio || '',
         phone: contact.properties.phone || '',
         gender: contact.properties.gender || '',
+        app_support_team_member: contact.properties.app_support_team_member || '',
       },
     });
 
@@ -938,7 +675,7 @@ app.post('/check_login_detail', async (req, res) => {
 });
 
 
-// Step 3: Forgot Password
+
 app.post('/forgot_password', async (req, res) => {
   const { email } = req.body;
 
@@ -950,7 +687,7 @@ app.post('/forgot_password', async (req, res) => {
     const fetch = (...args) =>
       import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-    // 1️⃣ Search contact by email in HubSpot
+    
     const searchResponse = await fetch(
       'https://api.hubapi.com/crm/v3/objects/contacts/search',
       {
@@ -979,7 +716,7 @@ app.post('/forgot_password', async (req, res) => {
       return res.status(404).json({ message: 'Please enter a valid email.' });
     }
 
-    // 2️⃣ Submit email to HubSpot form endpoint
+    
     const formResponse = await fetch(
       'https://api.hsforms.com/submissions/v3/integration/submit/4392290/635124f0-b15f-40c2-9806-5405ca736690',
       {
@@ -1066,7 +803,7 @@ app.post('/submit-feedback', async (req, res) => {
     const contactId = searchData.results[0].id;
 
     // -------- Step 2: Create Feedback object & associate with contact --------
-    const HUBSPOT_FEEDBACK_OBJECT_ID = '2-56321597'; // your feedback object type
+    const HUBSPOT_FEEDBACK_OBJECT_ID = '2-56321597'; 
 
     const feedbackResponse = await fetch(
       `https://api.hubapi.com/crm/v3/objects/${HUBSPOT_FEEDBACK_OBJECT_ID}`,
@@ -1163,7 +900,7 @@ app.post('/get-profile-by-email', async (req, res) => {
 
     const contact = data.results[0].properties;
 
-    // ✅ RESPONSE FOR PROFILE.JSX
+    
     res.status(200).json({
       user: {
         email: contact.email || '',
@@ -1229,83 +966,6 @@ app.post('/update-profile', async (req, res) => {
 });
 
 
-//Get Ticket Details
-// app.post('/get_contact_tickets', async (req, res) => {
-//   const { contactId } = req.body;
-
-//   console.log('contactId---- ', contactId);
-//   if (!contactId) {
-//     return res.status(400).json({
-//       message: 'Contact ID is required',
-//     });
-//   }
-
-//   try {
-//     const fetch = (...args) =>
-//       import('node-fetch').then(({ default: fetch }) => fetch(...args));
-
-//     // 1️⃣ GET TICKET ASSOCIATIONS
-//     const associationResponse = await fetch(
-//       `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}/associations/ticket`,
-//       {
-//         method: 'GET',
-//         headers: {
-//           'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
-//           'Content-Type': 'application/json',
-//         },
-//       }
-//     );
-
-//     const associationData = await associationResponse.json();
-
-//     if (!associationData.results || associationData.results.length === 0) {
-//       return res.status(200).json({
-//         message: 'No tickets found',
-//         tickets: [],
-//       });
-//     }
-
-//     // 2️⃣ EXTRACT TICKET IDS
-//     const ticketIds = associationData.results.map(item => item.id);
-
-//     // 3️⃣ FETCH EACH TICKET DETAIL
-//     const ticketPromises = ticketIds.map(ticketId =>
-//       fetch(
-//         `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}?properties=subject,createdate,hubspot_owner_id,hs_pipeline_stage`,
-//         {
-//           method: 'GET',
-//           headers: {
-//             'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
-//             'Content-Type': 'application/json',
-//           },
-//         }
-//       ).then(res => res.json())
-//     );
-
-//     const ticketResponses = await Promise.all(ticketPromises);
-
-//     // 4️⃣ FORMAT RESPONSE (UI FRIENDLY)
-//     const formattedTickets = ticketResponses.map(ticket => ({
-//       ticketId: ticket.id,
-//       subject: ticket.properties.subject || '',
-//       createdDate: ticket.properties.createdate || '',
-//       ownerId: ticket.properties.hubspot_owner_id || '',
-//       status: ticket.properties.hs_pipeline_stage || '',
-//     }));
-
-//     return res.status(200).json({
-//       message: 'Tickets fetched successfully',
-//       tickets: formattedTickets,
-//     });
-
-//   } catch (error) {
-//     console.error('Ticket Fetch Error:', error);
-//     return res.status(500).json({
-//       message: 'Internal server error',
-//     });
-//   }
-// });
-
 
 app.post('/get_tickets', async (req, res) => {
   const { contactId, type } = req.body;
@@ -1322,9 +982,6 @@ app.post('/get_tickets', async (req, res) => {
 
     let ticketIds = [];
 
-    // ============================
-    // 🔵 OWNED BY ME
-    // ============================
     if (type === 'me') {
 
       const associationResponse = await fetch(
@@ -1345,12 +1002,9 @@ app.post('/get_tickets', async (req, res) => {
       }
     }
 
-    // ============================
-    // 🟢 OWNED BY ORGANIZATION
-    // ============================
     if (type === 'org') {
 
-      // 1️⃣ GET COMPANY ID
+      
       const contactRes = await fetch(
         `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?associations=companies`,
         {
@@ -1374,7 +1028,7 @@ app.post('/get_tickets', async (req, res) => {
 
       const companyId = company.id;
 
-      // 2️⃣ GET COMPANY TICKETS
+      
       const companyRes = await fetch(
         `https://api.hubapi.com/crm/v3/objects/companies/${companyId}?associations=tickets`,
         {
@@ -1395,9 +1049,6 @@ app.post('/get_tickets', async (req, res) => {
         .map(t => t.id);
     }
 
-    // ============================
-    // 🚫 NO TICKETS
-    // ============================
     if (!ticketIds.length) {
       return res.status(200).json({
         message: 'No tickets found',
@@ -1405,9 +1056,6 @@ app.post('/get_tickets', async (req, res) => {
       });
     }
 
-    // ============================
-    // 🎯 FETCH TICKET DETAILS
-    // ============================
     const ticketPromises = ticketIds.map(ticketId =>
       fetch(
         `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}?properties=subject,createdate,hubspot_owner_id,hs_pipeline_stage`,
@@ -1445,7 +1093,8 @@ app.post('/get_tickets', async (req, res) => {
 
 
 app.post('/get_owner_ticket', async (req, res) => {
-  
+  const { ownerId } = req.body;
+
 
   try {
     const fetch = (...args) =>
@@ -1470,7 +1119,7 @@ app.post('/get_owner_ticket', async (req, res) => {
                   {
                     propertyName: 'hubspot_owner_id',
                     operator: 'EQ',
-                    value: '80554724',
+                    value: '35998790',
                   },
                 ],
               },
@@ -1523,6 +1172,47 @@ app.post('/get_owner_ticket', async (req, res) => {
 });
 
 
+app.post('/get-owner-id', async (req, res) => {
+  const { email } = req.body;
+  console.log('=== get-owner-id hit ===');
+  console.log('Email received:', email);
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email required' });
+  }
+
+  try {
+    const response = await axios.get(
+      'https://api.hubapi.com/crm/v3/owners?archived=false',
+      {
+        headers: {
+          Authorization: `Bearer ${HUBSPOT_API_KEY}`,
+        },
+      }
+    );
+
+    const owners = response.data.results || [];
+    console.log('Total owners found:', owners.length);
+    console.log('All owner emails:', owners.map(o => o.email));
+
+    const matchedOwner = owners.find(
+      (owner) => owner.email?.toLowerCase() === email?.toLowerCase()
+    );
+
+    console.log('Matched owner:', matchedOwner || 'NOT FOUND');
+
+    if (!matchedOwner) {
+      return res.status(200).json({ ownerId: null }); 
+    }
+
+    return res.status(200).json({ ownerId: matchedOwner.userId, OwnerUserID: matchedOwner.id });
+
+  } catch (err) {
+    console.error('Get owner error:', err.response?.data || err.message);
+    return res.status(500).json({ error: 'Failed to get owner' });
+  }
+});
+
 //Get Conversation Details
 app.post('/get_ticket_conversation', async (req, res) => {
   const { ticketId } = req.body;
@@ -1535,7 +1225,7 @@ app.post('/get_ticket_conversation', async (req, res) => {
     const fetch = (...args) =>
       import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-    // 1️⃣ GET THREAD ID FROM TICKET
+    
     const ticketRes = await fetch(
       `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}?properties=hs_conversations_originating_thread_id`,
       {
@@ -1550,13 +1240,14 @@ app.post('/get_ticket_conversation', async (req, res) => {
       ticketData?.properties?.hs_conversations_originating_thread_id;
 
       console.log('threadId--- ' , threadId);
+
     if (!threadId) {
       return res.status(200).json({
         messages: [],
       });
     }
 
-    // 2️⃣ GET THREAD MESSAGES
+    
     const msgRes = await fetch(
       `https://api.hubapi.com/conversations/v3/conversations/threads/${threadId}/messages`,
       {
@@ -1568,7 +1259,7 @@ app.post('/get_ticket_conversation', async (req, res) => {
 
     const msgData = await msgRes.json();
 
-    // 3️⃣ FORMAT MESSAGES
+    
     const formattedMessages = msgData.results
       .filter(m => m.type === 'MESSAGE')
       .map(m => {
@@ -1578,7 +1269,7 @@ app.post('/get_ticket_conversation', async (req, res) => {
 
         return {
           id: m.id,
-          direction: m.direction, // INCOMING / OUTGOING
+          direction: m.direction, 
           senderName: name,
           text: m.text || '',
           richText: m.richText || '',
@@ -1598,6 +1289,108 @@ app.post('/get_ticket_conversation', async (req, res) => {
   }
 });
 
+
+const uploadedFilesForViewTicket = [];
+app.post('/upload-to-hubspot-view', hubspotUpload.array('files'), async (req, res) => {
+  try {
+    const files = req.files;
+    if (!files || files.length === 0) {
+      return res.json({ success: true, files: [] });
+    }
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('file', fs.createReadStream(file.path));
+      formData.append('fileName', file.originalname);
+      formData.append('folderId', '204201997753'); 
+      formData.append(
+        'options',
+        JSON.stringify({ access: 'PUBLIC_INDEXABLE' })
+      );
+      const response = await axios.post(
+        'https://api.hubapi.com/files/v3/files',
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${HUBSPOT_API_KEY}`,
+            ...formData.getHeaders(),
+          },
+        }
+      );
+      uploadedFilesForViewTicket.push({
+        id: response.data.id,
+        url: response.data.url,
+      });
+      fs.unlinkSync(file.path);
+    }
+    res.json({
+      success: true,
+      files: uploadedFilesForViewTicket,
+    });
+    console.log('uploadedFilesForViewTicket--- ', uploadedFilesForViewTicket);
+    uploadedFilesForViewTicket.length = 0; 
+  } catch (err) {
+    console.log(err.response?.data || err);
+    res.status(500).json({ error: 'File upload failed' });
+  }
+});
+
+
+app.post('/send-hubspot-message', async (req, res) => {
+  const { threadId, text, recipientEmail, attachmentIds, channelAccountId, channelId, senderActorId } = req.body;
+
+  console.log('=== send-hubspot-message hit ===');
+  console.log('threadId:', threadId);
+  console.log('text:', text);
+  console.log('recipientEmail:', recipientEmail);
+  console.log('attachmentIds:', attachmentIds);
+  console.log('channelAccountId:', channelAccountId);
+  console.log('channelId:', channelId);
+  console.log('senderActorId received:', senderActorId);
+
+  try {
+    
+    const body = {
+      type: 'MESSAGE',
+      text: text,
+      senderActorId: senderActorId,
+      channelId: '1002',
+      channelAccountId: '597383280',
+      recipients: [
+        {
+          recipientField: 'TO',
+          deliveryIdentifiers: [
+            { type: 'HS_EMAIL_ADDRESS', value: recipientEmail },
+          ],
+        },
+      ],
+    };
+
+    
+    if (attachmentIds && attachmentIds.length > 0) {
+      body.attachments = attachmentIds.map((id) => ({ fileId: String(id) }));
+    }
+
+    console.log('Final body HubSpot ko ja raha hai:', JSON.stringify(body, null, 2));
+
+    const response = await axios.post(
+      `https://api.hubapi.com/conversations/v3/conversations/threads/${threadId}/messages`,
+      body,
+      {
+        headers: {
+          Authorization: `Bearer ${HUBSPOT_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    console.log('HubSpot response:', response.data);
+    return res.status(200).json({ success: true, data: response.data });
+
+  } catch (err) {
+    console.error('Send message error:', err.response?.data || err.message);
+    return res.status(500).json({ error: 'Message send failed', detail: err.response?.data });
+  }
+});
 
 app.listen(PORT,'0.0.0.0', () => console.log(`Server running on http://localhost:${PORT}`));
 
