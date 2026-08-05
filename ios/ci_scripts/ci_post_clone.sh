@@ -54,6 +54,7 @@ echo "Cloud Node path: $NODE_BINARY_PATH"
 
 cat > "$CI_PRIMARY_REPOSITORY_PATH/ios/.xcode.env.local" <<EOF
 export NODE_BINARY=$NODE_BINARY_PATH
+unset HERMES_CLI_PATH
 EOF
 
 echo "Checking WebView source files..."
