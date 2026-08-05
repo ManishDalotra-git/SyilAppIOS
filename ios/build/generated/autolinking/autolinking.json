@@ -77,6 +77,65 @@
         }
       }
     },
+    "@react-native-firebase/app": {
+      "root": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/@react-native-firebase/app",
+      "name": "@react-native-firebase/app",
+      "platforms": {
+        "ios": {
+          "podspecPath": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/@react-native-firebase/app/RNFBApp.podspec",
+          "version": "26.1.0",
+          "configurations": [],
+          "scriptPhases": [
+            {
+              "name": "[RNFB] Core Configuration",
+              "path": "./ios_config.sh",
+              "execution_position": "after_compile",
+              "input_files": [
+                "$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)"
+              ]
+            }
+          ]
+        },
+        "android": {
+          "sourceDir": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/@react-native-firebase/app/android",
+          "packageImportPath": "import io.invertase.firebase.app.ReactNativeFirebaseAppPackage;",
+          "packageInstance": "new ReactNativeFirebaseAppPackage()",
+          "buildTypes": [],
+          "libraryName": "RNFBAppTurboModules",
+          "componentDescriptors": [],
+          "cmakeListsPath": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/@react-native-firebase/app/android/src/reactnative/java/io/invertase/firebase/app/generated/jni/CMakeLists.txt",
+          "cxxModuleCMakeListsModuleName": null,
+          "cxxModuleCMakeListsPath": null,
+          "cxxModuleHeaderName": null,
+          "isPureCxxDependency": false
+        }
+      }
+    },
+    "@react-native-firebase/messaging": {
+      "root": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/@react-native-firebase/messaging",
+      "name": "@react-native-firebase/messaging",
+      "platforms": {
+        "ios": {
+          "podspecPath": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/@react-native-firebase/messaging/RNFBMessaging.podspec",
+          "version": "26.1.0",
+          "configurations": [],
+          "scriptPhases": []
+        },
+        "android": {
+          "sourceDir": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/@react-native-firebase/messaging/android",
+          "packageImportPath": "import io.invertase.firebase.messaging.ReactNativeFirebaseMessagingPackage;",
+          "packageInstance": "new ReactNativeFirebaseMessagingPackage()",
+          "buildTypes": [],
+          "libraryName": "RNFBMessagingTurboModules",
+          "componentDescriptors": [],
+          "cmakeListsPath": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/@react-native-firebase/messaging/android/src/main/java/io/invertase/firebase/messaging/generated/jni/CMakeLists.txt",
+          "cxxModuleCMakeListsModuleName": null,
+          "cxxModuleCMakeListsPath": null,
+          "cxxModuleHeaderName": null,
+          "isPureCxxDependency": false
+        }
+      }
+    },
     "@react-native-picker/picker": {
       "root": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/@react-native-picker/picker",
       "name": "@react-native-picker/picker",
@@ -173,7 +232,7 @@
       "platforms": {
         "ios": {
           "podspecPath": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/react-native-safe-area-context/react-native-safe-area-context.podspec",
-          "version": "5.6.2",
+          "version": "5.8.0",
           "configurations": [],
           "scriptPhases": []
         },
@@ -201,7 +260,7 @@
       "platforms": {
         "ios": {
           "podspecPath": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/react-native-screens/RNScreens.podspec",
-          "version": "4.19.0",
+          "version": "4.21.0",
           "configurations": [],
           "scriptPhases": []
         },
@@ -265,7 +324,7 @@
       "platforms": {
         "ios": {
           "podspecPath": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/react-native-video/react-native-video.podspec",
-          "version": "6.19.0",
+          "version": "6.19.2",
           "configurations": [],
           "scriptPhases": []
         },
@@ -289,7 +348,7 @@
       "platforms": {
         "ios": {
           "podspecPath": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/react-native-webview/react-native-webview.podspec",
-          "version": "13.16.1",
+          "version": "13.17.0",
           "configurations": [],
           "scriptPhases": []
         },

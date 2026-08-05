@@ -174,7 +174,7 @@ const ViewTicketDetail = ({ navigation }) => {
     .find(msg => msg.direction === 'INCOMING' && msg.senderName?.includes('@'));
 
   const incomingEmail = initialMessage?.senderName;
-  // const incomingSubject = incomingMessage?.subject;
+  //const incomingSubject = incomingMessage?.subject;
 
   const incomingSubject = incomingMessage?.subject;
 
@@ -224,7 +224,7 @@ const ViewTicketDetail = ({ navigation }) => {
   /* ================= SEND TO CUSTOMER ================= */
   const sendToCustomer = async () => {
     if (!messageText.trim()) {
-      Alert.alert('Error', 'Message likhna zaroori hai');
+      Alert.alert('Error', 'Message is required');
       return;
     }
 
@@ -289,7 +289,6 @@ console.log('Selected files before upload:', selectedFiles);
 
         attachmentIds = uploadData.files.map((f) => f.id); 
 
-
       }
 
       
@@ -304,6 +303,7 @@ console.log('Selected files before upload:', selectedFiles);
             threadId: conversationsThreadId,
             text: messageText,
             recipientEmail: incomingEmail,
+            subject: incomingSubject,
             attachmentIds,
             senderActorId: senderActorId,
           }),

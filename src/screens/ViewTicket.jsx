@@ -403,7 +403,12 @@ const ViewTicket = ({ navigation }) => {
                 {loading && <Text allowFontScaling={false} style={{ textAlign:'center' , padding:10, }}>Loading ticket...</Text>}
                 {/* TICKET LIST */}
                 <FlatList
-                    data={tickets}
+                    //data={tickets}
+                    data={tickets.filter(
+                        item =>
+                            item.customer_portal === '' || item.customer_portal === ' ' || item.customer_portal === 'False' ||
+                            item.customer_portal === false
+                    )}
                     showsVerticalScrollIndicator={false}
                     keyExtractor={(item) => item.ticketId}
                     //contentContainerStyle={{ paddingBottom: 200, }}
@@ -438,8 +443,13 @@ const ViewTicket = ({ navigation }) => {
                     )}
                 />
 
-                {!loading && tickets.length === 0 && (
+                {/* {!loading && tickets.length === 0 && (
                     <Text allowFontScaling={false} style={styles.noTicketText}>No tickets found</Text>
+                )} */}
+
+              {!loading &&
+                tickets.filter(item => item.customer_portal === '' || item.customer_portal === ' ' || item.customer_portal === 'False' || item.customer_portal === false).length === 0 && (
+                    <Text style={styles.noTicketText}>No tickets found</Text>
                 )}
 
 

@@ -13,6 +13,10 @@ import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import { setContactId } from '../utils/hiddenFields';
+import {
+  listenForFCMTokenRefresh,
+  saveFCMToken,
+} from '../utils/fcm';
 
 const Login = () => {
 
@@ -80,6 +84,21 @@ const handleSubmit = async () => {
     await AsyncStorage.setItem('app_support_team_member', String(result.user?.app_support_team_member ?? ''));
 
     console.log('result.user----- ', result.user);
+
+
+    const loggedInEmail =
+  result.user?.email || username;
+
+const fcmToken = await saveFCMToken(loggedInEmail);
+
+if (fcmToken) {
+  console.log('Dealer FCM registration completed');
+} else {
+  console.log(
+    'Login successful, but FCM token was not saved',
+  );
+}
+
 
       const userID = await AsyncStorage.getItem('userID');
       const userFirstName = await AsyncStorage.getItem('userFirstName');
