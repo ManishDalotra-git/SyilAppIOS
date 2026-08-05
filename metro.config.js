@@ -22,5 +22,5 @@ const config = {
     blockList: /syil-backend\/.*/,
   },
 };
-
+ 
 module.exports = mergeConfig(defaultConfig, config);

@@ -150,8 +150,14 @@
     ],
     "RCT-Folly/Fabric": [
 
+    ],
+    "Firebase/Messaging": [
+      "12.17.0"
+    ],
+    "FirebaseCoreExtension": [
+      "12.17.0"
     ]
   },
   "compiler_flags": "-DRCT_NEW_ARCH_ENABLED=1",
-  "static_framework": false
+  "static_framework": true
 }

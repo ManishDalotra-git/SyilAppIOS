@@ -57,13 +57,16 @@ require Pod::Executable.execute_command('node', ['-p',
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
+# Force React Native Firebase to use CocoaPods instead of SPM
+$RNFirebaseDisableSPM = true
+
+# RNFirebase pods should be static frameworks
+$RNFirebaseAsStaticFramework = true
+
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
-# RN Firebase v26 SPM requires dynamic framework linkage
-linkage = 'dynamic'
-Pod::UI.puts "Configuring Pods with #{linkage}ally linked frameworks".green
-use_frameworks! :linkage => linkage.to_sym
+use_frameworks! :linkage => :static
 
 target 'syilReact' do
   config = use_native_modules!
@@ -81,15 +84,46 @@ target 'syilReact' do
     )
 
     installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+
+        # Allow React headers inside framework pods
+        config.build_settings[
+          'CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'
+        ] = 'YES'
+
+        # Keep inherited flags
+        other_cflags =
+          config.build_settings['OTHER_CFLAGS'] || ['$(inherited)']
+
+        other_cflags =
+          [other_cflags] unless other_cflags.is_a?(Array)
+
+        unless other_cflags.include?(
+          '-Wno-non-modular-include-in-framework-module'
+        )
+          other_cflags <<
+            '-Wno-non-modular-include-in-framework-module'
+        end
+
+        config.build_settings['OTHER_CFLAGS'] = other_cflags
+      end
+
       if target.name == 'fmt'
         target.build_configurations.each do |config|
-          config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
-          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+          config.build_settings[
+            'CLANG_CXX_LANGUAGE_STANDARD'
+          ] = 'c++17'
 
-          unless config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'].include?(
-            'FMT_USE_CONSTEXPR=0'
-          )
-            config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FMT_USE_CONSTEXPR=0'
+          config.build_settings[
+            'GCC_PREPROCESSOR_DEFINITIONS'
+          ] ||= ['$(inherited)']
+
+          unless config.build_settings[
+            'GCC_PREPROCESSOR_DEFINITIONS'
+          ].include?('FMT_USE_CONSTEXPR=0')
+            config.build_settings[
+              'GCC_PREPROCESSOR_DEFINITIONS'
+            ] << 'FMT_USE_CONSTEXPR=0'
           end
         end
       end

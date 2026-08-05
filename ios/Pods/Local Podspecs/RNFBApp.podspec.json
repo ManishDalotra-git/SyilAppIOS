@@ -147,7 +147,10 @@
     ],
     "RCT-Folly/Fabric": [
 
+    ],
+    "Firebase/CoreOnly": [
+      "12.17.0"
     ]
   },
-  "static_framework": false
+  "static_framework": true
 }
