@@ -18,3 +18,6 @@ node_modules/
 .env
 
 ios/.xcode.env.local
+xcuserdata/
+*.xcuserstate
+ios/.xcode.env.local
