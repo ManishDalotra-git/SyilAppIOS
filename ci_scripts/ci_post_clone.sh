@@ -1,14 +1,25 @@
 #!/bin/sh
 
-echo "Starting CI setup..."
+set -e
 
-# Install node modules
-npm install
+echo "========== XCODE CLOUD POST CLONE =========="
 
-# Go to iOS folder
+cd "$CI_PRIMARY_REPOSITORY_PATH"
+
+echo "Node version:"
+node --version
+
+echo "NPM version:"
+npm --version
+
+echo "Installing JavaScript dependencies..."
+npm ci
+
+echo "Installing CocoaPods dependencies..."
 cd ios
 
-# Install pods
+rm -rf Pods
+
 pod install --repo-update
 
-echo "CI setup completed"
+echo "========== DEPENDENCIES INSTALLED =========="
