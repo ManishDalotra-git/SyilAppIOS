@@ -438,8 +438,8 @@ app.post(
 
 app.post('/hubspot-webhook', async (req, res) => {
   /*
-   * HubSpot ko turant response dena hai,
-   * warna webhook retry ho sakta hai.
+   * HubSpot ko turant 200 response dena zaroori hai,
+   * warna webhook dobara retry ho sakta hai.
    */
   res.sendStatus(200);
 
@@ -447,6 +447,7 @@ app.post('/hubspot-webhook', async (req, res) => {
     console.log(
       '========== HUBSPOT WEBHOOK RECEIVED ==========',
     );
+
     console.log(
       'Webhook body:',
       JSON.stringify(req.body, null, 2),
@@ -489,14 +490,18 @@ app.post('/hubspot-webhook', async (req, res) => {
       );
 
     /*
-     * Get thread messages.
+     * =====================================================
+     * STEP 1: Current thread ke messages fetch karo
+     * =====================================================
      */
+
     const messagesResponse = await fetch(
       `https://api.hubapi.com/conversations/v3/conversations/threads/${threadId}/messages`,
       {
         method: 'GET',
         headers: {
-          Authorization: `Bearer ${HUBSPOT_API_KEY}`,
+          Authorization:
+            `Bearer ${HUBSPOT_API_KEY}`,
           'Content-Type': 'application/json',
         },
       },
@@ -521,19 +526,6 @@ app.post('/hubspot-webhook', async (req, res) => {
     const availableMessages =
       messagesData.results || [];
 
-    console.log(
-      'Messages received:',
-      availableMessages.map(message => ({
-        id: message.id,
-        direction: message.direction,
-        type: message.type,
-        text: message.text?.slice(0, 80),
-      })),
-    );
-
-    /*
-     * Match webhook message ID exactly.
-     */
     const latestMessage =
       availableMessages.find(
         message =>
@@ -553,204 +545,347 @@ app.post('/hubspot-webhook', async (req, res) => {
       'Matched message direction:',
       latestMessage.direction,
     );
+
     console.log(
       'Matched message text:',
       latestMessage.text,
     );
 
     /*
-     * Dealer app notification customer message par jayegi.
+     * Sirf actual incoming/outgoing messages process karne hain.
      */
-    // if (latestMessage.direction !== 'INCOMING') {
-    //   console.log(
-    //     `Notification skipped because direction is ${latestMessage.direction}`,
-    //   );
-    //   return;
-    // }
+    const allowedDirections = [
+      'INCOMING',
+      'OUTGOING',
+    ];
 
-    const allowedDirections = ['INCOMING', 'OUTGOING'];
+    if (
+      !allowedDirections.includes(
+        latestMessage.direction,
+      )
+    ) {
+      console.log(
+        `Notification skipped because direction is ${latestMessage.direction}`,
+      );
+      return;
+    }
 
-if (!allowedDirections.includes(latestMessage.direction)) {
-  console.log(
-    `Notification skipped because direction is ${latestMessage.direction}`,
-  );
-  return;
-}
+    /*
+     * =====================================================
+     * STEP 2: Thread ke saath associated ticket find karo
+     * =====================================================
+     */
 
-// const senderEmail =
-//   latestMessage.senders?.[0]
-//     ?.deliveryIdentifier?.value || '';
-
-// const senderName =
-//   latestMessage.senders?.[0]?.name ||
-//   senderEmail ||
-//   (latestMessage.direction === 'OUTGOING'
-//     ? 'SYIL Support'
-//     : 'Customer');
-
-const senderEmail =
-  latestMessage.senders?.[0]
-    ?.deliveryIdentifier?.value
-    ?.trim()
-    ?.toLowerCase() || '';
-
-console.log(
-  'Message sender email:',
-  senderEmail || 'Not available',
-);
-
-/*
- * Sender ko HubSpot contact me search karke
- * app_support_team_member property check karenge.
- */
-let senderIsSupport = false;
-let senderContactName = '';
-
-if (senderEmail) {
-  const senderSearchResponse = await fetch(
-    'https://api.hubapi.com/crm/v3/objects/contacts/search',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${HUBSPOT_API_KEY}`,
-        'Content-Type': 'application/json',
+    const ticketSearchResponse = await fetch(
+      'https://api.hubapi.com/crm/v3/objects/tickets/search',
+      {
+        method: 'POST',
+        headers: {
+          Authorization:
+            `Bearer ${HUBSPOT_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName:
+                    'hs_conversations_originating_thread_id',
+                  operator: 'EQ',
+                  value: String(threadId),
+                },
+              ],
+            },
+          ],
+          properties: [
+            'subject',
+            'customer_portal',
+            'hs_conversations_originating_thread_id',
+          ],
+          limit: 1,
+        }),
       },
-      body: JSON.stringify({
-        filterGroups: [
-          {
-            filters: [
-              {
-                propertyName: 'email',
-                operator: 'EQ',
-                value: senderEmail,
-              },
-            ],
-          },
-        ],
-        properties: [
-          'email',
-          'firstname',
-          'lastname',
-          'app_support_team_member',
-        ],
-        limit: 1,
-      }),
-    },
-  );
-
-  const senderSearchData =
-    await senderSearchResponse.json();
-
-  console.log(
-    'Sender contact search status:',
-    senderSearchResponse.status,
-  );
-
-  if (!senderSearchResponse.ok) {
-    console.error(
-      'Sender contact search error:',
-      JSON.stringify(senderSearchData, null, 2),
     );
-  } else if (senderSearchData.results?.length) {
-    const senderContact =
-      senderSearchData.results[0];
 
-    const supportValue =
-      senderContact.properties
-        ?.app_support_team_member
+    const ticketSearchData =
+      await ticketSearchResponse.json();
+
+    console.log(
+      'Ticket search status:',
+      ticketSearchResponse.status,
+    );
+
+    if (!ticketSearchResponse.ok) {
+      console.error(
+        'Ticket search error:',
+        JSON.stringify(
+          ticketSearchData,
+          null,
+          2,
+        ),
+      );
+      return;
+    }
+
+    if (!ticketSearchData.results?.length) {
+      console.log(
+        'No ticket found for thread:',
+        threadId,
+      );
+      return;
+    }
+
+    const matchedTicket =
+      ticketSearchData.results[0];
+
+    const ticketId =
+      String(matchedTicket.id);
+
+    const ticketSubject =
+      matchedTicket.properties?.subject || '';
+
+    const rawCustomerPortal =
+      matchedTicket.properties
+        ?.customer_portal;
+
+    const normalizedCustomerPortal =
+      String(rawCustomerPortal ?? '')
+        .trim()
+        .toLowerCase();
+
+    /*
+     * true / yes / 1 ka matlab Customer App ticket.
+     * false / empty / missing ka matlab Dealer App ticket.
+     */
+    const isCustomerPortalTicket =
+      rawCustomerPortal === true ||
+      normalizedCustomerPortal === 'true' ||
+      normalizedCustomerPortal === 'yes' ||
+      normalizedCustomerPortal === '1';
+
+    console.log(
+      'Matched Ticket ID:',
+      ticketId,
+    );
+
+    console.log(
+      'Ticket Subject:',
+      ticketSubject,
+    );
+
+    console.log(
+      'customer_portal raw value:',
+      rawCustomerPortal,
+    );
+
+    console.log(
+      'Is customer portal ticket:',
+      isCustomerPortalTicket,
+    );
+
+    /*
+     * Dealer app me customer_portal=true ticket ki
+     * notification nahi bhejni.
+     */
+    if (isCustomerPortalTicket) {
+      console.log(
+        'Dealer push skipped: customer_portal is true',
+      );
+      return;
+    }
+
+    console.log(
+      'Dealer ticket confirmed',
+    );
+
+    /*
+     * =====================================================
+     * STEP 3: Message sender identify karo
+     * =====================================================
+     */
+
+    const senderEmail =
+      latestMessage.senders?.[0]
+        ?.deliveryIdentifier?.value
         ?.trim()
         ?.toLowerCase() || '';
 
-    senderIsSupport =
-      supportValue === 'yes';
-
-    senderContactName = [
-      senderContact.properties?.firstname,
-      senderContact.properties?.lastname,
-    ]
-      .filter(Boolean)
-      .join(' ');
-
     console.log(
-      'app_support_team_member:',
-      supportValue || 'empty',
+      'Message sender email:',
+      senderEmail || 'Not available',
     );
-  } else {
-    console.log(
-      'Sender HubSpot contact not found',
-    );
-  }
-}
-
-/*
- * Fallback:
- * Outgoing normally HubSpot/support message hota hai.
- * Incoming normally customer message hota hai.
- */
-if (!senderEmail || !senderContactName) {
-  senderIsSupport =
-    latestMessage.direction === 'OUTGOING';
-}
-
-const senderRole = senderIsSupport
-  ? 'support'
-  : 'customer';
-
-const senderName =
-  senderContactName ||
-  latestMessage.senders?.[0]?.name ||
-  senderEmail ||
-  (senderIsSupport
-    ? 'SYIL Support'
-    : 'Customer');
-
-const notificationTitle = senderIsSupport
-  ? `New support reply from ${senderName}`
-  : `New customer message from ${senderName}`;
-
-console.log('Sender role:', senderRole);
-console.log('Sender name:', senderName);
-console.log(
-  'Notification title:',
-  notificationTitle,
-);
-
-
-// const notificationTitle =
-//   latestMessage.direction === 'OUTGOING'
-//     ? `New support reply from ${senderName}`
-//     : `New customer message from ${senderName}`;
-
-console.log(
-  'Message direction:',
-  latestMessage.direction,
-);
-
-console.log(
-  'Sender:',
-  senderName,
-);
-
-    // const customerEmail =
-    //   latestMessage.senders?.[0]
-    //     ?.deliveryIdentifier?.value || '';
-
-    // console.log(
-    //   'Customer sender email:',
-    //   customerEmail || 'Not available',
-    // );
 
     /*
-     * Find all contacts having dealer_fcm_token.
-     * Testing phase me saare registered dealer devices
-     * ko notification jayegi.
+     * Sender contact ki app_support_team_member
+     * property check karenge.
      */
+    let senderIsSupport = false;
+    let senderContactName = '';
+    let senderContactFound = false;
+
+    if (senderEmail) {
+      const senderSearchResponse = await fetch(
+        'https://api.hubapi.com/crm/v3/objects/contacts/search',
+        {
+          method: 'POST',
+          headers: {
+            Authorization:
+              `Bearer ${HUBSPOT_API_KEY}`,
+            'Content-Type':
+              'application/json',
+          },
+          body: JSON.stringify({
+            filterGroups: [
+              {
+                filters: [
+                  {
+                    propertyName: 'email',
+                    operator: 'EQ',
+                    value: senderEmail,
+                  },
+                ],
+              },
+            ],
+            properties: [
+              'email',
+              'firstname',
+              'lastname',
+              'app_support_team_member',
+            ],
+            limit: 1,
+          }),
+        },
+      );
+
+      const senderSearchData =
+        await senderSearchResponse.json();
+
+      console.log(
+        'Sender contact search status:',
+        senderSearchResponse.status,
+      );
+
+      if (!senderSearchResponse.ok) {
+        console.error(
+          'Sender contact search error:',
+          JSON.stringify(
+            senderSearchData,
+            null,
+            2,
+          ),
+        );
+      } else if (
+        senderSearchData.results?.length
+      ) {
+        senderContactFound = true;
+
+        const senderContact =
+          senderSearchData.results[0];
+
+        const supportValue =
+          String(
+            senderContact.properties
+              ?.app_support_team_member ??
+              '',
+          )
+            .trim()
+            .toLowerCase();
+
+        /*
+         * Sirf Yes ka matlab support.
+         * No / empty / missing ka matlab customer.
+         */
+        senderIsSupport =
+          supportValue === 'yes';
+
+        senderContactName = [
+          senderContact.properties
+            ?.firstname,
+          senderContact.properties
+            ?.lastname,
+        ]
+          .filter(Boolean)
+          .join(' ');
+
+        console.log(
+          'app_support_team_member:',
+          supportValue || 'empty',
+        );
+      } else {
+        console.log(
+          'Sender contact not found in HubSpot',
+        );
+      }
+    }
+
+    /*
+     * Sender contact nahi mila to direction fallback:
+     * OUTGOING = support
+     * INCOMING = customer
+     */
+    if (!senderContactFound) {
+      senderIsSupport =
+        latestMessage.direction ===
+        'OUTGOING';
+
+      console.log(
+        'Using message direction as sender-role fallback',
+      );
+    }
+
+    const senderRole =
+      senderIsSupport
+        ? 'support'
+        : 'customer';
+
+    const senderName =
+      senderContactName ||
+      latestMessage.senders?.[0]?.name ||
+      senderEmail ||
+      (senderIsSupport
+        ? 'SYIL Support'
+        : 'Customer');
+
+    const notificationTitle =
+      senderIsSupport
+        ? `New support reply from ${senderName}`
+        : `New customer message from ${senderName}`;
+
+    const notificationBody =
+      latestMessage.text?.trim() ||
+      (senderIsSupport
+        ? 'You received a new reply from SYIL Support.'
+        : 'You received a new customer message.');
+
+    console.log(
+      'Sender role:',
+      senderRole,
+    );
+
+    console.log(
+      'Sender name:',
+      senderName,
+    );
+
+    console.log(
+      'Notification title:',
+      notificationTitle,
+    );
+
+    /*
+     * =====================================================
+     * STEP 4: Dealer FCM tokens find karo
+     * =====================================================
+     */
+
     const dealerSearchResponse = await fetch(
       'https://api.hubapi.com/crm/v3/objects/contacts/search',
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${HUBSPOT_API_KEY}`,
+          Authorization:
+            `Bearer ${HUBSPOT_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -803,9 +938,11 @@ console.log(
       'Dealer contacts with token:',
       dealerContacts.map(contact => ({
         contactId: contact.id,
-        email: contact.properties?.email,
+        email:
+          contact.properties?.email,
         hasToken: Boolean(
-          contact.properties?.dealer_fcm_token,
+          contact.properties
+            ?.dealer_fcm_token,
         ),
       })),
     );
@@ -829,111 +966,148 @@ console.log(
 
     if (!tokens.length) {
       console.log(
-        'No dealer FCM token found in HubSpot',
+        'No dealer FCM token found',
       );
       return;
     }
 
-    // const customerName =
-    //   latestMessage.senders?.[0]?.name ||
-    //   customerEmail ||
-    //   'Customer';
-
-    const body =
-  latestMessage.text?.trim() ||
-  (senderIsSupport
-    ? 'You received a new reply from SYIL Support.'
-    : 'You received a new customer message.');
-
     /*
-     * Send notification to each registered dealer token.
+     * =====================================================
+     * STEP 5: Push notification send karo
+     * =====================================================
      */
-    const pushResults = await Promise.allSettled(
-      tokens.map(token =>
-        getMessaging().send({
-          token,
 
-          notification: {
-            title: notificationTitle,
-            body: body.slice(0, 200),
-          },
+    const pushResults =
+      await Promise.allSettled(
+        tokens.map(token =>
+          getMessaging().send({
+            token,
 
-          // data: {
-          //   threadId: String(threadId),
-          //   messageId: String(
-          //     latestMessage.id,
-          //   ),
-          //   customerEmail: String(
-          //     customerEmail,
-          //   ),
-          //   type: 'customer_message',
-          // },
-
-  data: {
-  threadId: String(threadId),
-  messageId: String(latestMessage.id),
-  senderEmail: String(senderEmail),
-  senderRole: String(senderRole),
-  appSupportTeamMember:
-    senderIsSupport ? 'Yes' : 'No',
-  direction: String(
-    latestMessage.direction,
-  ),
-  type: senderIsSupport
-    ? 'support_message'
-    : 'customer_message',
-},
-
-          apns: {
-            headers: {
-              'apns-priority': '10',
+            notification: {
+              title: notificationTitle,
+              body:
+                notificationBody.slice(
+                  0,
+                  200,
+                ),
             },
-            payload: {
-              aps: {
-                alert: {
-                  title: notificationTitle,
-                  body: body.slice(0, 200),
+
+            data: {
+              /*
+               * Notification tap par isi ticket ko
+               * open karne ke liye.
+               */
+              ticketId:
+                String(ticketId),
+
+              threadId:
+                String(threadId),
+
+              messageId:
+                String(latestMessage.id),
+
+              ticketSubject:
+                String(ticketSubject),
+
+              senderEmail:
+                String(senderEmail),
+
+              senderRole:
+                String(senderRole),
+
+              appSupportTeamMember:
+                senderIsSupport
+                  ? 'Yes'
+                  : 'No',
+
+              direction:
+                String(
+                  latestMessage.direction,
+                ),
+
+              targetScreen:
+                'ViewTicketDetail',
+
+              type:
+                senderIsSupport
+                  ? 'support_message'
+                  : 'customer_message',
+            },
+
+            apns: {
+              headers: {
+                'apns-priority': '10',
+              },
+
+              payload: {
+                aps: {
+                  alert: {
+                    title:
+                      notificationTitle,
+                    body:
+                      notificationBody.slice(
+                        0,
+                        200,
+                      ),
+                  },
+
+                  sound: 'default',
+                  badge: 1,
                 },
-                sound: 'default',
-                badge: 1,
               },
             },
-          },
-        }),
-      ),
-    );
+          }),
+        ),
+      );
 
-    pushResults.forEach((result, index) => {
-      if (result.status === 'fulfilled') {
-        console.log(
-          `Push ${index + 1} success:`,
-          result.value,
-        );
-      } else {
-        console.error(
-          `Push ${index + 1} failed:`,
-          {
-            code: result.reason?.code,
-            message: result.reason?.message,
-          },
-        );
-      }
-    });
+    pushResults.forEach(
+      (result, index) => {
+        if (
+          result.status ===
+          'fulfilled'
+        ) {
+          console.log(
+            `Push ${index + 1} success:`,
+            result.value,
+          );
+        } else {
+          console.error(
+            `Push ${index + 1} failed:`,
+            {
+              code:
+                result.reason?.code,
+              message:
+                result.reason?.message,
+            },
+          );
+        }
+      },
+    );
 
     const successCount =
       pushResults.filter(
         result =>
-          result.status === 'fulfilled',
+          result.status ===
+          'fulfilled',
       ).length;
 
     const failureCount =
-      pushResults.length - successCount;
+      pushResults.length -
+      successCount;
 
     console.log(
       '========== PUSH SUMMARY ==========',
     );
-    console.log('Successful:', successCount);
-    console.log('Failed:', failureCount);
+
+    console.log(
+      'Successful:',
+      successCount,
+    );
+
+    console.log(
+      'Failed:',
+      failureCount,
+    );
   } catch (error) {
     console.error(
       'HubSpot webhook processing error:',
