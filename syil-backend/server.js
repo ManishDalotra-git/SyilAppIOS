@@ -849,8 +849,8 @@ app.post('/hubspot-webhook', async (req, res) => {
 
     const notificationTitle =
       senderIsSupport
-        ? `New support reply from ${senderName}`
-        : `New customer message from ${senderName}`;
+        ? `New reply from ${senderName}`
+        : `New message from ${senderName}`;
 
     const notificationBody =
       latestMessage.text?.trim() ||
