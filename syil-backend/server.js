@@ -438,13 +438,19 @@ app.post(
 
 app.post('/hubspot-webhook', async (req, res) => {
   /*
-   * HubSpot ko jaldi 200 response dena zaroori hai,
+   * HubSpot ko turant response dena hai,
    * warna webhook retry ho sakta hai.
    */
   res.sendStatus(200);
 
   try {
-    console.log('========== HUBSPOT WEBHOOK RECEIVED ==========');
+    console.log(
+      '========== HUBSPOT WEBHOOK RECEIVED ==========',
+    );
+    console.log(
+      'Webhook body:',
+      JSON.stringify(req.body, null, 2),
+    );
 
     const events = Array.isArray(req.body)
       ? req.body
@@ -460,8 +466,20 @@ app.post('/hubspot-webhook', async (req, res) => {
     const threadId = event.objectId;
     const webhookMessageId = event.messageId;
 
+    console.log('Thread ID:', threadId);
+    console.log(
+      'Webhook Message ID:',
+      webhookMessageId,
+    );
+    console.log(
+      'Subscription Type:',
+      event.subscriptionType,
+    );
+
     if (!threadId || !webhookMessageId) {
-      console.log('Thread ID or message ID missing');
+      console.log(
+        'Thread ID or webhook message ID missing',
+      );
       return;
     }
 
@@ -471,7 +489,7 @@ app.post('/hubspot-webhook', async (req, res) => {
       );
 
     /*
-     * Get all messages from the HubSpot conversation.
+     * Get thread messages.
      */
     const messagesResponse = await fetch(
       `https://api.hubapi.com/conversations/v3/conversations/threads/${threadId}/messages`,
@@ -487,60 +505,84 @@ app.post('/hubspot-webhook', async (req, res) => {
     const messagesData =
       await messagesResponse.json();
 
+    console.log(
+      'HubSpot messages status:',
+      messagesResponse.status,
+    );
+
     if (!messagesResponse.ok) {
       console.error(
-        'HubSpot thread messages error:',
-        messagesData,
+        'HubSpot messages API error:',
+        JSON.stringify(messagesData, null, 2),
       );
       return;
     }
 
+    const availableMessages =
+      messagesData.results || [];
+
+    console.log(
+      'Messages received:',
+      availableMessages.map(message => ({
+        id: message.id,
+        direction: message.direction,
+        type: message.type,
+        text: message.text?.slice(0, 80),
+      })),
+    );
+
     /*
-     * Always match the exact webhook message ID.
-     * Do not simply pick the first message, because order may change.
+     * Match webhook message ID exactly.
      */
     const latestMessage =
-      messagesData.results?.find(
+      availableMessages.find(
         message =>
           message.type === 'MESSAGE' &&
-          message.id === webhookMessageId,
+          String(message.id) ===
+            String(webhookMessageId),
       );
 
     if (!latestMessage) {
       console.log(
-        'Webhook message not found in thread data',
+        'Exact webhook message not found in thread',
       );
       return;
     }
 
+    console.log(
+      'Matched message direction:',
+      latestMessage.direction,
+    );
+    console.log(
+      'Matched message text:',
+      latestMessage.text,
+    );
+
     /*
-     * Dealer app should receive a notification when
-     * the customer sends an INCOMING message.
+     * Dealer app notification customer message par jayegi.
      */
     if (latestMessage.direction !== 'INCOMING') {
       console.log(
-        `Ignoring message direction: ${latestMessage.direction}`,
+        `Notification skipped because direction is ${latestMessage.direction}`,
       );
       return;
     }
 
     const customerEmail =
       latestMessage.senders?.[0]
-        ?.deliveryIdentifier?.value;
+        ?.deliveryIdentifier?.value || '';
 
-    if (!customerEmail) {
-      console.log(
-        'Customer email not found in message',
-      );
-      return;
-    }
-
-    console.log('Customer email:', customerEmail);
+    console.log(
+      'Customer sender email:',
+      customerEmail || 'Not available',
+    );
 
     /*
-     * Search the customer contact and fetch dealer token.
+     * Find all contacts having dealer_fcm_token.
+     * Testing phase me saare registered dealer devices
+     * ko notification jayegi.
      */
-    const contactSearchResponse = await fetch(
+    const dealerSearchResponse = await fetch(
       'https://api.hubapi.com/crm/v3/objects/contacts/search',
       {
         method: 'POST',
@@ -553,94 +595,173 @@ app.post('/hubspot-webhook', async (req, res) => {
             {
               filters: [
                 {
-                  propertyName: 'email',
-                  operator: 'EQ',
-                  value: customerEmail
-                    .trim()
-                    .toLowerCase(),
+                  propertyName:
+                    'dealer_fcm_token',
+                  operator: 'HAS_PROPERTY',
                 },
               ],
             },
           ],
           properties: [
+            'email',
             'firstname',
             'lastname',
             'dealer_fcm_token',
           ],
-          limit: 1,
+          limit: 100,
         }),
       },
     );
 
-    const contactData =
-      await contactSearchResponse.json();
-
-    if (!contactSearchResponse.ok) {
-      console.error(
-        'HubSpot contact search error:',
-        contactData,
-      );
-      return;
-    }
-
-    if (!contactData.results?.length) {
-      console.log('Customer contact not found');
-      return;
-    }
-
-    const contact = contactData.results[0];
-
-    const dealerFcmToken =
-      contact.properties?.dealer_fcm_token;
-
-    if (!dealerFcmToken) {
-      console.log(
-        'Dealer FCM token not found for contact',
-      );
-      return;
-    }
-
-    const firstName =
-      contact.properties?.firstname || 'Customer';
-
-    const notificationBody =
-      latestMessage.text ||
-      'You have received a new customer message.';
-
-    const firebaseResponse =
-      await getMessaging().send({
-        token: dealerFcmToken,
-
-        notification: {
-          title: `New message from ${firstName}`,
-          body: notificationBody.slice(0, 200),
-        },
-
-        data: {
-          threadId: String(threadId),
-          messageId: String(latestMessage.id),
-          customerEmail: String(customerEmail),
-          type: 'customer_message',
-        },
-
-        apns: {
-          payload: {
-            aps: {
-              sound: 'default',
-              badge: 1,
-            },
-          },
-        },
-      });
+    const dealerSearchData =
+      await dealerSearchResponse.json();
 
     console.log(
-      'Dealer push sent successfully:',
-      firebaseResponse,
+      'Dealer contact search status:',
+      dealerSearchResponse.status,
     );
+
+    if (!dealerSearchResponse.ok) {
+      console.error(
+        'Dealer contact search error:',
+        JSON.stringify(
+          dealerSearchData,
+          null,
+          2,
+        ),
+      );
+      return;
+    }
+
+    const dealerContacts =
+      dealerSearchData.results || [];
+
+    console.log(
+      'Dealer contacts with token:',
+      dealerContacts.map(contact => ({
+        contactId: contact.id,
+        email: contact.properties?.email,
+        hasToken: Boolean(
+          contact.properties?.dealer_fcm_token,
+        ),
+      })),
+    );
+
+    const tokens = [
+      ...new Set(
+        dealerContacts
+          .map(
+            contact =>
+              contact.properties
+                ?.dealer_fcm_token,
+          )
+          .filter(Boolean),
+      ),
+    ];
+
+    console.log(
+      'Unique dealer tokens found:',
+      tokens.length,
+    );
+
+    if (!tokens.length) {
+      console.log(
+        'No dealer FCM token found in HubSpot',
+      );
+      return;
+    }
+
+    const customerName =
+      latestMessage.senders?.[0]?.name ||
+      customerEmail ||
+      'Customer';
+
+    const body =
+      latestMessage.text?.trim() ||
+      'You received a new customer message.';
+
+    /*
+     * Send notification to each registered dealer token.
+     */
+    const pushResults = await Promise.allSettled(
+      tokens.map(token =>
+        getMessaging().send({
+          token,
+
+          notification: {
+            title: `New message from ${customerName}`,
+            body: body.slice(0, 200),
+          },
+
+          data: {
+            threadId: String(threadId),
+            messageId: String(
+              latestMessage.id,
+            ),
+            customerEmail: String(
+              customerEmail,
+            ),
+            type: 'customer_message',
+          },
+
+          apns: {
+            headers: {
+              'apns-priority': '10',
+            },
+            payload: {
+              aps: {
+                alert: {
+                  title: `New message from ${customerName}`,
+                  body: body.slice(0, 200),
+                },
+                sound: 'default',
+                badge: 1,
+              },
+            },
+          },
+        }),
+      ),
+    );
+
+    pushResults.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        console.log(
+          `Push ${index + 1} success:`,
+          result.value,
+        );
+      } else {
+        console.error(
+          `Push ${index + 1} failed:`,
+          {
+            code: result.reason?.code,
+            message: result.reason?.message,
+          },
+        );
+      }
+    });
+
+    const successCount =
+      pushResults.filter(
+        result =>
+          result.status === 'fulfilled',
+      ).length;
+
+    const failureCount =
+      pushResults.length - successCount;
+
+    console.log(
+      '========== PUSH SUMMARY ==========',
+    );
+    console.log('Successful:', successCount);
+    console.log('Failed:', failureCount);
   } catch (error) {
     console.error(
       'HubSpot webhook processing error:',
-      error,
+      {
+        code: error?.code,
+        message: error?.message,
+        stack: error?.stack,
+      },
     );
   }
 });
