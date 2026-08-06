@@ -89,7 +89,7 @@ const ViewTicketDetail = ({ navigation }) => {
         try {
           setLoading(true);
           const response = await fetch(
-            'https://syilapp-w8ye.onrender.com/get_ticket_conversation',
+            'https://syilfordealeriosapp.onrender.com/get_ticket_conversation',
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -140,7 +140,7 @@ const ViewTicketDetail = ({ navigation }) => {
     try {
       if (!ticketId) return;
       const response = await fetch(
-        'https://syilapp-w8ye.onrender.com/get_ticket_conversation',
+        'https://syilfordealeriosapp.onrender.com/get_ticket_conversation',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }, 
@@ -234,7 +234,7 @@ const ViewTicketDetail = ({ navigation }) => {
 
 
       const ownerRes = await fetch(
-      'https://syilapp-w8ye.onrender.com/get-owner-id',
+      'https://syilfordealeriosapp.onrender.com/get-owner-id',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -274,7 +274,7 @@ console.log('Selected files before upload:', selectedFiles);
 
 
         const uploadRes = await fetch(
-          'https://syilapp-w8ye.onrender.com/upload-to-hubspot-view',
+          'https://syilfordealeriosapp.onrender.com/upload-to-hubspot-view',
           {
             method: 'POST',
             body: formData,
@@ -295,7 +295,7 @@ console.log('Selected files before upload:', selectedFiles);
 
       
       const sendRes = await fetch(
-        'https://syilapp-w8ye.onrender.com/send-hubspot-message',
+        'https://syilfordealeriosapp.onrender.com/send-hubspot-message',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

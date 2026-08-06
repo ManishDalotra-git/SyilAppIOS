@@ -13,7 +13,7 @@ import {
 const firebaseApp = getApp();
 const messaging = getMessaging(firebaseApp);
 
-const API_URL = 'https://syilapp-w8ye.onrender.com';
+const API_URL = 'https://syilfordealeriosapp.onrender.com';
 
 export const saveFCMToken = async email => {
   try {

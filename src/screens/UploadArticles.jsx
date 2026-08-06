@@ -24,7 +24,7 @@ const UploadArticle = ({ navigation }) => {
   const [fileUri, setFileUri] = useState('');
 
 
-  const API_URL = 'https://syilapp-w8ye.onrender.com/upload-articles';
+  const API_URL = 'https://syilfordealeriosapp.onrender.com/upload-articles';
 
 
   // const handleSelectFile = async () => {

@@ -84,7 +84,7 @@ const OwnerTickets = ({ navigation }) => {
 console.log('email-----email---- ' , email);
 
           const ownerRes = await fetch(
-      'https://syilapp-w8ye.onrender.com/get-owner-id',
+      'https://syilfordealeriosapp.onrender.com/get-owner-id',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

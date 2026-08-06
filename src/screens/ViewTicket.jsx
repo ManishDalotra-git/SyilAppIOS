@@ -101,7 +101,7 @@ const ViewTicket = ({ navigation }) => {
                     //https://syilapp-w8ye.onrender.com/get_contact_tickets
                     //http://192.168.0.84:3000
 
-                    const response = await fetch('https://syilapp-w8ye.onrender.com/get_tickets', {
+                    const response = await fetch('https://syilfordealeriosapp.onrender.com/get_tickets', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

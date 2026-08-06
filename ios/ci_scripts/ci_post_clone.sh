@@ -58,7 +58,7 @@ unset HERMES_CLI_PATH
 EOF
 
 echo "Checking WebView source files..."
-
+ 
 if [ ! -f "node_modules/react-native-webview/apple/RNCWebViewImpl.h" ]; then
   echo "ERROR: RNCWebViewImpl.h not found"
   exit 1

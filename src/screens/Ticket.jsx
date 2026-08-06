@@ -173,7 +173,7 @@ const formatCategoryLabel = (key) => {
       });
     });
 
-    const res = await fetch('https://syilapp-w8ye.onrender.com/upload-to-hubspot', {
+    const res = await fetch('https://syilfordealeriosapp.onrender.com/upload-to-hubspot', {
       method: 'POST',
       body: formData,
       headers: {
@@ -239,7 +239,7 @@ const formatCategoryLabel = (key) => {
       };
 
       try {
-        const responseEmail = await fetch('https://syilapp-w8ye.onrender.com/get-contact-id', {
+        const responseEmail = await fetch('https://syilfordealeriosapp.onrender.com/get-contact-id', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: ticketData.email }),
@@ -265,7 +265,7 @@ const formatCategoryLabel = (key) => {
 
 
       // 2️⃣ Create Ticket
-      const responseTicket = await fetch('https://syilapp-w8ye.onrender.com/create-ticket', {
+      const responseTicket = await fetch('https://syilfordealeriosapp.onrender.com/create-ticket', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contactId, ticketData }),

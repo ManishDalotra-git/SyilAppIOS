@@ -436,6 +436,215 @@ app.post(
 );
 
 
+app.post('/hubspot-webhook', async (req, res) => {
+  /*
+   * HubSpot ko jaldi 200 response dena zaroori hai,
+   * warna webhook retry ho sakta hai.
+   */
+  res.sendStatus(200);
+
+  try {
+    console.log('========== HUBSPOT WEBHOOK RECEIVED ==========');
+
+    const events = Array.isArray(req.body)
+      ? req.body
+      : [];
+
+    if (!events.length) {
+      console.log('Webhook body is empty');
+      return;
+    }
+
+    const event = events[0];
+
+    const threadId = event.objectId;
+    const webhookMessageId = event.messageId;
+
+    if (!threadId || !webhookMessageId) {
+      console.log('Thread ID or message ID missing');
+      return;
+    }
+
+    const fetch = (...args) =>
+      import('node-fetch').then(
+        ({ default: fetch }) => fetch(...args),
+      );
+
+    /*
+     * Get all messages from the HubSpot conversation.
+     */
+    const messagesResponse = await fetch(
+      `https://api.hubapi.com/conversations/v3/conversations/threads/${threadId}/messages`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${HUBSPOT_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    const messagesData =
+      await messagesResponse.json();
+
+    if (!messagesResponse.ok) {
+      console.error(
+        'HubSpot thread messages error:',
+        messagesData,
+      );
+      return;
+    }
+
+    /*
+     * Always match the exact webhook message ID.
+     * Do not simply pick the first message, because order may change.
+     */
+    const latestMessage =
+      messagesData.results?.find(
+        message =>
+          message.type === 'MESSAGE' &&
+          message.id === webhookMessageId,
+      );
+
+    if (!latestMessage) {
+      console.log(
+        'Webhook message not found in thread data',
+      );
+      return;
+    }
+
+    /*
+     * Dealer app should receive a notification when
+     * the customer sends an INCOMING message.
+     */
+    if (latestMessage.direction !== 'INCOMING') {
+      console.log(
+        `Ignoring message direction: ${latestMessage.direction}`,
+      );
+      return;
+    }
+
+    const customerEmail =
+      latestMessage.senders?.[0]
+        ?.deliveryIdentifier?.value;
+
+    if (!customerEmail) {
+      console.log(
+        'Customer email not found in message',
+      );
+      return;
+    }
+
+    console.log('Customer email:', customerEmail);
+
+    /*
+     * Search the customer contact and fetch dealer token.
+     */
+    const contactSearchResponse = await fetch(
+      'https://api.hubapi.com/crm/v3/objects/contacts/search',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${HUBSPOT_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName: 'email',
+                  operator: 'EQ',
+                  value: customerEmail
+                    .trim()
+                    .toLowerCase(),
+                },
+              ],
+            },
+          ],
+          properties: [
+            'firstname',
+            'lastname',
+            'dealer_fcm_token',
+          ],
+          limit: 1,
+        }),
+      },
+    );
+
+    const contactData =
+      await contactSearchResponse.json();
+
+    if (!contactSearchResponse.ok) {
+      console.error(
+        'HubSpot contact search error:',
+        contactData,
+      );
+      return;
+    }
+
+    if (!contactData.results?.length) {
+      console.log('Customer contact not found');
+      return;
+    }
+
+    const contact = contactData.results[0];
+
+    const dealerFcmToken =
+      contact.properties?.dealer_fcm_token;
+
+    if (!dealerFcmToken) {
+      console.log(
+        'Dealer FCM token not found for contact',
+      );
+      return;
+    }
+
+    const firstName =
+      contact.properties?.firstname || 'Customer';
+
+    const notificationBody =
+      latestMessage.text ||
+      'You have received a new customer message.';
+
+    const firebaseResponse =
+      await getMessaging().send({
+        token: dealerFcmToken,
+
+        notification: {
+          title: `New message from ${firstName}`,
+          body: notificationBody.slice(0, 200),
+        },
+
+        data: {
+          threadId: String(threadId),
+          messageId: String(latestMessage.id),
+          customerEmail: String(customerEmail),
+          type: 'customer_message',
+        },
+
+        apns: {
+          payload: {
+            aps: {
+              sound: 'default',
+              badge: 1,
+            },
+          },
+        },
+      });
+
+    console.log(
+      'Dealer push sent successfully:',
+      firebaseResponse,
+    );
+  } catch (error) {
+    console.error(
+      'HubSpot webhook processing error:',
+      error,
+    );
+  }
+});
+
 
 // Step 1: Search contact by email
 app.post('/get-contact-id', async (req, res) => {
