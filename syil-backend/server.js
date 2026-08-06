@@ -561,21 +561,56 @@ app.post('/hubspot-webhook', async (req, res) => {
     /*
      * Dealer app notification customer message par jayegi.
      */
-    if (latestMessage.direction !== 'INCOMING') {
-      console.log(
-        `Notification skipped because direction is ${latestMessage.direction}`,
-      );
-      return;
-    }
+    // if (latestMessage.direction !== 'INCOMING') {
+    //   console.log(
+    //     `Notification skipped because direction is ${latestMessage.direction}`,
+    //   );
+    //   return;
+    // }
 
-    const customerEmail =
-      latestMessage.senders?.[0]
-        ?.deliveryIdentifier?.value || '';
+    const allowedDirections = ['INCOMING', 'OUTGOING'];
 
-    console.log(
-      'Customer sender email:',
-      customerEmail || 'Not available',
-    );
+if (!allowedDirections.includes(latestMessage.direction)) {
+  console.log(
+    `Notification skipped because direction is ${latestMessage.direction}`,
+  );
+  return;
+}
+
+const senderEmail =
+  latestMessage.senders?.[0]
+    ?.deliveryIdentifier?.value || '';
+
+const senderName =
+  latestMessage.senders?.[0]?.name ||
+  senderEmail ||
+  (latestMessage.direction === 'OUTGOING'
+    ? 'SYIL Support'
+    : 'Customer');
+
+const notificationTitle =
+  latestMessage.direction === 'OUTGOING'
+    ? `New support reply from ${senderName}`
+    : `New customer message from ${senderName}`;
+
+console.log(
+  'Message direction:',
+  latestMessage.direction,
+);
+
+console.log(
+  'Sender:',
+  senderName,
+);
+
+    // const customerEmail =
+    //   latestMessage.senders?.[0]
+    //     ?.deliveryIdentifier?.value || '';
+
+    // console.log(
+    //   'Customer sender email:',
+    //   customerEmail || 'Not available',
+    // );
 
     /*
      * Find all contacts having dealer_fcm_token.
@@ -689,20 +724,31 @@ app.post('/hubspot-webhook', async (req, res) => {
           token,
 
           notification: {
-            title: `New message from ${customerName}`,
+            title: notificationTitle,
             body: body.slice(0, 200),
           },
 
+          // data: {
+          //   threadId: String(threadId),
+          //   messageId: String(
+          //     latestMessage.id,
+          //   ),
+          //   customerEmail: String(
+          //     customerEmail,
+          //   ),
+          //   type: 'customer_message',
+          // },
+
           data: {
-            threadId: String(threadId),
-            messageId: String(
-              latestMessage.id,
-            ),
-            customerEmail: String(
-              customerEmail,
-            ),
-            type: 'customer_message',
-          },
+  threadId: String(threadId),
+  messageId: String(latestMessage.id),
+  senderEmail: String(senderEmail),
+  direction: String(latestMessage.direction),
+  type:
+    latestMessage.direction === 'OUTGOING'
+      ? 'support_message'
+      : 'customer_message',
+},
 
           apns: {
             headers: {
@@ -711,7 +757,7 @@ app.post('/hubspot-webhook', async (req, res) => {
             payload: {
               aps: {
                 alert: {
-                  title: `New message from ${customerName}`,
+                  title: notificationTitle,
                   body: body.slice(0, 200),
                 },
                 sound: 'default',
