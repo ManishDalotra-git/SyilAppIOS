@@ -997,23 +997,17 @@ app.post('/hubspot-webhook', async (req, res) => {
                * Notification tap par isi ticket ko
                * open karne ke liye.
                */
-              ticketId:
-                String(ticketId),
+              ticketId: String(ticketId),
 
-              threadId:
-                String(threadId),
+              threadId: String(threadId),
 
-              messageId:
-                String(latestMessage.id),
+              messageId: String(latestMessage.id),
 
-              ticketSubject:
-                String(ticketSubject),
+              ticketSubject: String(ticketSubject),
 
-              senderEmail:
-                String(senderEmail),
+              senderEmail: String(senderEmail),
 
-              senderRole:
-                String(senderRole),
+              senderRole: String(senderRole),
 
               appSupportTeamMember:
                 senderIsSupport
@@ -1027,6 +1021,9 @@ app.post('/hubspot-webhook', async (req, res) => {
 
               targetScreen:
                 'ViewTicketDetail',
+              senderEmail: String(
+                senderEmail,
+              ),
 
               type:
                 senderIsSupport
