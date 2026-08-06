@@ -716,10 +716,10 @@ console.log(
 );
 
 
-const notificationTitle =
-  latestMessage.direction === 'OUTGOING'
-    ? `New support reply from ${senderName}`
-    : `New customer message from ${senderName}`;
+// const notificationTitle =
+//   latestMessage.direction === 'OUTGOING'
+//     ? `New support reply from ${senderName}`
+//     : `New customer message from ${senderName}`;
 
 console.log(
   'Message direction:',
