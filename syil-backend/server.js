@@ -577,16 +577,144 @@ if (!allowedDirections.includes(latestMessage.direction)) {
   return;
 }
 
+// const senderEmail =
+//   latestMessage.senders?.[0]
+//     ?.deliveryIdentifier?.value || '';
+
+// const senderName =
+//   latestMessage.senders?.[0]?.name ||
+//   senderEmail ||
+//   (latestMessage.direction === 'OUTGOING'
+//     ? 'SYIL Support'
+//     : 'Customer');
+
 const senderEmail =
   latestMessage.senders?.[0]
-    ?.deliveryIdentifier?.value || '';
+    ?.deliveryIdentifier?.value
+    ?.trim()
+    ?.toLowerCase() || '';
+
+console.log(
+  'Message sender email:',
+  senderEmail || 'Not available',
+);
+
+/*
+ * Sender ko HubSpot contact me search karke
+ * app_support_team_member property check karenge.
+ */
+let senderIsSupport = false;
+let senderContactName = '';
+
+if (senderEmail) {
+  const senderSearchResponse = await fetch(
+    'https://api.hubapi.com/crm/v3/objects/contacts/search',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${HUBSPOT_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filterGroups: [
+          {
+            filters: [
+              {
+                propertyName: 'email',
+                operator: 'EQ',
+                value: senderEmail,
+              },
+            ],
+          },
+        ],
+        properties: [
+          'email',
+          'firstname',
+          'lastname',
+          'app_support_team_member',
+        ],
+        limit: 1,
+      }),
+    },
+  );
+
+  const senderSearchData =
+    await senderSearchResponse.json();
+
+  console.log(
+    'Sender contact search status:',
+    senderSearchResponse.status,
+  );
+
+  if (!senderSearchResponse.ok) {
+    console.error(
+      'Sender contact search error:',
+      JSON.stringify(senderSearchData, null, 2),
+    );
+  } else if (senderSearchData.results?.length) {
+    const senderContact =
+      senderSearchData.results[0];
+
+    const supportValue =
+      senderContact.properties
+        ?.app_support_team_member
+        ?.trim()
+        ?.toLowerCase() || '';
+
+    senderIsSupport =
+      supportValue === 'yes';
+
+    senderContactName = [
+      senderContact.properties?.firstname,
+      senderContact.properties?.lastname,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    console.log(
+      'app_support_team_member:',
+      supportValue || 'empty',
+    );
+  } else {
+    console.log(
+      'Sender HubSpot contact not found',
+    );
+  }
+}
+
+/*
+ * Fallback:
+ * Outgoing normally HubSpot/support message hota hai.
+ * Incoming normally customer message hota hai.
+ */
+if (!senderEmail || !senderContactName) {
+  senderIsSupport =
+    latestMessage.direction === 'OUTGOING';
+}
+
+const senderRole = senderIsSupport
+  ? 'support'
+  : 'customer';
 
 const senderName =
+  senderContactName ||
   latestMessage.senders?.[0]?.name ||
   senderEmail ||
-  (latestMessage.direction === 'OUTGOING'
+  (senderIsSupport
     ? 'SYIL Support'
     : 'Customer');
+
+const notificationTitle = senderIsSupport
+  ? `New support reply from ${senderName}`
+  : `New customer message from ${senderName}`;
+
+console.log('Sender role:', senderRole);
+console.log('Sender name:', senderName);
+console.log(
+  'Notification title:',
+  notificationTitle,
+);
+
 
 const notificationTitle =
   latestMessage.direction === 'OUTGOING'
@@ -706,14 +834,16 @@ console.log(
       return;
     }
 
-    const customerName =
-      latestMessage.senders?.[0]?.name ||
-      customerEmail ||
-      'Customer';
+    // const customerName =
+    //   latestMessage.senders?.[0]?.name ||
+    //   customerEmail ||
+    //   'Customer';
 
     const body =
-      latestMessage.text?.trim() ||
-      'You received a new customer message.';
+  latestMessage.text?.trim() ||
+  (senderIsSupport
+    ? 'You received a new reply from SYIL Support.'
+    : 'You received a new customer message.');
 
     /*
      * Send notification to each registered dealer token.
@@ -739,15 +869,19 @@ console.log(
           //   type: 'customer_message',
           // },
 
-          data: {
+  data: {
   threadId: String(threadId),
   messageId: String(latestMessage.id),
   senderEmail: String(senderEmail),
-  direction: String(latestMessage.direction),
-  type:
-    latestMessage.direction === 'OUTGOING'
-      ? 'support_message'
-      : 'customer_message',
+  senderRole: String(senderRole),
+  appSupportTeamMember:
+    senderIsSupport ? 'Yes' : 'No',
+  direction: String(
+    latestMessage.direction,
+  ),
+  type: senderIsSupport
+    ? 'support_message'
+    : 'customer_message',
 },
 
           apns: {
