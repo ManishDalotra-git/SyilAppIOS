@@ -7,6 +7,10 @@ export const navigationRef =
 
 let pendingTicketData = null;
 
+
+/*
+ * Notification se correct ticket open.
+ */
 export const openTicketFromNotification = data => {
   console.log(
     'Notification navigation data:',
@@ -35,9 +39,29 @@ export const openTicketFromNotification = data => {
     fromNotification: true,
   };
 
-  if (!navigationRef.isReady()) {
+  /*
+   * Navigation ready nahi hai OR abhi Loading
+   * screen chal rahi hai, to abhi navigate nahi karna.
+   *
+   * Loading login check complete hone ke baad
+   * pending ticket kholegi.
+   */
+  const currentRoute =
+    navigationRef.isReady()
+      ? navigationRef.getCurrentRoute()
+      : null;
+
+  console.log(
+    'Current route during notification:',
+    currentRoute?.name,
+  );
+
+  if (
+    !navigationRef.isReady() ||
+    currentRoute?.name === 'Loading'
+  ) {
     console.log(
-      'Navigation not ready, saving ticket temporarily',
+      'Saving notification ticket until loading completes',
     );
 
     pendingTicketData =
@@ -57,12 +81,30 @@ export const openTicketFromNotification = data => {
   );
 };
 
+
+/*
+ * Check whether notification ticket pending hai.
+ */
+export const hasPendingTicket = () => {
+  return Boolean(
+    pendingTicketData?.ticketId,
+  );
+};
+
+
+/*
+ * Loading/login check complete hone ke baad
+ * pending notification ticket open.
+ *
+ * true  = ticket open hua
+ * false = pending notification nahi thi
+ */
 export const openPendingTicket = () => {
   if (
     !navigationRef.isReady() ||
     !pendingTicketData
   ) {
-    return;
+    return false;
   }
 
   const routeParams =
@@ -71,22 +113,14 @@ export const openPendingTicket = () => {
   pendingTicketData = null;
 
   console.log(
-    'Opening pending ticket:',
+    'Opening pending notification ticket:',
     routeParams,
   );
 
-  /*
-   * Small delay because Loading screen may still
-   * be doing its initial AsyncStorage/navigation work.
-   */
-  setTimeout(() => {
-    if (!navigationRef.isReady()) {
-      return;
-    }
+  navigationRef.navigate(
+    'ViewTicketDetail',
+    routeParams,
+  );
 
-    navigationRef.navigate(
-      'ViewTicketDetail',
-      routeParams,
-    );
-  }, 1200);
+  return true;
 };

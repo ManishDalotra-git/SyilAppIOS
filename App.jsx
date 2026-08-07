@@ -29,7 +29,6 @@ import { NavigationContainer } from '@react-navigation/native';
 
 import {
   navigationRef,
-  openPendingTicket,
 } from './src/navigation/navigationRef';
 
 import {
@@ -52,14 +51,13 @@ const App = () => {
   }, []);
 
   return (
-     <NavigationContainer ref={navigationRef}
+     <NavigationContainer 
+     ref={navigationRef}
   onReady={() => {
-  console.log(
-    'Navigation container ready',
-  );
-
-  openPendingTicket();
-}}
+    console.log(
+      'Navigation container ready',
+    );
+  }}
   >
       <Stack.Navigator>
         <Stack.Screen name="Loading" component={Loading} options={{ headerShown: false }} />
