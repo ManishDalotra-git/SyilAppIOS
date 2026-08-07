@@ -879,97 +879,259 @@ app.post('/hubspot-webhook', async (req, res) => {
      * =====================================================
      */
 
-    const dealerSearchResponse = await fetch(
-      'https://api.hubapi.com/crm/v3/objects/contacts/search',
-      {
-        method: 'POST',
-        headers: {
-          Authorization:
-            `Bearer ${HUBSPOT_API_KEY}`,
-          'Content-Type': 'application/json',
+    // const dealerSearchResponse = await fetch(
+    //   'https://api.hubapi.com/crm/v3/objects/contacts/search',
+    //   {
+    //     method: 'POST',
+    //     headers: {
+    //       Authorization:
+    //         `Bearer ${HUBSPOT_API_KEY}`,
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify({
+    //       filterGroups: [
+    //         {
+    //           filters: [
+    //             {
+    //               propertyName:
+    //                 'dealer_fcm_token',
+    //               operator: 'HAS_PROPERTY',
+    //             },
+    //           ],
+    //         },
+    //       ],
+    //       properties: [
+    //         'email',
+    //         'firstname',
+    //         'lastname',
+    //         'dealer_fcm_token',
+    //       ],
+    //       limit: 100,
+    //     }),
+    //   },
+    // );
+
+    // const dealerSearchData =
+    //   await dealerSearchResponse.json();
+
+    // console.log(
+    //   'Dealer contact search status:',
+    //   dealerSearchResponse.status,
+    // );
+
+    // if (!dealerSearchResponse.ok) {
+    //   console.error(
+    //     'Dealer contact search error:',
+    //     JSON.stringify(
+    //       dealerSearchData,
+    //       null,
+    //       2,
+    //     ),
+    //   );
+    //   return;
+    // }
+
+    // const dealerContacts =
+    //   dealerSearchData.results || [];
+
+    // console.log(
+    //   'Dealer contacts with token:',
+    //   dealerContacts.map(contact => ({
+    //     contactId: contact.id,
+    //     email:
+    //       contact.properties?.email,
+    //     hasToken: Boolean(
+    //       contact.properties
+    //         ?.dealer_fcm_token,
+    //     ),
+    //   })),
+    // );
+
+    // const tokens = [
+    //   ...new Set(
+    //     dealerContacts
+    //       .map(
+    //         contact =>
+    //           contact.properties
+    //             ?.dealer_fcm_token,
+    //       )
+    //       .filter(Boolean),
+    //   ),
+    // ];
+
+    // console.log(
+    //   'Unique dealer tokens found:',
+    //   tokens.length,
+    // );
+
+    // if (!tokens.length) {
+    //   console.log(
+    //     'No dealer FCM token found',
+    //   );
+    //   return;
+    // }
+
+
+
+    /*
+ * =====================================================
+ * STEP 4:
+ * Current ticket ke associated contact(s) find karo
+ * aur sirf unka Dealer FCM token use karo.
+ * =====================================================
+ */
+
+console.log(
+  'Finding associated contacts for Ticket ID:',
+  ticketId,
+);
+
+/*
+ * Ticket -> Contact association fetch karo.
+ */
+const ticketContactsResponse = await fetch(
+  `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}/associations/contacts`,
+  {
+    method: 'GET',
+    headers: {
+      Authorization:
+        `Bearer ${HUBSPOT_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+  },
+);
+
+const ticketContactsData =
+  await ticketContactsResponse.json();
+
+console.log(
+  'Ticket contacts status:',
+  ticketContactsResponse.status,
+);
+
+if (!ticketContactsResponse.ok) {
+  console.error(
+    'Ticket contacts fetch error:',
+    JSON.stringify(
+      ticketContactsData,
+      null,
+      2,
+    ),
+  );
+
+  return;
+}
+
+/*
+ * Ticket ke saath jo HubSpot contacts associated hain,
+ * unki IDs.
+ */
+const associatedContactIds =
+  (ticketContactsData.results || [])
+    .map(item => String(item.id))
+    .filter(Boolean);
+
+console.log(
+  'Associated Contact IDs:',
+  associatedContactIds,
+);
+
+if (!associatedContactIds.length) {
+  console.log(
+    'Dealer push skipped: No contact associated with this ticket',
+  );
+
+  return;
+}
+
+/*
+ * Har associated contact ka dealer_fcm_token fetch karo.
+ */
+const contactRequests =
+  associatedContactIds.map(
+    async contactId => {
+      const contactResponse = await fetch(
+        `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?properties=email,firstname,lastname,app_support_team_member,dealer_fcm_token`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization:
+              `Bearer ${HUBSPOT_API_KEY}`,
+            'Content-Type':
+              'application/json',
+          },
         },
-        body: JSON.stringify({
-          filterGroups: [
-            {
-              filters: [
-                {
-                  propertyName:
-                    'dealer_fcm_token',
-                  operator: 'HAS_PROPERTY',
-                },
-              ],
-            },
-          ],
-          properties: [
-            'email',
-            'firstname',
-            'lastname',
-            'dealer_fcm_token',
-          ],
-          limit: 100,
-        }),
-      },
-    );
-
-    const dealerSearchData =
-      await dealerSearchResponse.json();
-
-    console.log(
-      'Dealer contact search status:',
-      dealerSearchResponse.status,
-    );
-
-    if (!dealerSearchResponse.ok) {
-      console.error(
-        'Dealer contact search error:',
-        JSON.stringify(
-          dealerSearchData,
-          null,
-          2,
-        ),
       );
-      return;
-    }
 
-    const dealerContacts =
-      dealerSearchData.results || [];
+      const contactData =
+        await contactResponse.json();
 
-    console.log(
-      'Dealer contacts with token:',
-      dealerContacts.map(contact => ({
-        contactId: contact.id,
-        email:
-          contact.properties?.email,
-        hasToken: Boolean(
+      if (!contactResponse.ok) {
+        console.error(
+          `Associated contact ${contactId} fetch failed:`,
+          contactData,
+        );
+
+        return null;
+      }
+
+      return contactData;
+    },
+  );
+
+const associatedContacts =
+  (
+    await Promise.all(contactRequests)
+  ).filter(Boolean);
+
+console.log(
+  'Associated Contacts:',
+  associatedContacts.map(contact => ({
+    contactId: String(contact.id),
+
+    email:
+      contact.properties?.email || '',
+
+    appSupportTeamMember:
+      contact.properties
+        ?.app_support_team_member || '',
+
+    hasDealerToken: Boolean(
+      contact.properties
+        ?.dealer_fcm_token,
+    ),
+  })),
+);
+
+/*
+ * Sirf associated contacts ke Dealer tokens.
+ */
+const tokens = [
+  ...new Set(
+    associatedContacts
+      .map(
+        contact =>
           contact.properties
             ?.dealer_fcm_token,
-        ),
-      })),
-    );
+      )
+      .filter(Boolean),
+  ),
+];
 
-    const tokens = [
-      ...new Set(
-        dealerContacts
-          .map(
-            contact =>
-              contact.properties
-                ?.dealer_fcm_token,
-          )
-          .filter(Boolean),
-      ),
-    ];
+console.log(
+  'Associated Dealer tokens found:',
+  tokens.length,
+);
 
-    console.log(
-      'Unique dealer tokens found:',
-      tokens.length,
-    );
+if (!tokens.length) {
+  console.log(
+    'Dealer push skipped: Associated contact has no dealer_fcm_token',
+  );
 
-    if (!tokens.length) {
-      console.log(
-        'No dealer FCM token found',
-      );
-      return;
-    }
+  return;
+}
+
+
 
     /*
      * =====================================================
