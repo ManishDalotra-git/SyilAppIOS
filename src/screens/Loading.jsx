@@ -103,133 +103,166 @@ const Loading = ({ navigation }) => {
   }, []);
 
 
-  const checkLoginStatus =
-    async () => {
+  const checkLoginStatus = async () => {
+  try {
+
+    const isLoggedIn =
+      await AsyncStorage.getItem(
+        'isLoggedIn',
+      );
+
+    const lastLoginTime =
+      await AsyncStorage.getItem(
+        'lastLoginTime',
+      );
+
+
+    if (
+      !isLoggedIn ||
+      !lastLoginTime
+    ) {
+      navigation.replace(
+        'Login',
+      );
+
+      return;
+    }
+
+
+    const now =
+      Date.now();
+
+    const diffInDays =
+      (
+        now -
+        Number(lastLoginTime)
+      ) /
+      1000 /
+      60 /
+      60 /
+      24;
+
+
+    if (diffInDays > 7) {
+
+      await AsyncStorage.clear();
+
+      navigation.replace(
+        'Login',
+      );
+
+      return;
+    }
+
+
+    /*
+     * =====================================================
+     * CHECK NOTIFICATION OPEN
+     * =====================================================
+     */
+
+    const pendingRaw =
+      await AsyncStorage.getItem(
+        'pendingNotificationTicket',
+      );
+
+
+    console.log(
+      'Pending notification raw:',
+      pendingRaw,
+    );
+
+
+    if (pendingRaw) {
 
       try {
 
-        const isLoggedIn =
-          await AsyncStorage.getItem(
-            'isLoggedIn',
-          );
-
-        const lastLoginTime =
-          await AsyncStorage.getItem(
-            'lastLoginTime',
+        const data =
+          JSON.parse(
+            pendingRaw,
           );
 
 
-        console.log(
-          'Loading - isLoggedIn:',
-          isLoggedIn,
-        );
-
-        console.log(
-          'Loading - pending notification:',
-          hasPendingTicket(),
+        /*
+         * Immediately remove so same notification
+         * dubara app launch par open na ho.
+         */
+        await AsyncStorage.removeItem(
+          'pendingNotificationTicket',
         );
 
 
-        /*
-         * Not logged in:
-         * notification ticket open nahi kar sakte.
-         */
-        if (
-          !isLoggedIn ||
-          !lastLoginTime
-        ) {
-          navigation.replace(
-            'Login',
-          );
-
-          return;
-        }
-
-
-        const now =
-          Date.now();
-
-        const diffInDays =
-          (
-            now -
-            Number(
-              lastLoginTime,
-            )
-          ) /
-          1000 /
-          60 /
-          60 /
-          24;
-
-
-        /*
-         * Login expired.
-         */
-        if (
-          diffInDays > 7
-        ) {
-
-          await AsyncStorage.clear();
-
-          navigation.replace(
-            'Login',
-          );
-
-          return;
-        }
-
-
-        /*
-         * ===============================
-         * IMPORTANT NOTIFICATION CHECK
-         * ===============================
-         *
-         * User logged in hai aur notification
-         * se app open hui hai to Home mat kholo.
-         *
-         * Direct notification wala ticket kholo.
-         */
-
-        if (
-          hasPendingTicket()
-        ) {
+        if (data?.ticketId) {
 
           console.log(
-            'Loading finished - opening notification ticket',
+            'Opening notification ticket:',
+            data.ticketId,
           );
 
-          const opened =
-            openPendingTicket();
 
-          if (opened) {
-            return;
-          }
+          navigation.replace(
+            'ViewTicketDetail',
+            {
+              ticketId:
+                String(
+                  data.ticketId,
+                ),
+
+              subject:
+                String(
+                  data.ticketSubject ||
+                  'Ticket Details',
+                ),
+
+              threadId:
+                String(
+                  data.threadId ||
+                  '',
+                ),
+
+              fromNotification:
+                true,
+            },
+          );
+
+
+          return;
         }
-
-
-        /*
-         * Normal app launch.
-         */
-        console.log(
-          'Normal app launch - opening Home',
-        );
-
-        navigation.replace(
-          'Home',
-        );
 
       } catch (error) {
 
         console.error(
-          'Login status check error:',
+          'Pending notification parse error:',
           error,
         );
 
-        navigation.replace(
-          'Login',
+        await AsyncStorage.removeItem(
+          'pendingNotificationTicket',
         );
       }
-    };
+
+    }
+
+
+    /*
+     * Normal app launch.
+     */
+    navigation.replace(
+      'Home',
+    );
+
+  } catch (error) {
+
+    console.error(
+      'Loading login check error:',
+      error,
+    );
+
+    navigation.replace(
+      'Login',
+    );
+  }
+};
 
 
   return (

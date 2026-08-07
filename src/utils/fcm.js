@@ -131,6 +131,8 @@ import {
   openTicketFromNotification,
 } from '../navigation/navigationRef';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const firebaseApp = getApp();
 
 const messaging =
@@ -369,6 +371,16 @@ export const setupNotificationNavigation =
             /*
              * Correct ticket screen.
              */
+
+            if (data?.ticketId) {
+
+  await AsyncStorage.setItem(
+    'pendingNotificationTicket',
+    JSON.stringify(data),
+  );
+
+}
+
             openTicketFromNotification(
               data,
             );
