@@ -2944,7 +2944,7 @@ app.post('/get_tickets', async (req, res) => {
 
     const ticketPromises = ticketIds.map(ticketId =>
       fetch(
-        `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}?properties=subject,createdate,hubspot_owner_id,hs_pipeline_stage,customer_portal,dealer_unread_count``https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}?properties=subject,createdate,hubspot_owner_id,hs_pipeline_stage,customer_portal`,
+        `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}?properties=subject,createdate,hubspot_owner_id,hs_pipeline_stage,customer_portal,dealer_unread_count`,
         {
           method: 'GET',
           headers: {
