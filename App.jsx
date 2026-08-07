@@ -54,9 +54,13 @@ const App = () => {
   return (
      <NavigationContainer ref={navigationRef}
   onReady={() => {
-    console.log('Navigation container ready');
-    openPendingTicket();
-  }}>
+  console.log(
+    'Navigation container ready',
+  );
+
+  openPendingTicket();
+}}
+  >
       <Stack.Navigator>
         <Stack.Screen name="Loading" component={Loading} options={{ headerShown: false }} />
         <Stack.Screen name="Home" component={Home} options={{ headerShown: false }} />
