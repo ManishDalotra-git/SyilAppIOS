@@ -106,6 +106,8 @@
 //   }
 // };
 
+import notifee from '@notifee/react-native';
+
 import {
   Platform,
 } from 'react-native';
@@ -246,11 +248,85 @@ export const saveFCMToken = async email => {
 };
 
 
+
+const markNotificationAsRead =
+  async data => {
+
+    try {
+
+      const contactId =
+        data?.recipientContactId;
+
+      if (!contactId) {
+        console.log(
+          'Badge: recipientContactId missing',
+        );
+
+        return;
+      }
+
+      const response =
+        await fetch(
+          `${API_URL}/dealer-notification-read`,
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+
+            body:
+              JSON.stringify({
+                contactId:
+                  String(
+                    contactId,
+                  ),
+              }),
+          },
+        );
+
+      const result =
+        await response.json();
+
+      console.log(
+        'Notification read result:',
+        result,
+      );
+
+      if (
+        response.ok &&
+        typeof result.count ===
+          'number'
+      ) {
+
+        await notifee.setBadgeCount(
+          result.count,
+        );
+
+        console.log(
+          'App icon badge updated:',
+          result.count,
+        );
+      }
+
+    } catch (error) {
+
+      console.error(
+        'Notification badge update error:',
+        error,
+      );
+    }
+  };
+
+
+
 /*
  * Notification tap -> ViewTicketDetail
  */
 export const setupNotificationNavigation =
   () => {
+
     console.log(
       'Notification navigation listeners started',
     );
@@ -261,45 +337,78 @@ export const setupNotificationNavigation =
     const unsubscribe =
       onNotificationOpenedApp(
         messaging,
-        remoteMessage => {
+
+        async remoteMessage => {
+
           console.log(
             'Notification opened from background:',
             remoteMessage?.data,
           );
 
+          /*
+           * Badge -1.
+           */
+          await markNotificationAsRead(
+            remoteMessage?.data,
+          );
+
+          /*
+           * IMPORTANT:
+           * Working navigation same.
+           */
           openTicketFromNotification(
             remoteMessage?.data,
           );
         },
       );
 
+
     /*
      * App completely closed thi.
      */
-    getInitialNotification(messaging)
-      .then(remoteMessage => {
-        if (!remoteMessage) {
+    getInitialNotification(
+      messaging,
+    )
+      .then(
+        async remoteMessage => {
+
+          if (!remoteMessage) {
+            console.log(
+              'App was not opened from notification',
+            );
+
+            return;
+          }
+
           console.log(
-            'App was not opened from notification',
+            'Notification opened from quit state:',
+            remoteMessage.data,
           );
-          return;
-        }
 
-        console.log(
-          'Notification opened from quit state:',
-          remoteMessage.data,
-        );
+          /*
+           * Badge -1.
+           */
+          await markNotificationAsRead(
+            remoteMessage.data,
+          );
 
-        openTicketFromNotification(
-          remoteMessage.data,
-        );
-      })
+          /*
+           * IMPORTANT:
+           * Existing navigation unchanged.
+           */
+          openTicketFromNotification(
+            remoteMessage.data,
+          );
+        },
+      )
       .catch(error => {
+
         console.error(
           'Initial notification error:',
           error,
         );
       });
+
 
     return unsubscribe;
   };
