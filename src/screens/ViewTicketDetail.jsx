@@ -18,12 +18,16 @@ import {
   Alert,
   ActivityIndicator, KeyboardAvoidingView,
 }  from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useRoute,
+} from '@react-navigation/native';
 import Video from 'react-native-video';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import Footer from './components/Footer';
 import { launchImageLibrary } from 'react-native-image-picker';
+import notifee from '@notifee/react-native';
 
 const ViewTicketDetail = ({ navigation }) => {
   StatusBar.setTranslucent(true);
@@ -32,6 +36,86 @@ const ViewTicketDetail = ({ navigation }) => {
 
   const route = useRoute();
   const { ticketId } = route.params || {};
+
+  const markCurrentTicketAsRead =
+  async () => {
+
+    try {
+      const contactId =
+        await AsyncStorage.getItem(
+          'userID',
+        );
+
+      if (!contactId || !ticketId) {
+        console.log(
+          'Mark read skipped: contactId/ticketId missing',
+        );
+        return;
+      }
+
+      console.log(
+        'Marking ticket as read:',
+        ticketId,
+      );
+
+      const response =
+        await fetch(
+          'https://syilfordealeriosapp.onrender.com/mark-ticket-read',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+            body: JSON.stringify({
+              ticketId:
+                String(ticketId),
+              contactId:
+                String(contactId),
+            }),
+          },
+        );
+
+      const result =
+        await response.json();
+
+      console.log(
+        'Mark ticket read response:',
+        result,
+      );
+
+      if (
+        response.ok &&
+        typeof result.totalUnreadCount ===
+          'number'
+      ) {
+        await notifee.setBadgeCount(
+          result.totalUnreadCount,
+        );
+
+        console.log(
+          'App icon badge updated:',
+          result.totalUnreadCount,
+        );
+      }
+
+    } catch (error) {
+      console.error(
+        'Mark current ticket read error:',
+        error,
+      );
+    }
+  };
+
+  useFocusEffect(
+  useCallback(() => {
+    if (ticketId) {
+      markCurrentTicketAsRead();
+    }
+  }, [ticketId]),
+);
+
+
   const { subject } = route.params || {};
   const currentRoute = route.name;
   const [appSupportTeamMember, setAppSupportTeamMember] = useState(false);
@@ -150,7 +234,7 @@ const ViewTicketDetail = ({ navigation }) => {
       const data = await response.json();
       console.log('data----- ', data);
       setMessages(data.messages || []);
-    } catch (error) {
+    } catch (error) {  
       console.log('Refresh error', error);
     } finally {
       setRefreshing(false);
