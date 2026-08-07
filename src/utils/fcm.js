@@ -254,7 +254,7 @@
 
 
 // const markNotificationAsRead =
-//   async data => {
+//   async data => { 
 
 //     try {
 
@@ -329,7 +329,7 @@
 //  * Notification tap -> ViewTicketDetail
 //  */
 // export const setupNotificationNavigation =
-//   () => {
+//   () => { 
 
 //     console.log(
 //       'Notification navigation listeners started',

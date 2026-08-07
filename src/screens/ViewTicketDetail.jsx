@@ -231,7 +231,7 @@ const ViewTicketDetail = ({ navigation }) => {
           body: JSON.stringify({ ticketId }),
         }
       );
-      const data = await response.json();
+      const data = await response.json(); 
       console.log('data----- ', data);
       setMessages(data.messages || []);
     } catch (error) {  
