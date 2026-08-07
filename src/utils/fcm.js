@@ -118,12 +118,14 @@ import {
 import {
   AuthorizationStatus,
   getAPNSToken,
-  getInitialNotification,
   getMessaging,
   getToken,
-  onNotificationOpenedApp,
   requestPermission,
 } from '@react-native-firebase/messaging';
+
+import notifee, {
+  EventType,
+} from '@notifee/react-native';
 
 import {
   openTicketFromNotification,
@@ -253,59 +255,131 @@ export const saveFCMToken = async email => {
  * Notification par tap hone par correct ticket
  * ki ViewTicketDetail screen open karta hai.
  */
+/*
+ * Notification par tap hone par:
+ * 1. App icon badge clear hoga
+ * 2. Correct ViewTicketDetail screen open hogi
+ */
 export const setupNotificationNavigation =
   () => {
     console.log(
-      'Notification navigation listeners started',
+      'Notifee notification listener started',
     );
 
-    /*
-     * App background me thi aur user ne
-     * notification par tap kiya.
-     */
     const unsubscribe =
-      onNotificationOpenedApp(
-        messaging,
-        remoteMessage => {
-          console.log(
-            'Notification opened from background:',
-            remoteMessage?.data,
-          );
+      notifee.onForegroundEvent(
+        async ({
+          type,
+          detail,
+        }) => {
+          if (
+            type !== EventType.PRESS
+          ) {
+            return;
+          }
 
-          openTicketFromNotification(
-            remoteMessage?.data,
-          );
+          try {
+            const data =
+              detail?.notification
+                ?.data;
+
+            console.log(
+              'Notification pressed:',
+              data,
+            );
+
+            const contactId =
+              data
+                ?.recipientContactId;
+
+            /*
+             * Backend ko batao ki
+             * ek notification read ho gayi.
+             */
+            if (contactId) {
+              const response =
+                await fetch(
+                  `${API_URL}/dealer-notification-read`,
+                  {
+                    method:
+                      'POST',
+
+                    headers: {
+                      'Content-Type':
+                        'application/json',
+                    },
+
+                    body:
+                      JSON.stringify({
+                        contactId:
+                          String(
+                            contactId,
+                          ),
+                      }),
+                  },
+                );
+
+              const result =
+                await response.json();
+
+              console.log(
+                'Notification read response:',
+                result,
+              );
+
+              if (
+                response.ok &&
+                typeof result.count ===
+                  'number'
+              ) {
+                /*
+                 * Backend ke actual count
+                 * se iPhone badge update.
+                 */
+                await notifee.setBadgeCount(
+                  result.count,
+                );
+
+                console.log(
+                  'Badge updated to:',
+                  result.count,
+                );
+              }
+            }
+
+            /*
+             * Sirf tapped notification
+             * remove karo.
+             *
+             * cancelDisplayedNotifications()
+             * mat use karo, warna sari
+             * notifications remove ho jayengi.
+             */
+            const notificationId =
+              detail?.notification
+                ?.id;
+
+            if (notificationId) {
+              await notifee
+                .cancelNotification(
+                  notificationId,
+                );
+            }
+
+            /*
+             * Correct ticket screen.
+             */
+            openTicketFromNotification(
+              data,
+            );
+          } catch (error) {
+            console.error(
+              'Notification press error:',
+              error,
+            );
+          }
         },
       );
-
-    /*
-     * App completely closed thi aur user ne
-     * notification par tap karke app open ki.
-     */
-    getInitialNotification(messaging)
-      .then(remoteMessage => {
-        if (!remoteMessage) {
-          console.log(
-            'App was not opened from notification',
-          );
-          return;
-        }
-
-        console.log(
-          'Notification opened from quit state:',
-          remoteMessage.data,
-        );
-
-        openTicketFromNotification(
-          remoteMessage.data,
-        );
-      })
-      .catch(error => {
-        console.error(
-          'Initial notification error:',
-          error,
-        );
-      });
 
     return unsubscribe;
   };

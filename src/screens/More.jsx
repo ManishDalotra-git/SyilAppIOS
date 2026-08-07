@@ -168,7 +168,7 @@ const More = ({ navigation }) => {
             </TouchableOpacity>
 
             {/* Request Quote */}
-            <TouchableOpacity style={styles.row} 
+            {/* <TouchableOpacity style={styles.row} 
                     onPress={() => {
                     const url = 'https://syil.com/contact-us';
                     Linking.canOpenURL(url)
@@ -186,24 +186,42 @@ const More = ({ navigation }) => {
                 <Text allowFontScaling={false} style={styles.text}>Request Quote</Text>
                 </View>
                 <Image source={require('../../images/left_arrow.png')} style={styles.Leftarrow} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             {/* Customer Stories */}
-            <TouchableOpacity style={styles.row} onPress={() => {
-                    const url = 'https://syil.com/customer-stories-form';
-                    Linking.canOpenURL(url)
-                    .then(supported => {
-                        if (supported) {
-                        Linking.openURL(url);
-                        } else {
-                        console.log("Don't know how to open URI: " + url);
-                        }
-                    })
-                    .catch(err => console.error('An error occurred', err));
-                }}>
+            <TouchableOpacity style={styles.row} 
+            // onPress={() => {
+            //         const url = 'https://syil.com/customer-stories-form';
+            //         Linking.canOpenURL(url)
+            //         .then(supported => {
+            //             if (supported) {
+            //             Linking.openURL(url);
+            //             } else {
+            //             console.log("Don't know how to open URI: " + url);
+            //             }
+            //         })
+            //         .catch(err => console.error('An error occurred', err));
+            //     }}
+
+            onPress={() =>
+                        navigation.navigate('WebViewScreen', {
+                        url: 'https://syil.com/case-studies',
+                        })
+                    }
+                
+                >
                 <View style={styles.left}>
                 <Image source={require('../../images/customer.png')} style={styles.icon} />
                 <Text allowFontScaling={false} style={styles.text}>Customer Stories</Text>
+                </View>
+                <Image source={require('../../images/left_arrow.png')} style={styles.Leftarrow} />
+            </TouchableOpacity>
+
+
+            <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('CustomerNewsListing')} >
+                <View style={styles.left}>
+                <Image source={require('../../images/customer_listing_blog.png')} style={styles.icon} />
+                <Text style={styles.text}>Customer News</Text>
                 </View>
                 <Image source={require('../../images/left_arrow.png')} style={styles.Leftarrow} />
             </TouchableOpacity>

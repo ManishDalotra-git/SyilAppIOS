@@ -1051,7 +1051,7 @@ const contactRequests =
   associatedContactIds.map(
     async contactId => {
       const contactResponse = await fetch(
-        `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?properties=email,firstname,lastname,app_support_team_member,dealer_fcm_token`,
+        `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?properties=email,firstname,lastname,app_support_team_member,dealer_fcm_token,dealer_unread_notification_count`,
         {
           method: 'GET',
           headers: {
@@ -1106,24 +1106,70 @@ console.log(
 /*
  * Sirf associated contacts ke Dealer tokens.
  */
-const tokens = [
-  ...new Set(
-    associatedContacts
-      .map(
-        contact =>
+// const tokens = [
+//   ...new Set(
+//     associatedContacts
+//       .map(
+//         contact =>
+//           contact.properties
+//             ?.dealer_fcm_token,
+//       )
+//       .filter(Boolean),
+//   ),
+// ];
+
+// console.log(
+//   'Associated Dealer tokens found:',
+//   tokens.length,
+// );
+
+// if (!tokens.length) {
+//   console.log(
+//     'Dealer push skipped: Associated contact has no dealer_fcm_token',
+//   );
+
+//   return;
+// }
+
+
+const dealerRecipients =
+  associatedContacts
+    .filter(contact =>
+      Boolean(
+        contact.properties
+          ?.dealer_fcm_token,
+      ),
+    )
+    .map(contact => ({
+      contactId:
+        String(contact.id),
+
+      email:
+        contact.properties?.email || '',
+
+      token:
+        contact.properties
+          ?.dealer_fcm_token,
+
+      currentUnreadCount:
+        Number(
           contact.properties
-            ?.dealer_fcm_token,
-      )
-      .filter(Boolean),
-  ),
-];
+            ?.dealer_unread_notification_count ||
+            0,
+        ),
+    }));
 
 console.log(
-  'Associated Dealer tokens found:',
-  tokens.length,
+  'Dealer notification recipients:',
+  dealerRecipients.map(item => ({
+    contactId: item.contactId,
+    email: item.email,
+    currentUnreadCount:
+      item.currentUnreadCount,
+  })),
 );
 
-if (!tokens.length) {
+if (!dealerRecipients.length) {
   console.log(
     'Dealer push skipped: Associated contact has no dealer_fcm_token',
   );
@@ -1133,91 +1179,257 @@ if (!tokens.length) {
 
 
 
+
     /*
      * =====================================================
      * STEP 5: Push notification send karo
      * =====================================================
      */
 
+    // const pushResults =
+    //   await Promise.allSettled(
+    //     tokens.map(token =>
+    //       getMessaging().send({
+    //         token,
+
+    //         notification: {
+    //           title: notificationTitle,
+    //           body:
+    //             notificationBody.slice(
+    //               0,
+    //               200,
+    //             ),
+    //         },
+
+    //         data: {
+    //           /*
+    //            * Notification tap par isi ticket ko
+    //            * open karne ke liye.
+    //            */
+    //           ticketId: String(ticketId),
+
+    //           threadId: String(threadId),
+
+    //           messageId: String(latestMessage.id),
+
+    //           ticketSubject: String(ticketSubject),
+
+    //           senderEmail: String(senderEmail),
+
+    //           senderRole: String(senderRole),
+
+    //           appSupportTeamMember:
+    //             senderIsSupport
+    //               ? 'Yes'
+    //               : 'No',
+
+    //           direction:
+    //             String(
+    //               latestMessage.direction,
+    //             ),
+
+    //           targetScreen:
+    //             'ViewTicketDetail',
+    //           senderEmail: String(
+    //             senderEmail,
+    //           ),
+
+    //           type:
+    //             senderIsSupport
+    //               ? 'support_message'
+    //               : 'customer_message',
+    //         },
+
+    //         apns: {
+    //           headers: {
+    //             'apns-priority': '10',
+    //           },
+
+    //           payload: {
+    //             aps: {
+    //               alert: {
+    //                 title:
+    //                   notificationTitle,
+    //                 body:
+    //                   notificationBody.slice(
+    //                     0,
+    //                     200,
+    //                   ),
+    //               },
+
+    //               sound: 'default',
+    //               badge: 1,
+    //             },
+    //           },
+    //         },
+    //       }),
+    //     ),
+    //   );
+
+
     const pushResults =
-      await Promise.allSettled(
-        tokens.map(token =>
-          getMessaging().send({
-            token,
+  await Promise.allSettled(
+    dealerRecipients.map(
+      async recipient => {
+        /*
+         * Current user's unread count +1.
+         */
+        const newUnreadCount =
+          recipient.currentUnreadCount + 1;
 
-            notification: {
-              title: notificationTitle,
-              body:
-                notificationBody.slice(
-                  0,
-                  200,
-                ),
+        console.log(
+          `Increasing unread count for ${recipient.email}:`,
+          recipient.currentUnreadCount,
+          '->',
+          newUnreadCount,
+        );
+
+        /*
+         * HubSpot Contact par latest unread count save.
+         */
+        const countUpdateResponse =
+          await fetch(
+            `https://api.hubapi.com/crm/v3/objects/contacts/${recipient.contactId}`,
+            {
+              method: 'PATCH',
+              headers: {
+                Authorization:
+                  `Bearer ${HUBSPOT_API_KEY}`,
+                'Content-Type':
+                  'application/json',
+              },
+              body: JSON.stringify({
+                properties: {
+                  dealer_unread_notification_count:
+                    String(
+                      newUnreadCount,
+                    ),
+                },
+              }),
             },
+          );
 
-            data: {
-              /*
-               * Notification tap par isi ticket ko
-               * open karne ke liye.
-               */
-              ticketId: String(ticketId),
+        const countUpdateText =
+          await countUpdateResponse.text();
 
-              threadId: String(threadId),
+        if (!countUpdateResponse.ok) {
+          throw new Error(
+            `Unable to update unread count for contact ${recipient.contactId}: ${countUpdateText}`,
+          );
+        }
 
-              messageId: String(latestMessage.id),
+        /*
+         * Push sirf isi dealer ko.
+         */
+        return getMessaging().send({
+          token: recipient.token,
 
-              ticketSubject: String(ticketSubject),
+          notification: {
+            title:
+              notificationTitle,
 
-              senderEmail: String(senderEmail),
+            body:
+              notificationBody.slice(
+                0,
+                200,
+              ),
+          },
 
-              senderRole: String(senderRole),
+          data: {
+            ticketId:
+              String(ticketId),
 
-              appSupportTeamMember:
-                senderIsSupport
-                  ? 'Yes'
-                  : 'No',
+            threadId:
+              String(threadId),
 
-              direction:
-                String(
-                  latestMessage.direction,
-                ),
+            messageId:
+              String(
+                latestMessage.id,
+              ),
 
-              targetScreen:
-                'ViewTicketDetail',
-              senderEmail: String(
+            ticketSubject:
+              String(
+                ticketSubject,
+              ),
+
+            senderEmail:
+              String(
                 senderEmail,
               ),
 
-              type:
-                senderIsSupport
-                  ? 'support_message'
-                  : 'customer_message',
+            senderRole:
+              String(
+                senderRole,
+              ),
+
+            appSupportTeamMember:
+              senderIsSupport
+                ? 'Yes'
+                : 'No',
+
+            direction:
+              String(
+                latestMessage.direction,
+              ),
+
+            targetScreen:
+              'ViewTicketDetail',
+
+            type:
+              senderIsSupport
+                ? 'support_message'
+                : 'customer_message',
+
+            /*
+             * Notification kis HubSpot contact
+             * ki hai.
+             */
+            recipientContactId:
+              String(
+                recipient.contactId,
+              ),
+
+            badgeCount:
+              String(
+                newUnreadCount,
+              ),
+          },
+
+          apns: {
+            headers: {
+              'apns-priority':
+                '10',
             },
 
-            apns: {
-              headers: {
-                'apns-priority': '10',
-              },
+            payload: {
+              aps: {
+                alert: {
+                  title:
+                    notificationTitle,
 
-              payload: {
-                aps: {
-                  alert: {
-                    title:
-                      notificationTitle,
-                    body:
-                      notificationBody.slice(
-                        0,
-                        200,
-                      ),
-                  },
-
-                  sound: 'default',
-                  badge: 1,
+                  body:
+                    notificationBody.slice(
+                      0,
+                      200,
+                    ),
                 },
+
+                sound:
+                  'default',
+
+                /*
+                 * Fixed 1 nahi.
+                 * User ka actual unread count.
+                 */
+                badge:
+                  newUnreadCount,
               },
             },
-          }),
-        ),
-      );
+          },
+        });
+      },
+    ),
+  );
 
     pushResults.forEach(
       (result, index) => {
@@ -1278,6 +1490,154 @@ if (!tokens.length) {
     );
   }
 });
+
+
+
+app.post(
+  '/dealer-notification-read',
+  async (req, res) => {
+    const {
+      contactId,
+    } = req.body;
+
+    if (!contactId) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message:
+            'contactId is required',
+        });
+    }
+
+    try {
+      const fetch = (...args) =>
+        import('node-fetch').then(
+          ({
+            default: fetch,
+          }) => fetch(...args),
+        );
+
+      /*
+       * Current unread count fetch.
+       */
+      const contactResponse =
+        await fetch(
+          `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?properties=dealer_unread_notification_count`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization:
+                `Bearer ${HUBSPOT_API_KEY}`,
+              'Content-Type':
+                'application/json',
+            },
+          },
+        );
+
+      const contactData =
+        await contactResponse.json();
+
+      if (!contactResponse.ok) {
+        console.error(
+          'Unread count contact fetch error:',
+          contactData,
+        );
+
+        return res
+          .status(
+            contactResponse.status,
+          )
+          .json({
+            success: false,
+            message:
+              'Unable to get unread count',
+          });
+      }
+
+      const currentCount =
+        Number(
+          contactData.properties
+            ?.dealer_unread_notification_count ||
+            0,
+        );
+
+      /*
+       * Ek notification read hui,
+       * isliye -1.
+       */
+      const newCount =
+        Math.max(
+          currentCount - 1,
+          0,
+        );
+
+      const updateResponse =
+        await fetch(
+          `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}`,
+          {
+            method: 'PATCH',
+            headers: {
+              Authorization:
+                `Bearer ${HUBSPOT_API_KEY}`,
+              'Content-Type':
+                'application/json',
+            },
+            body: JSON.stringify({
+              properties: {
+                dealer_unread_notification_count:
+                  String(newCount),
+              },
+            }),
+          },
+        );
+
+      const updateText =
+        await updateResponse.text();
+
+      if (!updateResponse.ok) {
+        console.error(
+          'Unread count update error:',
+          updateText,
+        );
+
+        return res
+          .status(
+            updateResponse.status,
+          )
+          .json({
+            success: false,
+            message:
+              'Unable to update unread count',
+          });
+      }
+
+      console.log(
+        `Dealer unread count updated for ${contactId}: ${currentCount} -> ${newCount}`,
+      );
+
+      return res.json({
+        success: true,
+        count:
+          newCount,
+      });
+    } catch (error) {
+      console.error(
+        'Dealer notification read error:',
+        error,
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            'Internal server error',
+        });
+    }
+  },
+);
+
 
 
 // Step 1: Search contact by email
@@ -2435,7 +2795,7 @@ app.post('/send-hubspot-message', async (req, res) => {
 app.get('/customer-news', async (req, res) => {  
   try {
     const response = await fetch(
-      'https://api.hubapi.com/cms/v3/blogs/posts?contentGroupId__eq=189594723724',
+      'https://api.hubapi.com/cms/v3/blogs/posts?contentGroupId__eq=218892120384',
       {
         method: 'GET',
         headers: { 

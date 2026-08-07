@@ -2890,6 +2890,11 @@ PODS:
     - Yoga
   - RNFS (2.20.0):
     - React-Core
+  - RNNotifee (9.1.8):
+    - React-Core
+    - RNNotifee/NotifeeCore (= 9.1.8)
+  - RNNotifee/NotifeeCore (9.1.8):
+    - React-Core
   - RNScreens (4.21.0):
     - boost
     - DoubleConversion
@@ -3070,6 +3075,7 @@ DEPENDENCIES:
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBMessaging (from `../node_modules/@react-native-firebase/messaging`)"
   - RNFS (from `../node_modules/react-native-fs`)
+  - "RNNotifee (from `../node_modules/@notifee/react-native`)"
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
   - SocketRocket (~> 0.7.1)
@@ -3268,6 +3274,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-firebase/messaging"
   RNFS:
     :path: "../node_modules/react-native-fs"
+  RNNotifee:
+    :path: "../node_modules/@notifee/react-native"
   RNScreens:
     :path: "../node_modules/react-native-screens"
   RNVectorIcons:
@@ -3375,6 +3383,7 @@ SPEC CHECKSUMS:
   RNFBApp: c67ba9ba10848a7ee033abfe1271f61bbcbc76bf
   RNFBMessaging: c1bfae91e8d016bb47720f27d4763d28323f63ed
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
+  RNNotifee: 4a6ee5c7deaf00e005050052d73ee6315dff7ec9
   RNScreens: 8f23c24db0c6ab9bf694e99f79970848a174b285
   RNVectorIcons: 96c832d9134dfee90ce0be7a1e0bf4c1e41a8d11
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748

@@ -3,6 +3,30 @@
   "reactNativePath": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/react-native",
   "reactNativeVersion": "0.83",
   "dependencies": {
+    "@notifee/react-native": {
+      "root": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/@notifee/react-native",
+      "name": "@notifee/react-native",
+      "platforms": {
+        "ios": {
+          "podspecPath": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/@notifee/react-native/RNNotifee.podspec",
+          "version": "9.1.8",
+          "configurations": [],
+          "scriptPhases": []
+        },
+        "android": {
+          "sourceDir": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/@notifee/react-native/android",
+          "packageImportPath": "import io.invertase.notifee.NotifeePackage;",
+          "packageInstance": "new NotifeePackage()",
+          "buildTypes": [],
+          "componentDescriptors": [],
+          "cmakeListsPath": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/@notifee/react-native/android/build/generated/source/codegen/jni/CMakeLists.txt",
+          "cxxModuleCMakeListsModuleName": null,
+          "cxxModuleCMakeListsPath": null,
+          "cxxModuleHeaderName": null,
+          "isPureCxxDependency": false
+        }
+      }
+    },
     "@react-native-async-storage/async-storage": {
       "root": "/Users/rentelplaza/SYIL_IOS_24.4/SyilAppIOS/node_modules/@react-native-async-storage/async-storage",
       "name": "@react-native-async-storage/async-storage",
