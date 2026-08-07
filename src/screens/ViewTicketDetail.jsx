@@ -24,7 +24,6 @@ import {
 } from '@react-navigation/native';
 import Video from 'react-native-video';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
 import Footer from './components/Footer';
 import { launchImageLibrary } from 'react-native-image-picker';
 import notifee from '@notifee/react-native';
