@@ -1051,7 +1051,7 @@ const contactRequests =
   associatedContactIds.map(
     async contactId => {
       const contactResponse = await fetch(
-        `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?properties=email,firstname,lastname,app_support_team_member,dealer_fcm_token,dealer_unread_notification_count`,
+        `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?properties=email,firstname,lastname,app_support_team_member,dealer_fcm_token`,
         {
           method: 'GET',
           headers: {
@@ -1106,76 +1106,76 @@ console.log(
 /*
  * Sirf associated contacts ke Dealer tokens.
  */
-// const tokens = [
-//   ...new Set(
-//     associatedContacts
-//       .map(
-//         contact =>
-//           contact.properties
-//             ?.dealer_fcm_token,
-//       )
-//       .filter(Boolean),
-//   ),
-// ];
-
-// console.log(
-//   'Associated Dealer tokens found:',
-//   tokens.length,
-// );
-
-// if (!tokens.length) {
-//   console.log(
-//     'Dealer push skipped: Associated contact has no dealer_fcm_token',
-//   );
-
-//   return;
-// }
-
-
-const dealerRecipients =
-  associatedContacts
-    .filter(contact =>
-      Boolean(
-        contact.properties
-          ?.dealer_fcm_token,
-      ),
-    )
-    .map(contact => ({
-      contactId:
-        String(contact.id),
-
-      email:
-        contact.properties?.email || '',
-
-      token:
-        contact.properties
-          ?.dealer_fcm_token,
-
-      currentUnreadCount:
-        Number(
+const tokens = [
+  ...new Set(
+    associatedContacts
+      .map(
+        contact =>
           contact.properties
-            ?.dealer_unread_notification_count ||
-            0,
-        ),
-    }));
+            ?.dealer_fcm_token,
+      )
+      .filter(Boolean),
+  ),
+];
 
 console.log(
-  'Dealer notification recipients:',
-  dealerRecipients.map(item => ({
-    contactId: item.contactId,
-    email: item.email,
-    currentUnreadCount:
-      item.currentUnreadCount,
-  })),
+  'Associated Dealer tokens found:',
+  tokens.length,
 );
 
-if (!dealerRecipients.length) {
+if (!tokens.length) {
   console.log(
     'Dealer push skipped: Associated contact has no dealer_fcm_token',
   );
 
   return;
 }
+
+
+// const dealerRecipients =
+//   associatedContacts
+//     .filter(contact =>
+//       Boolean(
+//         contact.properties
+//           ?.dealer_fcm_token,
+//       ),
+//     )
+//     .map(contact => ({
+//       contactId:
+//         String(contact.id),
+
+//       email:
+//         contact.properties?.email || '',
+
+//       token:
+//         contact.properties
+//           ?.dealer_fcm_token,
+
+//       currentUnreadCount:
+//         Number(
+//           contact.properties
+//             ?.dealer_unread_notification_count ||
+//             0,
+//         ),
+//     }));
+
+// console.log(
+//   'Dealer notification recipients:',
+//   dealerRecipients.map(item => ({
+//     contactId: item.contactId,
+//     email: item.email,
+//     currentUnreadCount:
+//       item.currentUnreadCount,
+//   })),
+// );
+
+// if (!dealerRecipients.length) {
+//   console.log(
+//     'Dealer push skipped: Associated contact has no dealer_fcm_token',
+//   );
+
+//   return;
+// }
 
 
 
