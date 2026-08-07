@@ -106,7 +106,6 @@
 //   }
 // };
 
-
 import {
   Platform,
 } from 'react-native';
@@ -118,20 +117,16 @@ import {
 import {
   AuthorizationStatus,
   getAPNSToken,
+  getInitialNotification,
   getMessaging,
   getToken,
+  onNotificationOpenedApp,
   requestPermission,
 } from '@react-native-firebase/messaging';
-
-import notifee, {
-  EventType,
-} from '@notifee/react-native';
 
 import {
   openTicketFromNotification,
 } from '../navigation/navigationRef';
-
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseApp = getApp();
 
@@ -141,10 +136,7 @@ const messaging =
 const API_URL =
   'https://syilfordealeriosapp.onrender.com';
 
-/*
- * Login ke baad FCM token generate karke
- * HubSpot contact me save karta hai.
- */
+
 export const saveFCMToken = async email => {
   try {
     if (!email) {
@@ -253,145 +245,61 @@ export const saveFCMToken = async email => {
   }
 };
 
+
 /*
- * Notification par tap hone par correct ticket
- * ki ViewTicketDetail screen open karta hai.
- */
-/*
- * Notification par tap hone par:
- * 1. App icon badge clear hoga
- * 2. Correct ViewTicketDetail screen open hogi
+ * Notification tap -> ViewTicketDetail
  */
 export const setupNotificationNavigation =
   () => {
     console.log(
-      'Notifee notification listener started',
+      'Notification navigation listeners started',
     );
 
+    /*
+     * App background me thi.
+     */
     const unsubscribe =
-      notifee.onForegroundEvent(
-        async ({
-          type,
-          detail,
-        }) => {
-          if (
-            type !== EventType.PRESS
-          ) {
-            return;
-          }
+      onNotificationOpenedApp(
+        messaging,
+        remoteMessage => {
+          console.log(
+            'Notification opened from background:',
+            remoteMessage?.data,
+          );
 
-          try {
-            const data =
-              detail?.notification
-                ?.data;
-
-            console.log(
-              'Notification pressed:',
-              data,
-            );
-
-            const contactId =
-              data
-                ?.recipientContactId;
-
-            /*
-             * Backend ko batao ki
-             * ek notification read ho gayi.
-             */
-            if (contactId) {
-              const response =
-                await fetch(
-                  `${API_URL}/dealer-notification-read`,
-                  {
-                    method:
-                      'POST',
-
-                    headers: {
-                      'Content-Type':
-                        'application/json',
-                    },
-
-                    body:
-                      JSON.stringify({
-                        contactId:
-                          String(
-                            contactId,
-                          ),
-                      }),
-                  },
-                );
-
-              const result =
-                await response.json();
-
-              console.log(
-                'Notification read response:',
-                result,
-              );
-
-              if (
-                response.ok &&
-                typeof result.count ===
-                  'number'
-              ) {
-                /*
-                 * Backend ke actual count
-                 * se iPhone badge update.
-                 */
-                await notifee.setBadgeCount(
-                  result.count,
-                );
-
-                console.log(
-                  'Badge updated to:',
-                  result.count,
-                );
-              }
-            }
-
-            /*
-             * Sirf tapped notification
-             * remove karo.
-             *
-             * cancelDisplayedNotifications()
-             * mat use karo, warna sari
-             * notifications remove ho jayengi.
-             */
-            const notificationId =
-              detail?.notification
-                ?.id;
-
-            if (notificationId) {
-              await notifee
-                .cancelNotification(
-                  notificationId,
-                );
-            }
-
-            /*
-             * Correct ticket screen.
-             */
-
-            if (data?.ticketId) {
-
-  await AsyncStorage.setItem(
-    'pendingNotificationTicket',
-    JSON.stringify(data),
-  );
-
-}
-
-            openTicketFromNotification(
-              data,
-            );
-          } catch (error) {
-            console.error(
-              'Notification press error:',
-              error,
-            );
-          }
+          openTicketFromNotification(
+            remoteMessage?.data,
+          );
         },
       );
+
+    /*
+     * App completely closed thi.
+     */
+    getInitialNotification(messaging)
+      .then(remoteMessage => {
+        if (!remoteMessage) {
+          console.log(
+            'App was not opened from notification',
+          );
+          return;
+        }
+
+        console.log(
+          'Notification opened from quit state:',
+          remoteMessage.data,
+        );
+
+        openTicketFromNotification(
+          remoteMessage.data,
+        );
+      })
+      .catch(error => {
+        console.error(
+          'Initial notification error:',
+          error,
+        );
+      });
 
     return unsubscribe;
   };

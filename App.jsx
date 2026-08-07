@@ -29,8 +29,8 @@ import { NavigationContainer } from '@react-navigation/native';
 
 import {
   navigationRef,
+  openPendingTicket,
 } from './src/navigation/navigationRef';
-
 import {
   setupNotificationNavigation,
 } from './src/utils/fcm';
@@ -57,6 +57,8 @@ const App = () => {
     console.log(
       'Navigation container ready',
     );
+
+    openPendingTicket();
   }}
   >
       <Stack.Navigator>
