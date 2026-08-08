@@ -595,6 +595,348 @@ const getDealerTotalUnreadCount =
 
 
 
+  const getSupportOwnerTotalUnreadCount =
+
+  async (
+
+    ownerId,
+
+    fetch,
+
+  ) => {
+
+
+
+    try {
+
+
+
+      let allTickets = [];
+
+      let after = null;
+
+
+
+
+
+      do {
+
+
+
+        const response =
+
+          await fetch(
+
+            'https://api.hubapi.com/crm/v3/objects/tickets/search',
+
+            {
+
+              method:
+
+                'POST',
+
+
+
+              headers: {
+
+                Authorization:
+
+                  `Bearer ${HUBSPOT_API_KEY}`,
+
+
+
+                'Content-Type':
+
+                  'application/json',
+
+              },
+
+
+
+              body:
+
+                JSON.stringify({
+
+                  filterGroups: [
+
+                    {
+
+                      filters: [
+
+                        {
+
+                          propertyName:
+
+                            'hubspot_owner_id',
+
+
+
+                          operator:
+
+                            'EQ',
+
+
+
+                          value:
+
+                            String(
+
+                              ownerId,
+
+                            ),
+
+                        },
+
+                      ],
+
+                    },
+
+                  ],
+
+
+
+                  properties: [
+
+                    'customer_portal',
+
+                    'dealer_unread_count',
+
+                  ],
+
+
+
+                  limit:
+
+                    100,
+
+
+
+                  ...(after
+
+                    ? { after }
+
+                    : {}),
+
+                }),
+
+            },
+
+          );
+
+
+
+
+
+        const data =
+
+          await response.json();
+
+
+
+
+
+        if (!response.ok) {
+
+
+
+          console.error(
+
+            'Support unread ticket search failed:',
+
+            data,
+
+          );
+
+
+
+          return 0;
+
+        }
+
+
+
+
+
+        allTickets = [
+
+          ...allTickets,
+
+          ...(data.results || []),
+
+        ];
+
+
+
+
+
+        after =
+
+          data?.paging
+
+            ?.next
+
+            ?.after ||
+
+          null;
+
+
+
+
+
+      } while (after);
+
+
+
+
+
+      const totalUnread =
+
+        allTickets.reduce(
+
+          (
+
+            total,
+
+            ticket,
+
+          ) => {
+
+
+
+            const rawPortal =
+
+              String(
+
+                ticket.properties
+
+                  ?.customer_portal ||
+
+                  '',
+
+              )
+
+                .trim()
+
+                .toLowerCase();
+
+
+
+
+
+            const isCustomerPortal =
+
+              rawPortal ===
+
+                'true' ||
+
+              rawPortal ===
+
+                'yes' ||
+
+              rawPortal ===
+
+                '1';
+
+
+
+
+
+            if (isCustomerPortal) {
+
+              return total;
+
+            }
+
+
+
+
+
+            const unread =
+
+              Number(
+
+                ticket.properties
+
+                  ?.dealer_unread_count ||
+
+                  0,
+
+              );
+
+
+
+
+
+            return (
+
+              total +
+
+              (
+
+                Number.isFinite(
+
+                  unread,
+
+                )
+
+                  ? unread
+
+                  : 0
+
+              )
+
+            );
+
+          },
+
+
+
+          0,
+
+        );
+
+
+
+
+
+      console.log(
+
+        `Support Owner ${ownerId} total unread:`,
+
+        totalUnread,
+
+      );
+
+
+
+
+
+      return totalUnread;
+
+
+
+    } catch (error) {
+
+
+
+      console.error(
+
+        'getSupportOwnerTotalUnreadCount error:',
+
+        error,
+
+      );
+
+
+
+      return 0;
+
+    }
+
+  };
+
+
+
 
 app.post('/hubspot-webhook', async (req, res) => {
   /*
@@ -1132,6 +1474,9 @@ console.log(
       );
     }
 
+    senderIsSupport =
+  latestMessage.direction === 'OUTGOING';
+
     const senderRole =
       senderIsSupport
         ? 'support'
@@ -1288,186 +1633,365 @@ console.log(
  * =====================================================
  */
 
-console.log(
-  'Finding notification recipient from Ticket Owner:',
-  ticketOwnerEmail || 'No owner email',
-);
+    /*
+ * =====================================================
+ * STEP 4:
+ * Notification recipient decide karo
+ *
+ * INCOMING = Customer -> Ticket Owner
+ * OUTGOING = Support  -> Associated Customer
+ * =====================================================
+ */
 
-if (!ticketOwnerEmail) {
-  console.log(
-    'Dealer push skipped: Ticket owner email not available',
-  );
+let dealerRecipients = [];
 
-  return;
-}
 
 /*
- * Ticket owner email se HubSpot Contact search karo.
+ * =====================================================
+ * CASE 1:
+ * Customer replied -> Ticket Owner ko notification
+ * =====================================================
  */
-const ownerContactSearchResponse =
-  await fetch(
-    'https://api.hubapi.com/crm/v3/objects/contacts/search',
-    {
-      method: 'POST',
+if (latestMessage.direction === 'INCOMING') {
 
-      headers: {
-        Authorization:
-          `Bearer ${HUBSPOT_API_KEY}`,
+  console.log(
+    'Incoming customer message: finding Ticket Owner',
+  );
 
-        'Content-Type':
-          'application/json',
+  if (!ticketOwnerEmail) {
+    console.log(
+      'Push skipped: Ticket owner email missing',
+    );
+
+    return;
+  }
+
+
+  const ownerContactSearchResponse =
+    await fetch(
+      'https://api.hubapi.com/crm/v3/objects/contacts/search',
+      {
+        method: 'POST',
+
+        headers: {
+          Authorization:
+            `Bearer ${HUBSPOT_API_KEY}`,
+
+          'Content-Type':
+            'application/json',
+        },
+
+        body: JSON.stringify({
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName:
+                    'email',
+
+                  operator:
+                    'EQ',
+
+                  value:
+                    ticketOwnerEmail,
+                },
+              ],
+            },
+          ],
+
+          properties: [
+            'email',
+            'firstname',
+            'lastname',
+            'app_support_team_member',
+            'dealer_fcm_token',
+          ],
+
+          limit: 1,
+        }),
       },
+    );
 
-      body: JSON.stringify({
-        filterGroups: [
-          {
-            filters: [
-              {
-                propertyName:
-                  'email',
 
-                operator:
-                  'EQ',
+  const ownerContactSearchData =
+    await ownerContactSearchResponse.json();
 
-                value:
-                  ticketOwnerEmail,
-              },
-            ],
-          },
-        ],
 
-        properties: [
-          'email',
-          'firstname',
-          'lastname',
-          'app_support_team_member',
-          'dealer_fcm_token',
-        ],
-
-        limit: 1,
-      }),
-    },
-  );
-
-const ownerContactSearchData =
-  await ownerContactSearchResponse.json();
-
-console.log(
-  'Ticket owner contact search status:',
-  ownerContactSearchResponse.status,
-);
-
-if (!ownerContactSearchResponse.ok) {
-  console.error(
-    'Ticket owner contact search failed:',
-    JSON.stringify(
+  if (!ownerContactSearchResponse.ok) {
+    console.error(
+      'Ticket owner contact search failed:',
       ownerContactSearchData,
-      null,
-      2,
-    ),
-  );
+    );
 
-  return;
+    return;
+  }
+
+
+  const ownerContact =
+    ownerContactSearchData
+      .results?.[0];
+
+
+  if (!ownerContact) {
+    console.log(
+      `Push skipped: Contact not found for owner ${ticketOwnerEmail}`,
+    );
+
+    return;
+  }
+
+
+  const supportValue =
+    String(
+      ownerContact.properties
+        ?.app_support_team_member ||
+        '',
+    )
+      .trim()
+      .toLowerCase();
+
+
+  const token =
+    ownerContact.properties
+      ?.dealer_fcm_token;
+
+
+  if (supportValue !== 'yes') {
+    console.log(
+      `Push skipped: Ticket owner ${ticketOwnerEmail} is not support team member`,
+    );
+
+    return;
+  }
+
+
+  if (!token) {
+    console.log(
+      `Push skipped: Ticket owner ${ticketOwnerEmail} has no FCM token`,
+    );
+
+    return;
+  }
+
+
+  dealerRecipients = [
+    {
+      contactId:
+        String(ownerContact.id),
+
+      email:
+        String(
+          ownerContact.properties
+            ?.email || '',
+        )
+          .trim()
+          .toLowerCase(),
+
+      token,
+
+      recipientType:
+        'support',
+
+      ownerId:
+        String(
+          ticketOwnerId,
+        ),
+    },
+  ];
 }
 
-if (
-  !ownerContactSearchData.results
-    ?.length
+
+/*
+ * =====================================================
+ * CASE 2:
+ * Support replied -> Associated Customer(s)
+ * =====================================================
+ */
+else if (
+  latestMessage.direction === 'OUTGOING'
 ) {
+
   console.log(
-    `Dealer push skipped: No HubSpot contact found for ticket owner ${ticketOwnerEmail}`,
+    'Outgoing support message: finding associated customer contacts',
   );
 
-  return;
+
+  const ticketContactsResponse =
+    await fetch(
+      `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}/associations/contacts`,
+      {
+        method: 'GET',
+
+        headers: {
+          Authorization:
+            `Bearer ${HUBSPOT_API_KEY}`,
+
+          'Content-Type':
+            'application/json',
+        },
+      },
+    );
+
+
+  const ticketContactsData =
+    await ticketContactsResponse.json();
+
+
+  if (!ticketContactsResponse.ok) {
+    console.error(
+      'Ticket contact association fetch failed:',
+      ticketContactsData,
+    );
+
+    return;
+  }
+
+
+  const associatedContactIds =
+    (
+      ticketContactsData.results ||
+      []
+    )
+      .map(item =>
+        String(item.id),
+      )
+      .filter(Boolean);
+
+
+  if (!associatedContactIds.length) {
+    console.log(
+      'Push skipped: No customer associated with ticket',
+    );
+
+    return;
+  }
+
+
+  const contactRequests =
+    associatedContactIds.map(
+      async contactId => {
+
+        const response =
+          await fetch(
+            `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?properties=email,firstname,lastname,app_support_team_member,dealer_fcm_token`,
+            {
+              method: 'GET',
+
+              headers: {
+                Authorization:
+                  `Bearer ${HUBSPOT_API_KEY}`,
+
+                'Content-Type':
+                  'application/json',
+              },
+            },
+          );
+
+
+        const data =
+          await response.json();
+
+
+        if (!response.ok) {
+          return null;
+        }
+
+
+        return data;
+      },
+    );
+
+
+  const contacts =
+    (
+      await Promise.all(
+        contactRequests,
+      )
+    ).filter(Boolean);
+
+
+  dealerRecipients =
+    contacts
+      .filter(contact => {
+
+        const supportValue =
+          String(
+            contact.properties
+              ?.app_support_team_member ||
+              '',
+          )
+            .trim()
+            .toLowerCase();
+
+
+        /*
+         * Customer/non-support contacts only.
+         */
+        const isSupport =
+          supportValue === 'yes';
+
+
+        const hasToken =
+          Boolean(
+            contact.properties
+              ?.dealer_fcm_token,
+          );
+
+
+        return (
+          !isSupport &&
+          hasToken
+        );
+      })
+
+      .map(contact => ({
+        contactId:
+          String(
+            contact.id,
+          ),
+
+        email:
+          String(
+            contact.properties
+              ?.email || '',
+          )
+            .trim()
+            .toLowerCase(),
+
+        token:
+          contact.properties
+            ?.dealer_fcm_token,
+
+        recipientType:
+          'customer',
+      }));
 }
 
-const ownerContact =
-  ownerContactSearchData.results[0];
-
-const ownerContactId =
-  String(
-    ownerContact.id,
-  );
-
-const ownerContactEmail =
-  String(
-    ownerContact.properties
-      ?.email || '',
-  )
-    .trim()
-    .toLowerCase();
-
-const ownerSupportValue =
-  String(
-    ownerContact.properties
-      ?.app_support_team_member ||
-      '',
-  )
-    .trim()
-    .toLowerCase();
-
-const ownerIsSupportTeamMember =
-  ownerSupportValue === 'yes';
-
-const ownerFcmToken =
-  ownerContact.properties
-    ?.dealer_fcm_token || '';
 
 console.log(
-  'Ticket Owner Contact:',
-  {
-    contactId:
-      ownerContactId,
+  'Dealer notification recipients:',
+  dealerRecipients.map(
+    recipient => ({
+      contactId:
+        recipient.contactId,
 
-    email:
-      ownerContactEmail,
+      email:
+        recipient.email,
 
-    appSupportTeamMember:
-      ownerSupportValue ||
-      'empty',
-
-    hasDealerToken:
-      Boolean(
-        ownerFcmToken,
-      ),
-  },
+      recipientType:
+        recipient.recipientType,
+    }),
+  ),
 );
 
-/*
- * OwnerTickets flow support users ke liye hai,
- * isliye app_support_team_member = Yes hona chahiye.
- */
-if (!ownerIsSupportTeamMember) {
+
+if (!dealerRecipients.length) {
   console.log(
-    `Dealer push skipped: Ticket owner ${ownerContactEmail} is not marked as support team member`,
+    'Push skipped: No eligible recipient',
   );
 
   return;
 }
-
-if (!ownerFcmToken) {
-  console.log(
-    `Dealer push skipped: Ticket owner ${ownerContactEmail} has no dealer_fcm_token`,
-  );
-
-  return;
-}
-
-/*
- * Push recipient sirf current ticket owner hoga.
- */
-const dealerRecipients = [
-  {
-    contactId:
-      ownerContactId,
-
-    email:
-      ownerContactEmail,
-
-    token:
-      ownerFcmToken,
-  },
-];
 
 console.log(
   'Dealer notification recipients:',
@@ -1665,12 +2189,38 @@ console.log(
          * Is Dealer ke saare Dealer tickets
          * ka total unread.
          */
-        const totalUnreadCount =
-          await getDealerTotalUnreadCount(
-            recipient.contactId,
-            fetch,
-          );
+let totalUnreadCount = 0;
 
+
+/*
+ * Support user:
+ * owned tickets ka total.
+ */
+if (
+  recipient.recipientType ===
+  'support'
+) {
+
+  totalUnreadCount =
+    await getSupportOwnerTotalUnreadCount(
+      recipient.ownerId,
+      fetch,
+    );
+}
+
+
+/*
+ * Normal/customer user:
+ * associated tickets ka total.
+ */
+else {
+
+  totalUnreadCount =
+    await getDealerTotalUnreadCount(
+      recipient.contactId,
+      fetch,
+    );
+}
         console.log(
           `Push badge for ${recipient.email}:`,
           totalUnreadCount,
@@ -2301,6 +2851,7 @@ if (isTicketOwner && !isAssociatedContact) {
       fetch,
     );
 }
+
 
       console.log(
         `Ticket ${ticketId} marked read. Remaining unread:`,
