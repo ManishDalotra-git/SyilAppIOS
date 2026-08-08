@@ -361,6 +361,143 @@ app.post(
       const contactId =
         searchData.results[0].id;
 
+
+        /*
+ * =====================================================
+ * Same device FCM token agar kisi aur HubSpot contact
+ * par saved hai to wahan se remove karo.
+ *
+ * Ek device token = ek currently logged-in user.
+ * =====================================================
+ */
+
+const existingTokenResponse =
+  await fetch(
+    'https://api.hubapi.com/crm/v3/objects/contacts/search',
+    {
+      method: 'POST',
+
+      headers: {
+        Authorization:
+          `Bearer ${HUBSPOT_API_KEY}`,
+
+        'Content-Type':
+          'application/json',
+      },
+
+      body: JSON.stringify({
+        filterGroups: [
+          {
+            filters: [
+              {
+                propertyName:
+                  'dealer_fcm_token',
+
+                operator:
+                  'EQ',
+
+                value:
+                  fcmToken,
+              },
+            ],
+          },
+        ],
+
+        properties: [
+          'email',
+          'dealer_fcm_token',
+        ],
+
+        limit: 100,
+      }),
+    },
+  );
+
+const existingTokenData =
+  await existingTokenResponse.json();
+
+if (existingTokenResponse.ok) {
+
+  const oldContacts =
+    (
+      existingTokenData.results ||
+      []
+    ).filter(
+      contact =>
+        String(contact.id) !==
+        String(contactId),
+    );
+
+  console.log(
+    'Old contacts using same FCM token:',
+    oldContacts.map(contact => ({
+      contactId:
+        contact.id,
+
+      email:
+        contact.properties
+          ?.email || '',
+    })),
+  );
+
+
+  /*
+   * Purane users se same token remove.
+   */
+  for (const oldContact of oldContacts) {
+
+    const clearTokenResponse =
+      await fetch(
+        `https://api.hubapi.com/crm/v3/objects/contacts/${oldContact.id}`,
+        {
+          method: 'PATCH',
+
+          headers: {
+            Authorization:
+              `Bearer ${HUBSPOT_API_KEY}`,
+
+            'Content-Type':
+              'application/json',
+          },
+
+          body: JSON.stringify({
+            properties: {
+              dealer_fcm_token:
+                '',
+            },
+          }),
+        },
+      );
+
+    if (clearTokenResponse.ok) {
+
+      console.log(
+        `Old FCM token removed from ${oldContact.properties?.email || oldContact.id}`,
+      );
+
+    } else {
+
+      const clearError =
+        await clearTokenResponse.text();
+
+      console.error(
+        'Old FCM token remove failed:',
+        oldContact.id,
+        clearError,
+      );
+    }
+  }
+
+} else {
+
+  console.error(
+    'Existing FCM token search failed:',
+    existingTokenData,
+  );
+}
+
+
+
       /*
        * Save Dealer app FCM token.
        */
