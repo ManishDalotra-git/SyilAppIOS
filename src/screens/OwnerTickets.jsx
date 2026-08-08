@@ -128,7 +128,41 @@ console.log('Final senderActorId:', senderActorId);
           );
 
           const data = await response.json();
-          console.log('data---- ', data);
+
+console.log(
+  '========== OWNER TICKET DEBUG =========='
+);
+
+console.log(
+  'Logged user email:',
+  email,
+);
+
+console.log(
+  'Owner API response:',
+  ownerData,
+);
+
+console.log(
+  'Final senderActorId:',
+  senderActorId,
+);
+
+console.log(
+  'Owner tickets API status:',
+  response.status,
+);
+
+console.log(
+  'Owner tickets response:',
+  JSON.stringify(data, null, 2),
+);
+
+console.log(
+  '========================================='
+);
+
+setTickets(data.tickets || []);
           
           setTickets(data.tickets || []);
           setLoading(false);
@@ -366,6 +400,7 @@ console.log('Final senderActorId:', senderActorId);
                 flexDirection: 'column-reverse',
               }}
               renderItem={({ item }) => (
+                
                 <Pressable
                   onPress={() =>
                     navigation.navigate('ViewTicketDetail', {
@@ -524,8 +559,8 @@ const styles = StyleSheet.create({
    ticketIdCell: {
   flex: '0 0 25%',
   width: '25%',
-  flexDirection: 'row',
-  alignItems: 'center',
+  flexDirection: 'column',
+  alignItems: 'flex-start',
   padding: 5,
 },
 
@@ -545,7 +580,7 @@ unreadBadge: {
   justifyContent: 'center',
   paddingHorizontal: 5,
   marginLeft: 5,
-},
+},  
 
 unreadBadgeText: {
   color: '#000',
