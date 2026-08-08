@@ -362,137 +362,175 @@ app.post(
         searchData.results[0].id;
 
 
-        /*
+ /*
  * =====================================================
- * Same device FCM token agar kisi aur HubSpot contact
- * par saved hai to wahan se remove karo.
+ * SAME DEVICE TOKEN CLEANUP
  *
- * Ek device token = ek currently logged-in user.
+ * Current FCM token kisi aur contact par saved ho
+ * to wahan se remove karo.
+ *
+ * Direct EQ search ke bajaye sab contacts jinke paas
+ * dealer_fcm_token hai fetch karke Node me exact compare
+ * karenge.
  * =====================================================
  */
 
-const existingTokenResponse =
-  await fetch(
-    'https://api.hubapi.com/crm/v3/objects/contacts/search',
-    {
-      method: 'POST',
+let tokenSearchAfter = null;
+let contactsWithDealerToken = [];
 
-      headers: {
-        Authorization:
-          `Bearer ${HUBSPOT_API_KEY}`,
+do {
+  const tokenContactsResponse =
+    await fetch(
+      'https://api.hubapi.com/crm/v3/objects/contacts/search',
+      {
+        method: 'POST',
 
-        'Content-Type':
-          'application/json',
+        headers: {
+          Authorization:
+            `Bearer ${HUBSPOT_API_KEY}`,
+
+          'Content-Type':
+            'application/json',
+        },
+
+        body: JSON.stringify({
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName:
+                    'dealer_fcm_token',
+
+                  operator:
+                    'HAS_PROPERTY',
+                },
+              ],
+            },
+          ],
+
+          properties: [
+            'email',
+            'dealer_fcm_token',
+          ],
+
+          limit: 100,
+
+          ...(tokenSearchAfter
+            ? {
+                after:
+                  tokenSearchAfter,
+              }
+            : {}),
+        }),
       },
+    );
 
-      body: JSON.stringify({
-        filterGroups: [
-          {
-            filters: [
-              {
-                propertyName:
-                  'dealer_fcm_token',
+  const tokenContactsData =
+    await tokenContactsResponse.json();
 
-                operator:
-                  'EQ',
+  if (!tokenContactsResponse.ok) {
+    console.error(
+      'Contacts-with-token search failed:',
+      tokenContactsData,
+    );
 
-                value:
-                  fcmToken,
-              },
-            ],
-          },
-        ],
+    break;
+  }
 
-        properties: [
-          'email',
-          'dealer_fcm_token',
-        ],
+  contactsWithDealerToken = [
+    ...contactsWithDealerToken,
+    ...(tokenContactsData.results || []),
+  ];
 
-        limit: 100,
-      }),
+  tokenSearchAfter =
+    tokenContactsData?.paging
+      ?.next
+      ?.after || null;
+
+} while (tokenSearchAfter);
+
+
+/*
+ * Same exact FCM token wale contacts,
+ * current logged-in contact ko chhod kar.
+ */
+const oldContacts =
+  contactsWithDealerToken.filter(
+    contact => {
+
+      const savedToken =
+        String(
+          contact.properties
+            ?.dealer_fcm_token ||
+            '',
+        ).trim();
+
+      return (
+        String(contact.id) !==
+          String(contactId) &&
+        savedToken ===
+          String(fcmToken).trim()
+      );
     },
   );
 
-const existingTokenData =
-  await existingTokenResponse.json();
 
-if (existingTokenResponse.ok) {
-
-  const oldContacts =
-    (
-      existingTokenData.results ||
-      []
-    ).filter(
-      contact =>
-        String(contact.id) !==
-        String(contactId),
-    );
-
-  console.log(
-    'Old contacts using same FCM token:',
-    oldContacts.map(contact => ({
+console.log(
+  'Same FCM token found on old contacts:',
+  oldContacts.map(
+    contact => ({
       contactId:
         contact.id,
 
       email:
         contact.properties
           ?.email || '',
-    })),
-  );
+    }),
+  ),
+);
 
 
-  /*
-   * Purane users se same token remove.
-   */
-  for (const oldContact of oldContacts) {
+/*
+ * Purane contacts se token remove.
+ */
+for (const oldContact of oldContacts) {
 
-    const clearTokenResponse =
-      await fetch(
-        `https://api.hubapi.com/crm/v3/objects/contacts/${oldContact.id}`,
-        {
-          method: 'PATCH',
+  const clearResponse =
+    await fetch(
+      `https://api.hubapi.com/crm/v3/objects/contacts/${oldContact.id}`,
+      {
+        method: 'PATCH',
 
-          headers: {
-            Authorization:
-              `Bearer ${HUBSPOT_API_KEY}`,
+        headers: {
+          Authorization:
+            `Bearer ${HUBSPOT_API_KEY}`,
 
-            'Content-Type':
-              'application/json',
-          },
-
-          body: JSON.stringify({
-            properties: {
-              dealer_fcm_token:
-                '',
-            },
-          }),
+          'Content-Type':
+            'application/json',
         },
-      );
 
-    if (clearTokenResponse.ok) {
+        body: JSON.stringify({
+          properties: {
+            dealer_fcm_token: '',
+          },
+        }),
+      },
+    );
 
-      console.log(
-        `Old FCM token removed from ${oldContact.properties?.email || oldContact.id}`,
-      );
+  const clearText =
+    await clearResponse.text();
 
-    } else {
+  if (!clearResponse.ok) {
+    console.error(
+      `FCM token remove failed for ${oldContact.properties?.email || oldContact.id}:`,
+      clearText,
+    );
 
-      const clearError =
-        await clearTokenResponse.text();
-
-      console.error(
-        'Old FCM token remove failed:',
-        oldContact.id,
-        clearError,
-      );
-    }
+    continue;
   }
 
-} else {
-
-  console.error(
-    'Existing FCM token search failed:',
-    existingTokenData,
+  console.log(
+    `Old FCM token successfully removed from ${oldContact.properties?.email || oldContact.id}`,
   );
 }
 
