@@ -221,7 +221,7 @@ const More = ({ navigation }) => {
             <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('CustomerNewsListing')} >
                 <View style={styles.left}>
                 <Image source={require('../../images/customer_listing_blog.png')} style={styles.icon} />
-                <Text style={styles.text}>Customer News</Text>
+                <Text allowFontScaling={false} style={styles.text}>Dealer News</Text>
                 </View>
                 <Image source={require('../../images/left_arrow.png')} style={styles.Leftarrow} />
             </TouchableOpacity>
