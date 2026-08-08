@@ -164,7 +164,7 @@ console.log(
 
 setTickets(data.tickets || []);
           
-          setTickets(data.tickets || []);
+          
           setLoading(false);
 
         } catch (error) {
@@ -559,8 +559,8 @@ const styles = StyleSheet.create({
    ticketIdCell: {
   flex: '0 0 25%',
   width: '25%',
-  flexDirection: 'column',
-  alignItems: 'flex-start',
+  flexDirection: 'row',
+  alignItems: 'center',
   padding: 5,
 },
 

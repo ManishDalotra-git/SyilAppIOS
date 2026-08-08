@@ -1877,23 +1877,195 @@ app.post(
         });
       }
 
+      // const associatedTicketIds =
+      //   (associationData.results || [])
+      //     .map(item =>
+      //       String(item.id),
+      //     );
+
+      // if (
+      //   !associatedTicketIds.includes(
+      //     String(ticketId),
+      //   )
+      // ) {
+      //   return res.status(403).json({
+      //     success: false,
+      //     message:
+      //       'Ticket is not associated with this contact',
+      //   });
+      // }
+
+
+
+
       const associatedTicketIds =
-        (associationData.results || [])
-          .map(item =>
-            String(item.id),
+  (associationData.results || [])
+    .map(item =>
+      String(item.id),
+    );
+
+const isAssociatedContact =
+  associatedTicketIds.includes(
+    String(ticketId),
+  );
+
+console.log(
+  'Ticket associated with logged-in contact:',
+  isAssociatedContact,
+);
+
+/*
+ * Agar ticket contact ke saath associated nahi hai,
+ * to check karo logged-in contact actually
+ * us ticket ka HubSpot Owner hai ya nahi.
+ */
+let isTicketOwner = false;
+
+if (!isAssociatedContact) {
+
+  /*
+   * Logged-in contact ka email fetch karo.
+   */
+  const loggedInContactResponse =
+    await fetch(
+      `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?properties=email`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization:
+            `Bearer ${HUBSPOT_API_KEY}`,
+          'Content-Type':
+            'application/json',
+        },
+      },
+    );
+
+  const loggedInContactData =
+    await loggedInContactResponse.json();
+
+  if (loggedInContactResponse.ok) {
+
+    const loggedInEmail =
+      loggedInContactData.properties
+        ?.email
+        ?.trim()
+        ?.toLowerCase() || '';
+
+    console.log(
+      'Logged-in email for owner validation:',
+      loggedInEmail,
+    );
+
+    /*
+     * HubSpot owners fetch karo.
+     */
+    const ownersResponse =
+      await fetch(
+        'https://api.hubapi.com/crm/v3/owners?archived=false',
+        {
+          method: 'GET',
+          headers: {
+            Authorization:
+              `Bearer ${HUBSPOT_API_KEY}`,
+            'Content-Type':
+              'application/json',
+          },
+        },
+      );
+
+    const ownersData =
+      await ownersResponse.json();
+
+    if (ownersResponse.ok) {
+
+      const matchedOwner =
+        (ownersData.results || [])
+          .find(
+            owner =>
+              owner.email
+                ?.trim()
+                ?.toLowerCase() ===
+              loggedInEmail,
           );
 
-      if (
-        !associatedTicketIds.includes(
-          String(ticketId),
-        )
-      ) {
-        return res.status(403).json({
-          success: false,
-          message:
-            'Ticket is not associated with this contact',
-        });
+      if (matchedOwner) {
+
+        const loggedInOwnerId =
+          String(matchedOwner.id);
+
+        console.log(
+          'Logged-in HubSpot Owner ID:',
+          loggedInOwnerId,
+        );
+
+        /*
+         * Current ticket ka owner fetch karo.
+         */
+        const ticketOwnerResponse =
+          await fetch(
+            `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}?properties=hubspot_owner_id`,
+            {
+              method: 'GET',
+              headers: {
+                Authorization:
+                  `Bearer ${HUBSPOT_API_KEY}`,
+                'Content-Type':
+                  'application/json',
+              },
+            },
+          );
+
+        const ticketOwnerData =
+          await ticketOwnerResponse.json();
+
+        if (ticketOwnerResponse.ok) {
+
+          const ticketOwnerId =
+            String(
+              ticketOwnerData.properties
+                ?.hubspot_owner_id ||
+                '',
+            );
+
+          isTicketOwner =
+            ticketOwnerId ===
+            loggedInOwnerId;
+
+          console.log(
+            'Ticket Owner ID:',
+            ticketOwnerId,
+          );
+
+          console.log(
+            'Logged user owns ticket:',
+            isTicketOwner,
+          );
+        }
       }
+    }
+  }
+}
+
+
+/*
+ * User allowed hai agar:
+ *
+ * 1. Contact ticket ke saath associated hai
+ * OR
+ * 2. User current ticket ka HubSpot Owner hai
+ */
+if (
+  !isAssociatedContact &&
+  !isTicketOwner
+) {
+  return res.status(403).json({
+    success: false,
+    message:
+      'User does not have access to this ticket',
+  });
+}
+
+
 
       /*
        * This ticket is now read.
@@ -1939,11 +2111,169 @@ app.post(
        * Remaining total unread
        * across all dealer tickets.
        */
-      const totalUnreadCount =
-        await getDealerTotalUnreadCount(
-          String(contactId),
-          fetch,
+      // const totalUnreadCount =
+      //   await getDealerTotalUnreadCount(
+      //     String(contactId),
+      //     fetch,
+      //   );
+
+      let totalUnreadCount = 0;
+
+if (isTicketOwner && !isAssociatedContact) {
+
+  /*
+   * Owner ke remaining unread tickets calculate karo.
+   */
+
+  const loggedInContactResponse =
+    await fetch(
+      `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?properties=email`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${HUBSPOT_API_KEY}`,
+        },
+      },
+    );
+
+  const loggedInContactData =
+    await loggedInContactResponse.json();
+
+  const loggedInEmail =
+    loggedInContactData.properties
+      ?.email
+      ?.trim()
+      ?.toLowerCase() || '';
+
+
+  const ownersResponse =
+    await fetch(
+      'https://api.hubapi.com/crm/v3/owners?archived=false',
+      {
+        headers: {
+          Authorization:
+            `Bearer ${HUBSPOT_API_KEY}`,
+        },
+      },
+    );
+
+  const ownersData =
+    await ownersResponse.json();
+
+  const matchedOwner =
+    (ownersData.results || [])
+      .find(
+        owner =>
+          owner.email
+            ?.trim()
+            ?.toLowerCase() ===
+          loggedInEmail,
+      );
+
+
+  if (matchedOwner) {
+
+    const ownerUnreadResponse =
+      await fetch(
+        'https://api.hubapi.com/crm/v3/objects/tickets/search',
+        {
+          method: 'POST',
+
+          headers: {
+            Authorization:
+              `Bearer ${HUBSPOT_API_KEY}`,
+
+            'Content-Type':
+              'application/json',
+          },
+
+          body: JSON.stringify({
+            filterGroups: [
+              {
+                filters: [
+                  {
+                    propertyName:
+                      'hubspot_owner_id',
+
+                    operator:
+                      'EQ',
+
+                    value:
+                      String(
+                        matchedOwner.id,
+                      ),
+                  },
+                ],
+              },
+            ],
+
+            properties: [
+              'dealer_unread_count',
+              'customer_portal',
+            ],
+
+            limit: 100,
+          }),
+        },
+      );
+
+    const ownerUnreadData =
+      await ownerUnreadResponse.json();
+
+
+    if (ownerUnreadResponse.ok) {
+
+      totalUnreadCount =
+        (
+          ownerUnreadData.results ||
+          []
+        ).reduce(
+          (total, ticket) => {
+
+            const portalValue =
+              String(
+                ticket.properties
+                  ?.customer_portal ||
+                  '',
+              )
+                .trim()
+                .toLowerCase();
+
+            const customerPortal =
+              portalValue === 'true' ||
+              portalValue === 'yes' ||
+              portalValue === '1';
+
+            if (customerPortal) {
+              return total;
+            }
+
+            return (
+              total +
+              Number(
+                ticket.properties
+                  ?.dealer_unread_count ||
+                  0,
+              )
+            );
+          },
+
+          0,
         );
+    }
+  }
+
+} else {
+
+  /*
+   * Normal ViewTicket Contact user.
+   */
+  totalUnreadCount =
+    await getDealerTotalUnreadCount(
+      String(contactId),
+      fetch,
+    );
+}
 
       console.log(
         `Ticket ${ticketId} marked read. Remaining unread:`,
