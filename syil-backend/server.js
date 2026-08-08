@@ -1279,39 +1279,89 @@ console.log(
  * =====================================================
  */
 
+
+    /*
+ * =====================================================
+ * STEP 4:
+ * Ticket Owner ke HubSpot contact ka
+ * Dealer FCM token find karo.
+ * =====================================================
+ */
+
 console.log(
-  'Finding associated contacts for Ticket ID:',
-  ticketId,
+  'Finding notification recipient from Ticket Owner:',
+  ticketOwnerEmail || 'No owner email',
 );
+
+if (!ticketOwnerEmail) {
+  console.log(
+    'Dealer push skipped: Ticket owner email not available',
+  );
+
+  return;
+}
 
 /*
- * Ticket -> Contact association fetch karo.
+ * Ticket owner email se HubSpot Contact search karo.
  */
-const ticketContactsResponse = await fetch(
-  `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}/associations/contacts`,
-  {
-    method: 'GET',
-    headers: {
-      Authorization:
-        `Bearer ${HUBSPOT_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-  },
-);
+const ownerContactSearchResponse =
+  await fetch(
+    'https://api.hubapi.com/crm/v3/objects/contacts/search',
+    {
+      method: 'POST',
 
-const ticketContactsData =
-  await ticketContactsResponse.json();
+      headers: {
+        Authorization:
+          `Bearer ${HUBSPOT_API_KEY}`,
+
+        'Content-Type':
+          'application/json',
+      },
+
+      body: JSON.stringify({
+        filterGroups: [
+          {
+            filters: [
+              {
+                propertyName:
+                  'email',
+
+                operator:
+                  'EQ',
+
+                value:
+                  ticketOwnerEmail,
+              },
+            ],
+          },
+        ],
+
+        properties: [
+          'email',
+          'firstname',
+          'lastname',
+          'app_support_team_member',
+          'dealer_fcm_token',
+        ],
+
+        limit: 1,
+      }),
+    },
+  );
+
+const ownerContactSearchData =
+  await ownerContactSearchResponse.json();
 
 console.log(
-  'Ticket contacts status:',
-  ticketContactsResponse.status,
+  'Ticket owner contact search status:',
+  ownerContactSearchResponse.status,
 );
 
-if (!ticketContactsResponse.ok) {
+if (!ownerContactSearchResponse.ok) {
   console.error(
-    'Ticket contacts fetch error:',
+    'Ticket owner contact search failed:',
     JSON.stringify(
-      ticketContactsData,
+      ownerContactSearchData,
       null,
       2,
     ),
@@ -1320,279 +1370,104 @@ if (!ticketContactsResponse.ok) {
   return;
 }
 
-/*
- * Ticket ke saath jo HubSpot contacts associated hain,
- * unki IDs.
- */
-const associatedContactIds =
-  (ticketContactsData.results || [])
-    .map(item => String(item.id))
-    .filter(Boolean);
+if (
+  !ownerContactSearchData.results
+    ?.length
+) {
+  console.log(
+    `Dealer push skipped: No HubSpot contact found for ticket owner ${ticketOwnerEmail}`,
+  );
+
+  return;
+}
+
+const ownerContact =
+  ownerContactSearchData.results[0];
+
+const ownerContactId =
+  String(
+    ownerContact.id,
+  );
+
+const ownerContactEmail =
+  String(
+    ownerContact.properties
+      ?.email || '',
+  )
+    .trim()
+    .toLowerCase();
+
+const ownerSupportValue =
+  String(
+    ownerContact.properties
+      ?.app_support_team_member ||
+      '',
+  )
+    .trim()
+    .toLowerCase();
+
+const ownerIsSupportTeamMember =
+  ownerSupportValue === 'yes';
+
+const ownerFcmToken =
+  ownerContact.properties
+    ?.dealer_fcm_token || '';
 
 console.log(
-  'Associated Contact IDs:',
-  associatedContactIds,
+  'Ticket Owner Contact:',
+  {
+    contactId:
+      ownerContactId,
+
+    email:
+      ownerContactEmail,
+
+    appSupportTeamMember:
+      ownerSupportValue ||
+      'empty',
+
+    hasDealerToken:
+      Boolean(
+        ownerFcmToken,
+      ),
+  },
 );
 
-if (!associatedContactIds.length) {
+/*
+ * OwnerTickets flow support users ke liye hai,
+ * isliye app_support_team_member = Yes hona chahiye.
+ */
+if (!ownerIsSupportTeamMember) {
   console.log(
-    'Dealer push skipped: No contact associated with this ticket',
+    `Dealer push skipped: Ticket owner ${ownerContactEmail} is not marked as support team member`,
+  );
+
+  return;
+}
+
+if (!ownerFcmToken) {
+  console.log(
+    `Dealer push skipped: Ticket owner ${ownerContactEmail} has no dealer_fcm_token`,
   );
 
   return;
 }
 
 /*
- * Har associated contact ka dealer_fcm_token fetch karo.
+ * Push recipient sirf current ticket owner hoga.
  */
-const contactRequests =
-  associatedContactIds.map(
-    async contactId => {
-      const contactResponse = await fetch(
-        `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?properties=email,firstname,lastname,app_support_team_member,dealer_fcm_token`,
-        {
-          method: 'GET',
-          headers: {
-            Authorization:
-              `Bearer ${HUBSPOT_API_KEY}`,
-            'Content-Type':
-              'application/json',
-          },
-        },
-      );
-
-      const contactData =
-        await contactResponse.json();
-
-      if (!contactResponse.ok) {
-        console.error(
-          `Associated contact ${contactId} fetch failed:`,
-          contactData,
-        );
-
-        return null;
-      }
-
-      return contactData;
-    },
-  );
-
-const associatedContacts =
-  (
-    await Promise.all(contactRequests)
-  ).filter(Boolean);
-
-console.log(
-  'Associated Contacts:',
-  associatedContacts.map(contact => ({
-    contactId: String(contact.id),
+const dealerRecipients = [
+  {
+    contactId:
+      ownerContactId,
 
     email:
-      contact.properties?.email || '',
+      ownerContactEmail,
 
-    appSupportTeamMember:
-      contact.properties
-        ?.app_support_team_member || '',
-
-    hasDealerToken: Boolean(
-      contact.properties
-        ?.dealer_fcm_token,
-    ),
-  })),
-);
-
-/*
- * Sirf associated contacts ke Dealer tokens.
- */
-// const tokens = [
-//   ...new Set(
-//     associatedContacts
-//       .map(
-//         contact =>
-//           contact.properties
-//             ?.dealer_fcm_token,
-//       )
-//       .filter(Boolean),
-//   ),
-// ];
-
-// console.log(
-//   'Associated Dealer tokens found:',
-//   tokens.length,
-// );
-
-// if (!tokens.length) {
-//   console.log(
-//     'Dealer push skipped: Associated contact has no dealer_fcm_token',
-//   );
-
-//   return;
-// }
-
-// const dealerRecipients =
-//   associatedContacts
-//     .filter(contact =>
-//       Boolean(
-//         contact.properties
-//           ?.dealer_fcm_token,
-//       ),
-//     )
-//     .map(contact => ({
-//       contactId:
-//         String(contact.id),
-
-//       email:
-//         contact.properties?.email || '',
-
-//       token:
-//         contact.properties
-//           ?.dealer_fcm_token,
-
-//       currentUnreadCount:
-//         Number(
-//           contact.properties
-//             ?.dealer_unread_notification_count ||
-//             0,
-//         ),
-//     }));
-
-// console.log(
-//   'Dealer notification recipients:',
-//   dealerRecipients.map(recipient => ({
-//     contactId:
-//       recipient.contactId,
-
-//     email:
-//       recipient.email,
-
-//     currentUnreadCount:
-//       recipient.currentUnreadCount,
-//   })),
-// );
-
-// if (!dealerRecipients.length) {
-//   console.log(
-//     'Dealer push skipped: Associated contact has no dealer_fcm_token',
-//   );
-
-//   return;
-// }
-
-
-// const dealerRecipients =
-//   associatedContacts
-//     .filter(contact =>
-//       Boolean(
-//         contact.properties
-//           ?.dealer_fcm_token,
-//       ),
-//     )
-//     .map(contact => ({
-//       contactId:
-//         String(contact.id),
-
-//       email:
-//         contact.properties
-//           ?.email || '',
-
-//       token:
-//         contact.properties
-//           ?.dealer_fcm_token,
-//     }));
-
-
-
-const dealerRecipients =
-  associatedContacts
-    .filter(contact => {
-      /*
-       * FCM token hona zaroori hai.
-       */
-      const token =
-        contact.properties
-          ?.dealer_fcm_token;
-
-      if (!token) {
-        return false;
-      }
-
-      const contactEmail =
-        String(
-          contact.properties
-            ?.email || '',
-        )
-          .trim()
-          .toLowerCase();
-
-      const supportValue =
-        String(
-          contact.properties
-            ?.app_support_team_member || '',
-        )
-          .trim()
-          .toLowerCase();
-
-      const isSupportTeamMember =
-        supportValue === 'yes';
-
-      /*
-       * Support team member ko notification
-       * sirf tab milegi jab woh current
-       * ticket ka owner hai.
-       */
-      if (isSupportTeamMember) {
-        const isCurrentTicketOwner =
-          Boolean(
-            ticketOwnerEmail &&
-            contactEmail &&
-            ticketOwnerEmail ===
-              contactEmail,
-          );
-
-        console.log(
-          'Support notification check:',
-          {
-            contactEmail,
-            ticketOwnerEmail,
-            isCurrentTicketOwner,
-          },
-        );
-
-        if (!isCurrentTicketOwner) {
-          console.log(
-            `Push skipped for support user ${contactEmail}: user is not ticket owner`,
-          );
-
-          return false;
-        }
-
-        return true;
-      }
-
-      /*
-       * Normal dealer user ke liye
-       * existing associated-contact logic.
-       */
-      return true;
-    })
-    .map(contact => ({
-      contactId:
-        String(contact.id),
-
-      email:
-        String(
-          contact.properties
-            ?.email || '',
-        )
-          .trim()
-          .toLowerCase(),
-
-      token:
-        contact.properties
-          ?.dealer_fcm_token,
-    }));
-
-
+    token:
+      ownerFcmToken,
+  },
+];
 
 console.log(
   'Dealer notification recipients:',
@@ -1606,15 +1481,6 @@ console.log(
     }),
   ),
 );
-
-if (!dealerRecipients.length) {
-  console.log(
-    'Dealer push skipped: No eligible notification recipient',
-  );
-
-  return;
-}
-
 
 
     /*
