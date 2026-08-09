@@ -248,7 +248,7 @@ const ViewTicketDetail = ({ navigation }) => {
   const channelAccountId = outgoingMessage?.channelAccountId;
   const channelId = outgoingMessage?.channelId;
   const conversationsThreadId = initialMessage?.conversationsThreadId;
-  //const initialMessageemail = initialMessage?.senderName; 
+  //const initialMessageemail = initialMessage?.senderName;    
 
   console.log('Initial Message:', conversationsThreadId);
  
@@ -259,7 +259,10 @@ const ViewTicketDetail = ({ navigation }) => {
   const incomingEmail = incomingMessage?.senderName || '';
   //const incomingSubject = incomingMessage?.subject;
 
-  const incomingSubject = incomingMessage?.subject;
+  const incomingSubject =
+  incomingMessage?.subject ||
+  subject ||
+  'Ticket Reply';
 
   const hasOutgoings = messages.filter(msg => msg.direction === 'OUTGOING').length;
   const subjectPrefix = hasOutgoings > 1 ? 'Re: ' : '';
