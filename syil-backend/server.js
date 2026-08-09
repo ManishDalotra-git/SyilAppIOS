@@ -4296,6 +4296,8 @@ app.post('/get_ticket_conversation', async (req, res) => {
           createdAt: m.createdAt,
           subject : m.subject,
           attachments: m.attachments,
+          conversationsThreadId:
+    String(threadId),
         };
       });
 

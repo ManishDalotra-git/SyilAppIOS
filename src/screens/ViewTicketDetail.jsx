@@ -256,7 +256,7 @@ const ViewTicketDetail = ({ navigation }) => {
     .reverse()
     .find(msg => msg.direction === 'INCOMING' && msg.senderName?.includes('@'));
 
-  const incomingEmail = initialMessage?.senderName;
+  const incomingEmail = incomingMessage?.senderName || '';
   //const incomingSubject = incomingMessage?.subject;
 
   const incomingSubject = incomingMessage?.subject;
