@@ -144,7 +144,7 @@ const More = ({ navigation }) => {
             <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('Chatscreen')} >
                 <View style={styles.left}>
                 <Image source={require('../../images/ArticleIcon.png')} style={styles.icon} />
-                <Text allowFontScaling={false} style={styles.text}>Ask Alex</Text>
+                <Text allowFontScaling={false} style={styles.text}>Chat with SYIL</Text>
                 </View>
                 <Image source={require('../../images/left_arrow.png')} style={styles.Leftarrow} />
             </TouchableOpacity>

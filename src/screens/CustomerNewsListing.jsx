@@ -160,7 +160,7 @@ const CustomerNewsListing = ({ navigation }) => {
                 style={styles.arrowIcon}
             />
             </TouchableOpacity>
-            <Text allowFontScaling={false} style={styles.headerTitle}>Customer News Listing</Text>
+            <Text allowFontScaling={false} style={styles.headerTitle}>Dealer News Listing</Text>
         </View>
         <View style={styles.containerInner}>
 

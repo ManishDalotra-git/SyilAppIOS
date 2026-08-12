@@ -206,7 +206,7 @@ const cleanedPostBody = (
         </TouchableOpacity>
 
         <Text allowFontScaling={false} style={styles.headerTitle}>
-          Customer News Detail
+          Dealer News Detail
         </Text>
       </View>
 
