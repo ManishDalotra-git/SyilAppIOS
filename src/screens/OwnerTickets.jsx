@@ -370,6 +370,8 @@ setTickets(data.tickets || []);
                 </Pressable>
             </View>
 
+
+
           {/* TABLE */}
           <View style={styles.ticketContainer}>
 
