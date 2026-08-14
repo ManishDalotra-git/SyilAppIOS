@@ -4053,16 +4053,18 @@ app.post('/get_tickets', async (req, res) => {
         }
     );
 
-    if(!response.ok){
+    if (!response.ok) {
 
-        console.log(
-            "Ticket fetch failed:",
-            ticketId,
-            response.status
-        );
+    console.log(
+        "Ticket fetch failed:",
+        ticketId,
+        response.status
+    );
 
-        return null;
-    }
+    console.log(await response.text());
+
+    return null;
+}
 
     return await response.json();
 
