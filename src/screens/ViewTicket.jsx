@@ -476,7 +476,7 @@ return (
                   showsVerticalScrollIndicator={false}
                   keyExtractor={(item) => item.ticketId}
                   //contentContainerStyle={{ paddingBottom: 200, }}
-                  contentContainerStyle={{ paddingBottom: 420, paddingTop: 0, flexDirection: 'column-reverse',}}
+                  contentContainerStyle={{ paddingBottom: 420, paddingTop: 0,}}
                   //ListFooterComponent={<View style={{ height: 290 }} />}
                   renderItem={({ item }) => (
                   <Pressable
