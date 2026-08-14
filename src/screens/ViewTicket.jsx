@@ -1,4 +1,9 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+} from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, ImageBackground, StatusBar,
 Platform, Pressable, FlatList, Modal, } from 'react-native'
 import { useRoute } from '@react-navigation/native';
@@ -20,6 +25,7 @@ const ViewTicket = ({ navigation }) => {
   const [contactID, setContactID] = useState('');
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
+  const requestId = useRef(0);
   const [appSupportTeamMember, setAppSupportTeamMember] = useState(false);
 
 
@@ -90,43 +96,91 @@ const ViewTicket = ({ navigation }) => {
   // );
 
 
-  useFocusEffect(
-      useCallback(() => {
-          const fetchTickets = async () => {
-              if (!contactID) return;
+useEffect(() => {
 
-              try {
-                  setLoading(true);
+    if (!contactID) return;
 
-                  //https://syilapp-w8ye.onrender.com/get_contact_tickets
-                  //http://192.168.0.84:3000
+    const fetchTickets = async () => {
 
-                  const response = await fetch('https://syilfordealeriosapp.onrender.com/get_tickets', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                      contactId: contactID,
-                      type: ticketType,
-                  }),
-                  });
+        try {
 
-                  const data = await response.json();
-                  setTickets(data.tickets || []);
-                  setLoading(false);
-              } catch (error) {
-                  console.log('Ticket fetch error', error);
-                  setLoading(false);
-              }
-          };
+            setLoading(true);
 
-          fetchTickets();
-      }, [contactID, ticketType])
-  );
+            const response = await fetch(
+                'https://syilfordealeriosapp.onrender.com/get_tickets',
+                {
+                    method:'POST',
+                    headers:{
+                        'Content-Type':'application/json',
+                    },
+                    body:JSON.stringify({
+                        contactId:contactID,
+                        type:ticketType,
+                    }),
+                },
+            );
+
+            const data = await response.json();
+
+            console.log("API DATA",data);
+
+            setTickets(data.tickets || []);
+
+        }
+        catch(error){
+
+            console.log(error);
+
+        }
+        finally{
+
+            setLoading(false);
+
+        }
+
+    };
+
+    fetchTickets();
+
+},[contactID,ticketType]);
+
+useFocusEffect(
+
+    useCallback(()=>{
+
+        console.log("Screen Focus");
+
+    },[])
+
+);
+
 
   console.log('tickets--- ' , tickets);
   console.log('contactID--- ' , contactID);
+
+
+  const filteredTickets = tickets.filter(item => {
+
+  const portal = String(
+    item.customer_portal || ''
+  )
+    .trim()
+    .toLowerCase();
+
+  return (
+    portal === '' ||
+    portal === 'false'
+  );
+
+
+
+});
+
+  console.log(
+    "FlatList Count:",
+    filteredTickets.length
+);
+
 
   const formatDate = (dateString) => {
       if (!dateString) return '';
@@ -402,17 +456,20 @@ return (
               </View>
               {loading && <Text allowFontScaling={false} style={{ textAlign:'center' , padding:10, }}>Loading ticket...</Text>}
               {/* TICKET LIST */}
+
+
               <FlatList
+              data={filteredTickets}
                   //data={tickets}
-                  data={tickets.filter(
-                      item =>
-                          item.customer_portal === '' || item.customer_portal === ' ' || item.customer_portal === 'False' ||
-                          item.customer_portal === false
-                  )}
+                  // data={tickets.filter(
+                  //     item =>
+                  //         item.customer_portal === '' || item.customer_portal === ' ' || item.customer_portal === 'False' ||
+                  //         item.customer_portal === false
+                  // )}
                   showsVerticalScrollIndicator={false}
                   keyExtractor={(item) => item.ticketId}
-                  //contentContainerStyle={{ paddingBottom: 200, }}
-                  contentContainerStyle={{ paddingBottom: 420, paddingTop: 0, flexDirection: 'column-reverse',}}
+                  contentContainerStyle={{ paddingBottom: 200, }}
+                  //contentContainerStyle={{ paddingBottom: 420, paddingTop: 0, flexDirection: 'column-reverse',}}
                   //ListFooterComponent={<View style={{ height: 290 }} />}
                   renderItem={({ item }) => (
                   <Pressable
@@ -478,11 +535,18 @@ return (
                   <Text allowFontScaling={false} style={styles.noTicketText}>No tickets found</Text>
               )} */}
 
-            {!loading &&
+{/*            {!loading &&
               tickets.filter(item => item.customer_portal === '' || item.customer_portal === ' ' || item.customer_portal === 'False' || item.customer_portal === false).length === 0 && (
                   <Text style={styles.noTicketText}>No tickets found</Text>
               )}
+*/}
 
+{!loading &&
+filteredTickets.length === 0 && (
+<Text style={styles.noTicketText}>
+No tickets found
+</Text>
+)}
 
               
 

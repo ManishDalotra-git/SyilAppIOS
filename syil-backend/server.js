@@ -3989,7 +3989,9 @@ app.post('/get_tickets', async (req, res) => {
 
       const companies = contactData?.associations?.companies?.results || [];
 
-      const company = companies.find(c => c.type === 'contact_to_company');
+      // const company = companies.find(c => c.type === 'contact_to_company');
+      const company =
+  companies.find(c => c.id) || null;
 
       if (!company) {
         return res.status(200).json({ tickets: [] });
@@ -4025,45 +4027,65 @@ app.post('/get_tickets', async (req, res) => {
       });
     }
 
-    const ticketPromises = ticketIds.map(ticketId =>
-      fetch(
+    // const ticketPromises = ticketIds.map(ticketId =>
+    //   fetch(
+    //     `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}?properties=subject,createdate,hubspot_owner_id,hs_pipeline_stage,customer_portal,dealer_unread_count`,
+    //     {
+    //       method: 'GET',
+    //       headers: {
+    //         'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
+    //         'Content-Type': 'application/json',
+    //       },
+    //     }
+    //   ).then(res => res.json())
+    // );
+
+    const ticketPromises = ticketIds.map(async ticketId => {
+
+    const response = await fetch(
         `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}?properties=subject,createdate,hubspot_owner_id,hs_pipeline_stage,customer_portal,dealer_unread_count`,
         {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
+            method:'GET',
+            headers:{
+                Authorization:`Bearer ${HUBSPOT_API_KEY}`,
+                'Content-Type':'application/json'
+            }
         }
-      ).then(res => res.json())
     );
 
-    const ticketResponses = await Promise.all(ticketPromises);
+    if(!response.ok){
 
-    const formattedTickets = ticketResponses.map(ticket => ({
-  ticketId: ticket.id,
+        console.log(
+            "Ticket fetch failed:",
+            ticketId,
+            response.status
+        );
 
-  subject:
-    ticket.properties.subject || '',
+        return null;
+    }
 
-  createdDate:
-    ticket.properties.createdate || '',
+    return await response.json();
 
-  ownerId:
-    ticket.properties.hubspot_owner_id || '',
+});
 
-  status:
-    ticket.properties.hs_pipeline_stage || '',
+const ticketResponses =
+  (await Promise.all(ticketPromises))
+    .filter(Boolean);
 
-  customer_portal:
-    ticket.properties.customer_portal || '',
-
-  dealer_unread_count:
-    Number(
-      ticket.properties.dealer_unread_count ||
-      0,
+const formattedTickets = ticketResponses
+  .filter(ticket => ticket.properties)
+  .map(ticket => ({
+    ticketId: ticket.id,
+    subject: ticket.properties.subject || '',
+    createdDate: ticket.properties.createdate || '',
+    ownerId: ticket.properties.hubspot_owner_id || '',
+    status: ticket.properties.hs_pipeline_stage || '',
+    customer_portal: ticket.properties.customer_portal || '',
+    dealer_unread_count: Number(
+      ticket.properties.dealer_unread_count || 0
     ),
-}));
+  }));
+
 
     return res.status(200).json({
       tickets: formattedTickets,
