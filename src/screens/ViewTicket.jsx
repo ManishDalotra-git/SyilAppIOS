@@ -181,6 +181,13 @@ useFocusEffect(
     filteredTickets.length
 );
 
+const sortedTickets = [...filteredTickets].sort((a, b) => {
+  return (
+    new Date(b.createdDate).getTime() -
+    new Date(a.createdDate).getTime()
+  );
+});
+
 
   const formatDate = (dateString) => {
       if (!dateString) return '';
@@ -459,7 +466,7 @@ return (
 
 
               <FlatList
-              data={filteredTickets}
+              data={sortedTickets}
                   //data={tickets}
                   // data={tickets.filter(
                   //     item =>
@@ -542,7 +549,7 @@ return (
 */}
 
 {!loading &&
-filteredTickets.length === 0 && (
+sortedTickets.length === 0 && (
 <Text style={styles.noTicketText}>
 No tickets found
 </Text>
