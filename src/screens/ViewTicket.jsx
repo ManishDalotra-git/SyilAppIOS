@@ -478,7 +478,7 @@ return (
                           ticketId: item.ticketId,
                           subject: item.subject,
                       })
-                      }
+                      } 
                   >
                       <View style={styles.tableRow}>
 
