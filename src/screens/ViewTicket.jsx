@@ -20,10 +20,16 @@ import {
 } from 'react-native';
 
 import { useRoute } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Footer from './components/Footer';
+
+
+
+const TICKET_TYPE_KEY =
+  'view_ticket_selected_type';
+
 
 
 const ViewTicket = ({ navigation }) => {
@@ -35,7 +41,9 @@ const ViewTicket = ({ navigation }) => {
 
   const route = useRoute();
 
-  const currentRoute = route.name;
+  const currentRoute =
+    route.name;
+
 
 
   // =====================================================
@@ -57,15 +65,17 @@ const ViewTicket = ({ navigation }) => {
   const [loading, setLoading] =
     useState(false);
 
-  const [appSupportTeamMember, setAppSupportTeamMember] =
-    useState(false);
+  const [
+    appSupportTeamMember,
+    setAppSupportTeamMember,
+  ] = useState(false);
 
 
   /*
-   * Default:
+   * First render default "me".
    *
-   * me = Owned by me
-   * org = Owned by organization
+   * Baad me AsyncStorage se
+   * saved value restore hogi.
    */
 
   const [ticketType, setTicketType] =
@@ -73,20 +83,22 @@ const ViewTicket = ({ navigation }) => {
 
 
   /*
-   * Screen focus par API force refresh
-   * karne ke liye.
+   * Screen focus par same selection ke
+   * fresh tickets force reload karne ke liye.
    */
 
-  // const [refreshKey, setRefreshKey] =
-  //   useState(0);
+  const [refreshKey, setRefreshKey] =
+    useState(0);
 
 
-  const [showTicketTypeModal, setShowTicketTypeModal] =
-    useState(false);
+  const [
+    showTicketTypeModal,
+    setShowTicketTypeModal,
+  ] = useState(false);
 
 
   /*
-   * Old API response ko latest response
+   * Old API response ko new selection
    * overwrite karne se rokne ke liye.
    */
 
@@ -103,7 +115,6 @@ const ViewTicket = ({ navigation }) => {
     async () => {
 
       if (!contactID) {
-
         console.log(
           'fetchMyTickets skipped: contactID missing'
         );
@@ -137,11 +148,10 @@ const ViewTicket = ({ navigation }) => {
 
         const response =
           await fetch(
-
             'https://syilfordealeriosapp.onrender.com/get-my-tickets',
-
             {
-              method: 'POST',
+              method:
+                'POST',
 
               headers: {
                 'Content-Type':
@@ -209,12 +219,6 @@ const ViewTicket = ({ navigation }) => {
 
         }
 
-
-        /*
-         * User dropdown change kar chuka ho
-         * aur old request ab response de rahi ho
-         * to us response ko ignore karo.
-         */
 
         if (
           currentRequest !==
@@ -290,7 +294,6 @@ const ViewTicket = ({ navigation }) => {
     async () => {
 
       if (!contactID) {
-
         console.log(
           'fetchOrganizationTickets skipped: contactID missing'
         );
@@ -324,9 +327,7 @@ const ViewTicket = ({ navigation }) => {
 
         const response =
           await fetch(
-
             'https://syilfordealeriosapp.onrender.com/get-organization-tickets',
-
             {
               method:
                 'POST',
@@ -342,7 +343,6 @@ const ViewTicket = ({ navigation }) => {
                     contactID,
                 }),
             }
-
           );
 
 
@@ -468,11 +468,11 @@ const ViewTicket = ({ navigation }) => {
   // =====================================================
   // SCREEN FOCUS
   //
-  // Har baar ViewTicket screen par aane par:
+  // First time:
+  // saved value nahi hogi -> "me"
   //
-  // 1. Owned by me select
-  // 2. User data load
-  // 3. Fresh API call force
+  // Next time:
+  // last selected value restore hogi.
   // =====================================================
 
   useFocusEffect(
@@ -485,24 +485,13 @@ const ViewTicket = ({ navigation }) => {
         );
 
 
-        /*
-         * Har baar screen par aate hi
-         * Owned by me default.
-         */
-
-        setTicketType(
-          'me'
-        );
-
-
         setShowTicketTypeModal(
           false
         );
 
 
         /*
-         * Existing running API ko
-         * invalidate karo.
+         * Purani running request invalidate.
          */
 
         requestId.current += 1;
@@ -537,27 +526,35 @@ const ViewTicket = ({ navigation }) => {
                 );
 
 
+              const savedTicketType =
+                await AsyncStorage.getItem(
+                  TICKET_TYPE_KEY
+                );
+
+
               console.log(
                 'FOCUS firstName:',
                 userFirstName
               );
-
 
               console.log(
                 'FOCUS lastName:',
                 userLastName
               );
 
-
               console.log(
                 'FOCUS contactID:',
                 userContactID
               );
 
-
               console.log(
                 'FOCUS support member:',
                 supportMember
+              );
+
+              console.log(
+                'Saved Ticket Type:',
+                savedTicketType
               );
 
 
@@ -586,20 +583,64 @@ const ViewTicket = ({ navigation }) => {
 
 
               /*
-               * IMPORTANT:
-               *
-               * contactID same ho sakta hai.
-               * ticketType bhi already "me"
-               * ho sakta hai.
-               *
-               * Isliye refreshKey force
-               * API refresh karega.
+               * Valid saved selection available.
                */
 
-              // setRefreshKey(
-              //   previous =>
-              //     previous + 1
-              // );
+              if (
+                savedTicketType ===
+                  'me' ||
+                savedTicketType ===
+                  'org'
+              ) {
+
+                console.log(
+                  'Restoring Ticket Type:',
+                  savedTicketType
+                );
+
+
+                setTicketType(
+                  savedTicketType
+                );
+
+              } else {
+
+                /*
+                 * FIRST TIME VIEW TICKET OPEN.
+                 *
+                 * Default Owned by me.
+                 */
+
+                console.log(
+                  'First ViewTicket visit -> default Owned by me'
+                );
+
+
+                setTicketType(
+                  'me'
+                );
+
+
+                await AsyncStorage.setItem(
+                  TICKET_TYPE_KEY,
+                  'me'
+                );
+
+              }
+
+
+              /*
+               * Important:
+               *
+               * Agar contactID aur ticketType same
+               * hain tab bhi screen focus par
+               * fresh API call honi chahiye.
+               */
+
+              setRefreshKey(
+                previous =>
+                  previous + 1
+              );
 
 
             } catch (
@@ -619,10 +660,6 @@ const ViewTicket = ({ navigation }) => {
         loadUserData();
 
 
-        /*
-         * Screen blur/unmount.
-         */
-
         return () => {
 
           console.log(
@@ -631,7 +668,8 @@ const ViewTicket = ({ navigation }) => {
 
 
           /*
-           * Running request invalidate.
+           * Screen leave karte hi
+           * running request invalidate.
            */
 
           requestId.current += 1;
@@ -647,7 +685,7 @@ const ViewTicket = ({ navigation }) => {
 
 
   // =====================================================
-  // FETCH TICKETS ACCORDING TO DROPDOWN
+  // FETCH CORRECT API
   // =====================================================
 
   useEffect(
@@ -669,14 +707,14 @@ const ViewTicket = ({ navigation }) => {
       );
 
       console.log(
-        'Ticket Type:',
+        'CURRENT TICKET TYPE:',
         ticketType
       );
 
-      // console.log(
-      //   'Refresh Key:',
-      //   refreshKey
-      // );
+      console.log(
+        'Refresh Key:',
+        refreshKey
+      );
 
 
       if (
@@ -696,22 +734,84 @@ const ViewTicket = ({ navigation }) => {
       }
 
 
-      /*
-       * fetch functions intentionally
-       * dependencies me nahi hain because
-       * functions component render par
-       * recreate hoti hain.
-       */
-
       // eslint-disable-next-line react-hooks/exhaustive-deps
 
     },
     [
       contactID,
       ticketType,
-      // refreshKey,
+      refreshKey,
     ]
   );
+
+
+
+  // =====================================================
+  // DROPDOWN SELECT HANDLER
+  // =====================================================
+
+  const handleTicketTypeChange =
+    async (
+      newType
+    ) => {
+
+      try {
+
+        console.log(
+          'Changing Ticket Type:',
+          newType
+        );
+
+
+        /*
+         * Existing API response invalidate.
+         */
+
+        requestId.current += 1;
+
+
+        /*
+         * UI instantly update.
+         */
+
+        setTicketType(
+          newType
+        );
+
+
+        setShowTicketTypeModal(
+          false
+        );
+
+
+        /*
+         * Selection save.
+         */
+
+        await AsyncStorage.setItem(
+          TICKET_TYPE_KEY,
+          newType
+        );
+
+
+        console.log(
+          'Ticket Type Saved:',
+          newType
+        );
+
+
+      } catch (
+        error
+      ) {
+
+        console.log(
+          'Ticket Type Save Error:',
+          error
+        );
+
+      }
+
+    };
 
 
 
@@ -731,13 +831,6 @@ const ViewTicket = ({ navigation }) => {
             .trim()
             .toLowerCase();
 
-
-        /*
-         * Dealer app:
-         *
-         * customer_portal true wale
-         * tickets show nahi karne.
-         */
 
         return (
           portal === '' ||
@@ -791,7 +884,7 @@ const ViewTicket = ({ navigation }) => {
 
 
   // =====================================================
-  // DATE FORMAT
+  // FORMAT DATE
   // =====================================================
 
   const formatDate =
@@ -1054,7 +1147,7 @@ const ViewTicket = ({ navigation }) => {
 
 
   // =====================================================
-  // PROFILE INITIALS
+  // INITIALS
   // =====================================================
 
   const getInitials =
@@ -1109,9 +1202,7 @@ const ViewTicket = ({ navigation }) => {
         >
 
 
-          {/* ================================================= */}
           {/* HEADER */}
-          {/* ================================================= */}
 
           <View
             style={
@@ -1183,9 +1274,7 @@ const ViewTicket = ({ navigation }) => {
 
 
 
-          {/* ================================================= */}
-          {/* TICKET TYPE DROPDOWN */}
-          {/* ================================================= */}
+          {/* DROPDOWN */}
 
           <View
             style={{
@@ -1239,13 +1328,7 @@ const ViewTicket = ({ navigation }) => {
                 {ticketType ===
                 'me'
                   ? 'Owned by me'
-
-                  : ticketType ===
-                    'org'
-
-                  ? 'Owned by organization'
-
-                  : 'Owned by me'}
+                  : 'Owned by organization'}
 
               </Text>
 
@@ -1255,9 +1338,7 @@ const ViewTicket = ({ navigation }) => {
 
 
 
-          {/* ================================================= */}
-          {/* DROPDOWN MODAL */}
-          {/* ================================================= */}
+          {/* MODAL */}
 
           <Modal
 
@@ -1305,29 +1386,11 @@ const ViewTicket = ({ navigation }) => {
                     styles.modalOption
                   }
 
-                  onPress={() => {
-
-                    /*
-                     * Request immediately invalidate.
-                     *
-                     * Example:
-                     * Organization loading thi aur
-                     * user My Tickets par click kare.
-                     */
-
-                    requestId.current += 1;
-
-
-                    setTicketType(
+                  onPress={() =>
+                    handleTicketTypeChange(
                       'me'
-                    );
-
-
-                    setShowTicketTypeModal(
-                      false
-                    );
-
-                  }}
+                    )
+                  }
 
                 >
 
@@ -1355,21 +1418,11 @@ const ViewTicket = ({ navigation }) => {
                     styles.modalOptionLast,
                   ]}
 
-                  onPress={() => {
-
-                    requestId.current += 1;
-
-
-                    setTicketType(
+                  onPress={() =>
+                    handleTicketTypeChange(
                       'org'
-                    );
-
-
-                    setShowTicketTypeModal(
-                      false
-                    );
-
-                  }}
+                    )
+                  }
 
                 >
 
@@ -1397,18 +1450,13 @@ const ViewTicket = ({ navigation }) => {
 
 
 
-          {/* ================================================= */}
           {/* TICKET TABLE */}
-          {/* ================================================= */}
 
           <View
             style={
               styles.ticketContainer
             }
           >
-
-
-            {/* TABLE HEADER */}
 
             <View
               style={
@@ -1471,8 +1519,6 @@ const ViewTicket = ({ navigation }) => {
 
 
 
-            {/* LOADING */}
-
             {loading && (
 
               <Text
@@ -1491,10 +1537,6 @@ const ViewTicket = ({ navigation }) => {
             )}
 
 
-
-            {/* ================================================= */}
-            {/* TICKET LIST */}
-            {/* ================================================= */}
 
             {!loading && (
 
@@ -1552,8 +1594,6 @@ const ViewTicket = ({ navigation }) => {
                     >
 
 
-                      {/* Ticket ID + unread badge */}
-
                       <View
                         style={
                           styles.ticketIdCell
@@ -1608,8 +1648,6 @@ const ViewTicket = ({ navigation }) => {
 
 
 
-                      {/* Subject */}
-
                       <Text
                         allowFontScaling={
                           false
@@ -1624,8 +1662,6 @@ const ViewTicket = ({ navigation }) => {
                       </Text>
 
 
-
-                      {/* Created */}
 
                       <Text
                         allowFontScaling={
@@ -1643,8 +1679,6 @@ const ViewTicket = ({ navigation }) => {
                       </Text>
 
 
-
-                      {/* Owner */}
 
                       <Text
                         allowFontScaling={
@@ -1689,7 +1723,6 @@ const ViewTicket = ({ navigation }) => {
 
             )}
 
-
           </View>
 
         </View>
@@ -1699,15 +1732,12 @@ const ViewTicket = ({ navigation }) => {
 
 
       <Footer
-
         appSupportTeamMember={
           appSupportTeamMember
         }
-
         currentRoute={
           currentRoute
         }
-
       />
 
 
@@ -1718,13 +1748,10 @@ const ViewTicket = ({ navigation }) => {
 };
 
 
+
 export default ViewTicket;
 
 
-
-// =====================================================
-// STYLES
-// =====================================================
 
 const styles =
   StyleSheet.create({
@@ -1732,7 +1759,6 @@ const styles =
     background: {
       flex: 1,
     },
-
 
     container: {
 
@@ -1752,11 +1778,9 @@ const styles =
 
     },
 
-
     containerInner: {
       flex: 1,
     },
-
 
     flexClass: {
 
@@ -1774,7 +1798,6 @@ const styles =
 
     },
 
-
     logoSyil: {
 
       width:
@@ -1785,7 +1808,6 @@ const styles =
 
     },
 
-
     ticketIcon: {
 
       width:
@@ -1795,7 +1817,6 @@ const styles =
         21.88,
 
     },
-
 
     initialsAvatar: {
 
@@ -1819,7 +1840,6 @@ const styles =
 
     },
 
-
     initialsText: {
 
       fontSize:
@@ -1832,11 +1852,6 @@ const styles =
         '#FFEA00',
 
     },
-
-
-    // =================================================
-    // MODAL
-    // =================================================
 
     modalOverlay: {
 
@@ -1854,7 +1869,6 @@ const styles =
 
     },
 
-
     modalContent: {
 
       backgroundColor:
@@ -1867,7 +1881,6 @@ const styles =
         'hidden',
 
     },
-
 
     modalOption: {
 
@@ -1882,14 +1895,12 @@ const styles =
 
     },
 
-
     modalOptionLast: {
 
       borderBottomWidth:
         0,
 
     },
-
 
     modalOptionText: {
 
@@ -1901,11 +1912,6 @@ const styles =
 
     },
 
-
-    // =================================================
-    // TICKETS
-    // =================================================
-
     ticketContainer: {
 
       flex:
@@ -1915,7 +1921,6 @@ const styles =
         10,
 
     },
-
 
     tableHeader: {
 
@@ -1933,7 +1938,6 @@ const styles =
 
     },
 
-
     tableRow: {
 
       flexDirection:
@@ -1949,7 +1953,6 @@ const styles =
         '#f0f0f0',
 
     },
-
 
     cell: {
 
@@ -1970,7 +1973,6 @@ const styles =
 
     },
 
-
     headerText: {
 
       fontWeight:
@@ -1980,7 +1982,6 @@ const styles =
         '#000',
 
     },
-
 
     loadingText: {
 
@@ -1995,7 +1996,6 @@ const styles =
 
     },
 
-
     noTicketText: {
 
       textAlign:
@@ -2008,7 +2008,6 @@ const styles =
         '#999',
 
     },
-
 
     ticketIdCell: {
 
@@ -2029,7 +2028,6 @@ const styles =
 
     },
 
-
     cellIDText: {
 
       fontSize:
@@ -2045,7 +2043,6 @@ const styles =
         1,
 
     },
-
 
     unreadBadge: {
 
@@ -2074,7 +2071,6 @@ const styles =
         5,
 
     },
-
 
     unreadBadgeText: {
 
