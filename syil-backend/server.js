@@ -3936,8 +3936,178 @@ app.post('/update-profile', async (req, res) => {
 
 
 
-app.post('/get_tickets', async (req, res) => {
-  const { contactId, type } = req.body;
+// app.post('/get_tickets', async (req, res) => {
+//   const { contactId, type } = req.body;
+
+//   if (!contactId) {
+//     return res.status(400).json({
+//       message: 'Contact ID is required',
+//     });
+//   }
+
+//   try {
+//     const fetch = (...args) =>
+//       import('node-fetch').then(({ default: fetch }) => fetch(...args));
+
+//     let ticketIds = [];
+
+//     if (type === 'me') {
+
+//       const associationResponse = await fetch(
+//         `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}/associations/ticket`,
+//         {
+//           method: 'GET',
+//           headers: {
+//             'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
+//             'Content-Type': 'application/json',
+//           },
+//         }
+//       );
+
+//       const associationData = await associationResponse.json();
+
+//       if (associationData.results) {
+//         ticketIds = associationData.results.map(item => item.id);
+//       }
+//     }
+
+//     if (type === 'org') {
+
+      
+//       const contactRes = await fetch(
+//         `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?associations=companies`,
+//         {
+//           method: 'GET',
+//           headers: {
+//             'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
+//             'Content-Type': 'application/json',
+//           },
+//         }
+//       );
+
+//       const contactData = await contactRes.json();
+
+//       const companies = contactData?.associations?.companies?.results || [];
+
+//       // const company = companies.find(c => c.type === 'contact_to_company');
+//       const company =
+//   companies.find(c => c.id) || null;
+
+//       if (!company) {
+//         return res.status(200).json({ tickets: [] });
+//       }
+
+//       const companyId = company.id;
+
+      
+//       const companyRes = await fetch(
+//         `https://api.hubapi.com/crm/v3/objects/companies/${companyId}?associations=tickets`,
+//         {
+//           method: 'GET',
+//           headers: {
+//             'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
+//             'Content-Type': 'application/json',
+//           },
+//         }
+//       );
+
+//       const companyData = await companyRes.json();
+
+//       const tickets = companyData?.associations?.tickets?.results || [];
+
+//       ticketIds = tickets
+//         .filter(t => t.type === 'company_to_ticket')
+//         .map(t => t.id);
+//     }
+
+//     if (!ticketIds.length) {
+//       return res.status(200).json({
+//         message: 'No tickets found',
+//         tickets: [],
+//       });
+//     }
+
+//     // const ticketPromises = ticketIds.map(ticketId =>
+//     //   fetch(
+//     //     `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}?properties=subject,createdate,hubspot_owner_id,hs_pipeline_stage,customer_portal,dealer_unread_count`,
+//     //     {
+//     //       method: 'GET',
+//     //       headers: {
+//     //         'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
+//     //         'Content-Type': 'application/json',
+//     //       },
+//     //     }
+//     //   ).then(res => res.json())
+//     // );
+
+//     const ticketPromises = ticketIds.map(async ticketId => {
+
+//     const response = await fetch(
+//         `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}?properties=subject,createdate,hubspot_owner_id,hs_pipeline_stage,customer_portal,dealer_unread_count`,
+//         {
+//             method:'GET',
+//             headers:{
+//                 Authorization:`Bearer ${HUBSPOT_API_KEY}`,
+//                 'Content-Type':'application/json'
+//             }
+//         }
+//     );
+
+//     if (!response.ok) {
+
+//     console.log(
+//         "Ticket fetch failed:",
+//         ticketId,
+//         response.status
+//     );
+
+//     console.log(await response.text());
+
+//     return null;
+// }
+
+//     return await response.json();
+
+// });
+
+// const ticketResponses =
+//   (await Promise.all(ticketPromises))
+//     .filter(Boolean);
+
+// const formattedTickets = ticketResponses
+//   .filter(ticket => ticket.properties)
+//   .map(ticket => ({
+//     ticketId: ticket.id,
+//     subject: ticket.properties.subject || '',
+//     createdDate: ticket.properties.createdate || '',
+//     ownerId: ticket.properties.hubspot_owner_id || '',
+//     status: ticket.properties.hs_pipeline_stage || '',
+//     customer_portal: ticket.properties.customer_portal || '',
+//     dealer_unread_count: Number(
+//       ticket.properties.dealer_unread_count || 0
+//     ),
+//   }));
+
+
+//     return res.status(200).json({
+//       tickets: formattedTickets,
+//     });
+
+//   } catch (error) {
+//     console.error('Error:', error);
+//     return res.status(500).json({
+//       message: 'Internal server error',
+//     });
+//   }
+// });
+
+
+
+
+
+app.post('/get-my-tickets', async (req, res) => {
+
+  const { contactId } = req.body;
 
   if (!contactId) {
     return res.status(400).json({
@@ -3946,160 +4116,570 @@ app.post('/get_tickets', async (req, res) => {
   }
 
   try {
+
     const fetch = (...args) =>
-      import('node-fetch').then(({ default: fetch }) => fetch(...args));
-
-    let ticketIds = [];
-
-    if (type === 'me') {
-
-      const associationResponse = await fetch(
-        `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}/associations/ticket`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-        }
+      import('node-fetch').then(
+        ({ default: fetch }) => fetch(...args)
       );
 
-      const associationData = await associationResponse.json();
+    console.log(
+      '========== GET MY TICKETS =========='
+    );
 
-      if (associationData.results) {
-        ticketIds = associationData.results.map(item => item.id);
+    console.log('Contact ID:', contactId);
+
+
+    // ============================================
+    // Get tickets associated directly with contact
+    // ============================================
+
+    const associationResponse = await fetch(
+      `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}/associations/ticket`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${HUBSPOT_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
       }
+    );
+
+
+    const associationData =
+      await associationResponse.json();
+
+
+    if (!associationResponse.ok) {
+
+      console.error(
+        'Contact ticket association error:',
+        associationData
+      );
+
+      return res.status(
+        associationResponse.status
+      ).json({
+        message:
+          'Failed to fetch contact tickets',
+      });
     }
 
-    if (type === 'org') {
 
-      
-      const contactRes = await fetch(
-        `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?associations=companies`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+    const ticketIds =
+      (associationData.results || [])
+        .map(item => String(item.id))
+        .filter(Boolean);
 
-      const contactData = await contactRes.json();
 
-      const companies = contactData?.associations?.companies?.results || [];
+    console.log(
+      'My Ticket IDs:',
+      ticketIds
+    );
 
-      // const company = companies.find(c => c.type === 'contact_to_company');
-      const company =
-  companies.find(c => c.id) || null;
-
-      if (!company) {
-        return res.status(200).json({ tickets: [] });
-      }
-
-      const companyId = company.id;
-
-      
-      const companyRes = await fetch(
-        `https://api.hubapi.com/crm/v3/objects/companies/${companyId}?associations=tickets`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      const companyData = await companyRes.json();
-
-      const tickets = companyData?.associations?.tickets?.results || [];
-
-      ticketIds = tickets
-        .filter(t => t.type === 'company_to_ticket')
-        .map(t => t.id);
-    }
 
     if (!ticketIds.length) {
+
       return res.status(200).json({
         message: 'No tickets found',
         tickets: [],
       });
+
     }
 
-    // const ticketPromises = ticketIds.map(ticketId =>
-    //   fetch(
-    //     `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}?properties=subject,createdate,hubspot_owner_id,hs_pipeline_stage,customer_portal,dealer_unread_count`,
-    //     {
-    //       method: 'GET',
-    //       headers: {
-    //         'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
-    //         'Content-Type': 'application/json',
-    //       },
-    //     }
-    //   ).then(res => res.json())
-    // );
 
-    const ticketPromises = ticketIds.map(async ticketId => {
+    // ============================================
+    // Fetch ticket details
+    // ============================================
 
-    const response = await fetch(
-        `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}?properties=subject,createdate,hubspot_owner_id,hs_pipeline_stage,customer_portal,dealer_unread_count`,
-        {
-            method:'GET',
-            headers:{
-                Authorization:`Bearer ${HUBSPOT_API_KEY}`,
-                'Content-Type':'application/json'
-            }
+    const ticketPromises =
+      ticketIds.map(async ticketId => {
+
+        const response = await fetch(
+          `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}?properties=subject,createdate,hubspot_owner_id,hs_pipeline_stage,customer_portal,dealer_unread_count`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization:
+                `Bearer ${HUBSPOT_API_KEY}`,
+
+              'Content-Type':
+                'application/json',
+            },
+          }
+        );
+
+
+        if (!response.ok) {
+
+          console.error(
+            'My ticket fetch failed:',
+            ticketId,
+            response.status
+          );
+
+          console.error(
+            await response.text()
+          );
+
+          return null;
         }
-    );
 
-    if (!response.ok) {
+
+        return await response.json();
+      });
+
+
+    const ticketResponses =
+      (
+        await Promise.all(ticketPromises)
+      ).filter(Boolean);
+
+
+    // ============================================
+    // Format
+    // ============================================
+
+    const formattedTickets =
+      ticketResponses
+        .filter(ticket => ticket.properties)
+        .map(ticket => ({
+
+          ticketId:
+            String(ticket.id),
+
+          subject:
+            ticket.properties.subject || '',
+
+          createdDate:
+            ticket.properties.createdate || '',
+
+          ownerId:
+            ticket.properties.hubspot_owner_id || '',
+
+          status:
+            ticket.properties.hs_pipeline_stage || '',
+
+          customer_portal:
+            ticket.properties.customer_portal || '',
+
+          dealer_unread_count:
+            Number(
+              ticket.properties
+                .dealer_unread_count || 0
+            ),
+
+        }));
+
 
     console.log(
-        "Ticket fetch failed:",
-        ticketId,
-        response.status
+      'My tickets count:',
+      formattedTickets.length
     );
-
-    console.log(await response.text());
-
-    return null;
-}
-
-    return await response.json();
-
-});
-
-const ticketResponses =
-  (await Promise.all(ticketPromises))
-    .filter(Boolean);
-
-const formattedTickets = ticketResponses
-  .filter(ticket => ticket.properties)
-  .map(ticket => ({
-    ticketId: ticket.id,
-    subject: ticket.properties.subject || '',
-    createdDate: ticket.properties.createdate || '',
-    ownerId: ticket.properties.hubspot_owner_id || '',
-    status: ticket.properties.hs_pipeline_stage || '',
-    customer_portal: ticket.properties.customer_portal || '',
-    dealer_unread_count: Number(
-      ticket.properties.dealer_unread_count || 0
-    ),
-  }));
 
 
     return res.status(200).json({
-      tickets: formattedTickets,
+      message:
+        'My tickets fetched successfully',
+
+      tickets:
+        formattedTickets,
     });
 
+
   } catch (error) {
-    console.error('Error:', error);
+
+    console.error(
+      'Get My Tickets Error:',
+      error
+    );
+
+
     return res.status(500).json({
       message: 'Internal server error',
     });
+
   }
+
 });
+
+
+
+
+
+app.post(
+  '/get-organization-tickets',
+  async (req, res) => {
+
+    const { contactId } = req.body;
+
+
+    if (!contactId) {
+
+      return res.status(400).json({
+        message: 'Contact ID is required',
+      });
+
+    }
+
+
+    try {
+
+      const fetch = (...args) =>
+        import('node-fetch').then(
+          ({ default: fetch }) =>
+            fetch(...args)
+        );
+
+
+      console.log(
+        '========== GET ORGANIZATION TICKETS =========='
+      );
+
+      console.log(
+        'Contact ID:',
+        contactId
+      );
+
+
+      // ============================================
+      // STEP 1
+      // Find company associated with contact
+      // ============================================
+
+      const contactResponse =
+        await fetch(
+
+          `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?associations=companies`,
+
+          {
+            method: 'GET',
+
+            headers: {
+
+              Authorization:
+                `Bearer ${HUBSPOT_API_KEY}`,
+
+              'Content-Type':
+                'application/json',
+
+            },
+          }
+        );
+
+
+      const contactData =
+        await contactResponse.json();
+
+
+      if (!contactResponse.ok) {
+
+        console.error(
+          'Contact company fetch error:',
+          contactData
+        );
+
+
+        return res.status(
+          contactResponse.status
+        ).json({
+
+          message:
+            'Failed to fetch contact company',
+
+        });
+
+      }
+
+
+      const companies =
+        contactData
+          ?.associations
+          ?.companies
+          ?.results || [];
+
+
+      console.log(
+        'Associated companies:',
+        companies
+      );
+
+
+      const company =
+        companies.find(
+          company => company.id
+        ) || null;
+
+
+      if (!company) {
+
+        console.log(
+          'No company associated with contact'
+        );
+
+
+        return res.status(200).json({
+
+          message:
+            'No organization found',
+
+          tickets: [],
+
+        });
+
+      }
+
+
+      const companyId =
+        String(company.id);
+
+
+      console.log(
+        'Company ID:',
+        companyId
+      );
+
+
+      // ============================================
+      // STEP 2
+      // Get tickets associated with company
+      // ============================================
+
+      const companyResponse =
+        await fetch(
+
+          `https://api.hubapi.com/crm/v3/objects/companies/${companyId}?associations=tickets`,
+
+          {
+            method: 'GET',
+
+            headers: {
+
+              Authorization:
+                `Bearer ${HUBSPOT_API_KEY}`,
+
+              'Content-Type':
+                'application/json',
+
+            },
+          }
+        );
+
+
+      const companyData =
+        await companyResponse.json();
+
+
+      if (!companyResponse.ok) {
+
+        console.error(
+          'Company ticket fetch error:',
+          companyData
+        );
+
+
+        return res.status(
+          companyResponse.status
+        ).json({
+
+          message:
+            'Failed to fetch organization tickets',
+
+        });
+
+      }
+
+
+      const associatedTickets =
+        companyData
+          ?.associations
+          ?.tickets
+          ?.results || [];
+
+
+      /*
+       * Important:
+       * Sirf ID use kar rahe hain.
+       *
+       * t.type === 'company_to_ticket'
+       * par depend nahi karenge.
+       */
+
+      const ticketIds =
+        associatedTickets
+          .map(ticket =>
+            String(ticket.id)
+          )
+          .filter(Boolean);
+
+
+      console.log(
+        'Organization Ticket IDs:',
+        ticketIds
+      );
+
+
+      if (!ticketIds.length) {
+
+        return res.status(200).json({
+
+          message:
+            'No organization tickets found',
+
+          tickets: [],
+
+        });
+
+      }
+
+
+      // ============================================
+      // STEP 3
+      // Fetch ticket details
+      // ============================================
+
+      const ticketPromises =
+        ticketIds.map(
+          async ticketId => {
+
+            const response =
+              await fetch(
+
+                `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}?properties=subject,createdate,hubspot_owner_id,hs_pipeline_stage,customer_portal,dealer_unread_count`,
+
+                {
+                  method: 'GET',
+
+                  headers: {
+
+                    Authorization:
+                      `Bearer ${HUBSPOT_API_KEY}`,
+
+                    'Content-Type':
+                      'application/json',
+
+                  },
+                }
+              );
+
+
+            if (!response.ok) {
+
+              console.error(
+                'Organization ticket fetch failed:',
+                ticketId,
+                response.status
+              );
+
+
+              console.error(
+                await response.text()
+              );
+
+
+              return null;
+
+            }
+
+
+            return await response.json();
+
+          }
+        );
+
+
+      const ticketResponses =
+        (
+          await Promise.all(
+            ticketPromises
+          )
+        ).filter(Boolean);
+
+
+      // ============================================
+      // STEP 4
+      // Format response
+      // ============================================
+
+      const formattedTickets =
+        ticketResponses
+
+          .filter(
+            ticket =>
+              ticket.properties
+          )
+
+          .map(ticket => ({
+
+            ticketId:
+              String(ticket.id),
+
+            subject:
+              ticket.properties
+                .subject || '',
+
+            createdDate:
+              ticket.properties
+                .createdate || '',
+
+            ownerId:
+              ticket.properties
+                .hubspot_owner_id || '',
+
+            status:
+              ticket.properties
+                .hs_pipeline_stage || '',
+
+            customer_portal:
+              ticket.properties
+                .customer_portal || '',
+
+            dealer_unread_count:
+              Number(
+                ticket.properties
+                  .dealer_unread_count ||
+                0
+              ),
+
+          }));
+
+
+      console.log(
+        'Organization tickets count:',
+        formattedTickets.length
+      );
+
+
+      return res.status(200).json({
+
+        message:
+          'Organization tickets fetched successfully',
+
+        tickets:
+          formattedTickets,
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        'Get Organization Tickets Error:',
+        error
+      );
+
+
+      return res.status(500).json({
+
+        message:
+          'Internal server error',
+
+      });
+
+    }
+
+  }
+);
+
 
 
 app.post('/get_owner_ticket', async (req, res) => {

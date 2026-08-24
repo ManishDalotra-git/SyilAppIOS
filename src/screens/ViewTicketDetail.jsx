@@ -233,12 +233,13 @@ const ViewTicketDetail = ({ navigation }) => {
       const data = await response.json(); 
       console.log('data----- ', data);
       setMessages(data.messages || []);
-    } catch (error) {  
+    } catch (error) {
       console.log('Refresh error', error);
     } finally {
       setRefreshing(false);
     }
   }, [ticketId]);
+
 
   const initialMessage = messages[messages.length - 1];
   const dynamicSubject = initialMessage?.subject;
