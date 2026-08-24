@@ -4122,186 +4122,615 @@ app.post('/get-my-tickets', async (req, res) => {
         ({ default: fetch }) => fetch(...args)
       );
 
+
     console.log(
       '========== GET MY TICKETS =========='
     );
 
-    console.log('Contact ID:', contactId);
-
-
-    // ============================================
-    // Get tickets associated directly with contact
-    // ============================================
-
-    const associationResponse = await fetch(
-      `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}/associations/ticket`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${HUBSPOT_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      }
+    console.log(
+      'Contact ID:',
+      contactId
     );
 
 
-    const associationData =
-      await associationResponse.json();
+    // =====================================================
+    // STEP 1
+    // CONTACT -> ALL ASSOCIATED TICKET IDS
+    // WITH PAGINATION
+    // =====================================================
+
+    let allTicketIds = [];
+
+    let after = null;
+
+    let pageNumber = 1;
 
 
-    if (!associationResponse.ok) {
+    do {
 
-      console.error(
-        'Contact ticket association error:',
-        associationData
+      let associationUrl =
+        `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}/associations/tickets?limit=100`;
+
+
+      if (after) {
+
+        associationUrl +=
+          `&after=${encodeURIComponent(after)}`;
+
+      }
+
+
+      console.log(
+        `Fetching My Tickets association page ${pageNumber}`
       );
 
-      return res.status(
+
+      const associationResponse =
+        await fetch(
+          associationUrl,
+          {
+            method: 'GET',
+
+            headers: {
+
+              Authorization:
+                `Bearer ${HUBSPOT_API_KEY}`,
+
+              'Content-Type':
+                'application/json',
+
+            },
+          }
+        );
+
+
+      const associationText =
+        await associationResponse.text();
+
+
+      let associationData = {};
+
+
+      try {
+
+        associationData =
+          associationText
+            ? JSON.parse(
+                associationText
+              )
+            : {};
+
+      } catch (error) {
+
+        console.error(
+          'My Tickets association JSON error:',
+          associationText
+        );
+
+
+        return res.status(500).json({
+
+          message:
+            'Invalid HubSpot association response',
+
+        });
+
+      }
+
+
+      console.log(
+        `My Tickets page ${pageNumber} HTTP status:`,
         associationResponse.status
-      ).json({
-        message:
-          'Failed to fetch contact tickets',
-      });
-    }
+      );
 
 
-    const ticketIds =
-      (associationData.results || [])
-        .map(item => String(item.id))
-        .filter(Boolean);
+      console.log(
+        `My Tickets page ${pageNumber} count:`,
+        associationData.results?.length || 0
+      );
+
+
+      if (!associationResponse.ok) {
+
+        console.error(
+          'My Tickets association error:',
+          associationData
+        );
+
+
+        return res
+          .status(
+            associationResponse.status
+          )
+          .json({
+
+            message:
+              'Failed to fetch contact ticket associations',
+
+            detail:
+              associationData,
+
+          });
+
+      }
+
+
+      const pageIds =
+        (
+          associationData.results ||
+          []
+        )
+          .map(
+            item =>
+              String(item.id)
+          )
+          .filter(Boolean);
+
+
+      allTicketIds.push(
+        ...pageIds
+      );
+
+
+      console.log(
+        'My Ticket IDs collected:',
+        allTicketIds.length
+      );
+
+
+      after =
+        associationData
+          ?.paging
+          ?.next
+          ?.after ||
+        null;
+
+
+      console.log(
+        'My Tickets next after:',
+        after
+      );
+
+
+      pageNumber += 1;
+
+
+    } while (after);
+
+
+
+    // =====================================================
+    // REMOVE DUPLICATE TICKET IDS
+    // =====================================================
+
+    const ticketIds = [
+      ...new Set(
+        allTicketIds
+      ),
+    ];
 
 
     console.log(
-      'My Ticket IDs:',
-      ticketIds
+      '===================================='
+    );
+
+    console.log(
+      'FINAL UNIQUE MY TICKET IDS:',
+      ticketIds.length
+    );
+
+    console.log(
+      '===================================='
     );
 
 
     if (!ticketIds.length) {
 
       return res.status(200).json({
-        message: 'No tickets found',
-        tickets: [],
+
+        message:
+          'No tickets found',
+
+        total:
+          0,
+
+        tickets:
+          [],
+
       });
 
     }
 
 
-    // ============================================
-    // Fetch ticket details
-    // ============================================
 
-    const ticketPromises =
-      ticketIds.map(async ticketId => {
+    // =====================================================
+    // STEP 2
+    // FETCH TICKET DETAILS USING BATCH API
+    //
+    // Example:
+    // 250 tickets
+    //
+    // Batch 1 = 100
+    // Batch 2 = 100
+    // Batch 3 = 50
+    //
+    // Instead of 250 individual requests.
+    // =====================================================
 
-        const response = await fetch(
-          `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}?properties=subject,createdate,hubspot_owner_id,hs_pipeline_stage,customer_portal,dealer_unread_count`,
+    const BATCH_SIZE =
+      100;
+
+
+    const ticketChunks =
+      [];
+
+
+    for (
+      let i = 0;
+      i < ticketIds.length;
+      i += BATCH_SIZE
+    ) {
+
+      ticketChunks.push(
+        ticketIds.slice(
+          i,
+          i + BATCH_SIZE
+        )
+      );
+
+    }
+
+
+    console.log(
+      'Total My Ticket batches:',
+      ticketChunks.length
+    );
+
+
+    let allTickets =
+      [];
+
+
+    /*
+     * Sequentially batches fetch karenge
+     * taaki HubSpot rate-limit pressure kam rahe.
+     */
+
+    for (
+      let batchIndex = 0;
+      batchIndex < ticketChunks.length;
+      batchIndex++
+    ) {
+
+      const chunk =
+        ticketChunks[
+          batchIndex
+        ];
+
+
+      console.log(
+        `Fetching My Ticket batch ${batchIndex + 1}/${ticketChunks.length}`
+      );
+
+
+      console.log(
+        'My Ticket batch size:',
+        chunk.length
+      );
+
+
+      const batchResponse =
+        await fetch(
+
+          'https://api.hubapi.com/crm/v3/objects/tickets/batch/read',
+
           {
-            method: 'GET',
+            method:
+              'POST',
+
             headers: {
+
               Authorization:
                 `Bearer ${HUBSPOT_API_KEY}`,
 
               'Content-Type':
                 'application/json',
+
             },
+
+
+            body:
+              JSON.stringify({
+
+                properties: [
+
+                  'subject',
+
+                  'createdate',
+
+                  'hubspot_owner_id',
+
+                  'hs_pipeline_stage',
+
+                  'customer_portal',
+
+                  'dealer_unread_count',
+
+                ],
+
+
+                inputs:
+                  chunk.map(
+                    ticketId => ({
+
+                      id:
+                        String(
+                          ticketId
+                        ),
+
+                    })
+                  ),
+
+              }),
+
           }
+
         );
 
 
-        if (!response.ok) {
-
-          console.error(
-            'My ticket fetch failed:',
-            ticketId,
-            response.status
-          );
-
-          console.error(
-            await response.text()
-          );
-
-          return null;
-        }
+      const batchText =
+        await batchResponse.text();
 
 
-        return await response.json();
-      });
+      let batchData = {};
 
 
-    const ticketResponses =
-      (
-        await Promise.all(ticketPromises)
-      ).filter(Boolean);
+      try {
+
+        batchData =
+          batchText
+            ? JSON.parse(
+                batchText
+              )
+            : {};
+
+      } catch (error) {
+
+        console.error(
+          `My Ticket batch ${batchIndex + 1} JSON error:`,
+          batchText
+        );
 
 
-    // ============================================
-    // Format
-    // ============================================
+        return res.status(500).json({
+
+          message:
+            `Invalid HubSpot response for My Ticket batch ${batchIndex + 1}`,
+
+        });
+
+      }
+
+
+      console.log(
+        `My Ticket batch ${batchIndex + 1} HTTP status:`,
+        batchResponse.status
+      );
+
+
+      console.log(
+        `My Ticket batch ${batchIndex + 1} returned:`,
+        batchData.results?.length || 0
+      );
+
+
+      if (!batchResponse.ok) {
+
+        console.error(
+          `My Ticket batch ${batchIndex + 1} failed:`,
+          batchData
+        );
+
+
+        /*
+         * Failed batch ko silently ignore nahi karenge.
+         * Isse random/incomplete count nahi aayega.
+         */
+
+        return res
+          .status(
+            batchResponse.status
+          )
+          .json({
+
+            message:
+              `HubSpot My Ticket batch ${batchIndex + 1} failed`,
+
+            detail:
+              batchData,
+
+          });
+
+      }
+
+
+      allTickets.push(
+        ...(
+          batchData.results ||
+          []
+        )
+      );
+
+
+      console.log(
+        'Total My Ticket details collected:',
+        allTickets.length
+      );
+
+
+      /*
+       * Small delay between batches.
+       */
+
+      if (
+        batchIndex <
+        ticketChunks.length - 1
+      ) {
+
+        await new Promise(
+          resolve =>
+            setTimeout(
+              resolve,
+              150
+            )
+        );
+
+      }
+
+    }
+
+
+
+    // =====================================================
+    // STEP 3
+    // FORMAT TICKETS
+    // =====================================================
 
     const formattedTickets =
-      ticketResponses
-        .filter(ticket => ticket.properties)
-        .map(ticket => ({
+      allTickets
 
-          ticketId:
-            String(ticket.id),
+        .filter(
+          ticket =>
+            ticket &&
+            ticket.properties
+        )
 
-          subject:
-            ticket.properties.subject || '',
+        .map(
+          ticket => ({
 
-          createdDate:
-            ticket.properties.createdate || '',
+            ticketId:
+              String(
+                ticket.id
+              ),
 
-          ownerId:
-            ticket.properties.hubspot_owner_id || '',
-
-          status:
-            ticket.properties.hs_pipeline_stage || '',
-
-          customer_portal:
-            ticket.properties.customer_portal || '',
-
-          dealer_unread_count:
-            Number(
+            subject:
               ticket.properties
-                .dealer_unread_count || 0
-            ),
+                ?.subject ||
+              '',
 
-        }));
+            createdDate:
+              ticket.properties
+                ?.createdate ||
+              '',
 
+            ownerId:
+              ticket.properties
+                ?.hubspot_owner_id ||
+              '',
+
+            status:
+              ticket.properties
+                ?.hs_pipeline_stage ||
+              '',
+
+            customer_portal:
+              ticket.properties
+                ?.customer_portal ??
+              '',
+
+            dealer_unread_count:
+              Number(
+                ticket.properties
+                  ?.dealer_unread_count ||
+                0
+              ),
+
+          })
+        );
+
+
+
+    // =====================================================
+    // FINAL DEBUG
+    // =====================================================
 
     console.log(
-      'My tickets count:',
+      '===================================='
+    );
+
+    console.log(
+      'MY ASSOCIATED TICKET IDS:',
+      ticketIds.length
+    );
+
+    console.log(
+      'MY TICKET DETAILS RETURNED:',
+      allTickets.length
+    );
+
+    console.log(
+      'MY FORMATTED TICKETS:',
       formattedTickets.length
     );
 
+    console.log(
+      '===================================='
+    );
+
+
+
+    // =====================================================
+    // RESPONSE
+    // =====================================================
 
     return res.status(200).json({
+
       message:
         'My tickets fetched successfully',
 
+      contactId:
+        String(contactId),
+
+      associatedTicketCount:
+        ticketIds.length,
+
+      total:
+        formattedTickets.length,
+
       tickets:
         formattedTickets,
+
     });
 
 
   } catch (error) {
 
     console.error(
-      'Get My Tickets Error:',
-      error
+      'GET MY TICKETS ERROR:',
+      {
+        message:
+          error?.message,
+
+        stack:
+          error?.stack,
+      }
     );
 
 
     return res.status(500).json({
-      message: 'Internal server error',
+
+      message:
+        'Internal server error',
+
+      error:
+        error?.message ||
+        'Unknown error',
+
     });
 
   }
 
 });
-
 
 
 
