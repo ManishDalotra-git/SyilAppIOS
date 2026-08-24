@@ -5449,41 +5449,84 @@ app.post(
 
 
 app.post('/get_owner_ticket', async (req, res) => {
+
   const { ownerId } = req.body;
 
+  if (!ownerId) {
+    return res.status(400).json({
+      message: 'Owner ID is required',
+    });
+  }
 
   try {
+
     const fetch = (...args) =>
-      import('node-fetch').then(({ default: fetch }) => fetch(...args));
+      import('node-fetch').then(
+        ({ default: fetch }) => fetch(...args)
+      );
+
+
+    console.log(
+      '========== GET OWNER TICKETS =========='
+    );
+
+    console.log(
+      'Owner ID:',
+      ownerId
+    );
+
 
     let allTickets = [];
+
     let after = null;
 
+    let pageNumber = 1;
+
+
+    // =====================================================
+    // FETCH ALL OWNER TICKETS WITH PAGINATION
+    // =====================================================
+
     do {
+
+      console.log(
+        `Fetching Owner Ticket page ${pageNumber}`
+      );
+
+
       const response = await fetch(
         'https://api.hubapi.com/crm/v3/objects/tickets/search',
         {
           method: 'POST',
+
           headers: {
-            'Authorization': `Bearer ${HUBSPOT_API_KEY}`,
-            'Content-Type': 'application/json',
+            Authorization:
+              `Bearer ${HUBSPOT_API_KEY}`,
+
+            'Content-Type':
+              'application/json',
           },
+
           body: JSON.stringify({
+
             filterGroups: [
               {
                 filters: [
                   {
-                    propertyName: 'hubspot_owner_id',
-                    operator: 'EQ',
-                    value: String(
-                      ownerId || '35998790',
-                    ),
+                    propertyName:
+                      'hubspot_owner_id',
+
+                    operator:
+                      'EQ',
+
+                    value:
+                      String(ownerId),
                   },
                 ],
               },
             ],
-            limit: 100,
-            after: after, 
+
+
             properties: [
               'subject',
               'content',
@@ -5494,73 +5537,279 @@ app.post('/get_owner_ticket', async (req, res) => {
               'customer_portal',
               'dealer_unread_count',
             ],
-            sorts: ['createdate'],
+
+
+            limit:
+              100,
+
+
+            ...(after
+              ? {
+                  after:
+                    after,
+                }
+              : {}),
+
+
+            /*
+             * Newest tickets first.
+             */
+            sorts: [
+              {
+                propertyName:
+                  'createdate',
+
+                direction:
+                  'DESCENDING',
+              },
+            ],
+
           }),
         }
       );
 
-      const data = await response.json();
-      console.log('data---ticketowner ', data);
 
-      allTickets = [...allTickets, ...(data.results || [])];
+      const responseText =
+        await response.text();
 
-      after = data?.paging?.next?.after || null;
+
+      let data = {};
+
+
+      try {
+
+        data =
+          responseText
+            ? JSON.parse(
+                responseText
+              )
+            : {};
+
+      } catch (error) {
+
+        console.error(
+          `Owner Ticket page ${pageNumber} JSON error:`,
+          responseText
+        );
+
+
+        return res.status(500).json({
+
+          message:
+            `Invalid response from HubSpot Owner Ticket page ${pageNumber}`,
+
+        });
+
+      }
+
+
+      console.log(
+        `Owner Ticket page ${pageNumber} HTTP status:`,
+        response.status
+      );
+
+
+      console.log(
+        `Owner Ticket page ${pageNumber} count:`,
+        data.results?.length || 0
+      );
+
+
+      if (!response.ok) {
+
+        console.error(
+          `Owner Ticket page ${pageNumber} failed:`,
+          data
+        );
+
+
+        return res
+          .status(
+            response.status
+          )
+          .json({
+
+            message:
+              `Failed to fetch Owner Ticket page ${pageNumber}`,
+
+            detail:
+              data,
+
+          });
+
+      }
+
+
+      allTickets.push(
+        ...(
+          data.results ||
+          []
+        )
+      );
+
+
+      console.log(
+        'Total Owner Tickets collected:',
+        allTickets.length
+      );
+
+
+      after =
+        data
+          ?.paging
+          ?.next
+          ?.after ||
+        null;
+
+
+      console.log(
+        'Next after:',
+        after
+      );
+
+
+      pageNumber += 1;
+
 
     } while (after);
 
-    // const tickets = allTickets.map(item => ({
-    //   ticketId: item.id,
-    //   subject: item.properties.subject || '',
-    //   createdDate: item.properties.createdate || '',
-    //   ownerId: item.properties.hubspot_owner_id || '',
-    //   status: item.properties.hs_pipeline_stage || '',
-    //   content: item.properties.content || '',
-    //   customer_portal: item.properties.customer_portal || '',
-    // }));
 
-    const tickets = allTickets.map(item => ({
-  ticketId:
-    item.id,
 
-  subject:
-    item.properties.subject || '',
+    // =====================================================
+    // REMOVE DUPLICATES
+    // =====================================================
 
-  createdDate:
-    item.properties.createdate || '',
+    const uniqueTickets =
+      Array.from(
+        new Map(
+          allTickets.map(
+            ticket => [
+              String(ticket.id),
+              ticket,
+            ]
+          )
+        ).values()
+      );
 
-  ownerId:
-    item.properties.hubspot_owner_id || '',
 
-  status:
-    item.properties.hs_pipeline_stage || '',
+    console.log(
+      'Unique Owner Tickets:',
+      uniqueTickets.length
+    );
 
-  content:
-    item.properties.content || '',
 
-  customer_portal:
-    item.properties.customer_portal || '',
 
-  dealer_unread_count:
-    Number(
-      item.properties.dealer_unread_count ||
-      0,
-    ),
-}));
+    // =====================================================
+    // FORMAT RESPONSE
+    // =====================================================
+
+    const tickets =
+      uniqueTickets.map(
+        item => ({
+
+          ticketId:
+            String(item.id),
+
+          subject:
+            item.properties
+              ?.subject ||
+            '',
+
+          createdDate:
+            item.properties
+              ?.createdate ||
+            '',
+
+          ownerId:
+            item.properties
+              ?.hubspot_owner_id ||
+            '',
+
+          status:
+            item.properties
+              ?.hs_pipeline_stage ||
+            '',
+
+          content:
+            item.properties
+              ?.content ||
+            '',
+
+          customer_portal:
+            item.properties
+              ?.customer_portal ??
+            '',
+
+          dealer_unread_count:
+            Number(
+              item.properties
+                ?.dealer_unread_count ||
+              0
+            ),
+
+        })
+      );
+
+
+    console.log(
+      '===================================='
+    );
+
+    console.log(
+      'FINAL OWNER TICKET COUNT:',
+      tickets.length
+    );
+
+    console.log(
+      '===================================='
+    );
+
 
     return res.status(200).json({
-      message: 'All owner tickets fetched',
-      total: tickets.length,
-      tickets,
+
+      message:
+        'All owner tickets fetched successfully',
+
+      ownerId:
+        String(ownerId),
+
+      total:
+        tickets.length,
+
+      tickets:
+        tickets,
+
     });
+
 
   } catch (error) {
-    console.error('Owner Ticket Fetch Error:', error);
-    return res.status(500).json({
-      message: 'Internal server error',
-    });
-  }
-});
 
+    console.error(
+      'Owner Ticket Fetch Error:',
+      {
+        message:
+          error?.message,
+
+        stack:
+          error?.stack,
+      }
+    );
+
+
+    return res.status(500).json({
+
+      message:
+        'Internal server error',
+
+      error:
+        error?.message ||
+        'Unknown error',
+
+    });
+
+  }
+
+});
 
 app.post('/get-owner-id', async (req, res) => {
   const { email } = req.body;
