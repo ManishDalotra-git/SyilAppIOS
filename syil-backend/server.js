@@ -4312,22 +4312,17 @@ app.post(
 
     const { contactId } = req.body;
 
-
     if (!contactId) {
-
       return res.status(400).json({
         message: 'Contact ID is required',
       });
-
     }
-
 
     try {
 
       const fetch = (...args) =>
         import('node-fetch').then(
-          ({ default: fetch }) =>
-            fetch(...args)
+          ({ default: fetch }) => fetch(...args)
         );
 
 
@@ -4341,30 +4336,25 @@ app.post(
       );
 
 
-      // ============================================
+      // =====================================================
       // STEP 1
-      // Find company associated with contact
-      // ============================================
+      // CONTACT -> COMPANY
+      // =====================================================
 
-      const contactResponse =
-        await fetch(
+      const contactResponse = await fetch(
+        `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?associations=companies`,
+        {
+          method: 'GET',
 
-          `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?associations=companies`,
+          headers: {
+            Authorization:
+              `Bearer ${HUBSPOT_API_KEY}`,
 
-          {
-            method: 'GET',
-
-            headers: {
-
-              Authorization:
-                `Bearer ${HUBSPOT_API_KEY}`,
-
-              'Content-Type':
-                'application/json',
-
-            },
-          }
-        );
+            'Content-Type':
+              'application/json',
+          },
+        }
+      );
 
 
       const contactData =
@@ -4374,20 +4364,16 @@ app.post(
       if (!contactResponse.ok) {
 
         console.error(
-          'Contact company fetch error:',
+          'Contact company fetch failed:',
           contactData
         );
 
-
-        return res.status(
-          contactResponse.status
-        ).json({
-
-          message:
-            'Failed to fetch contact company',
-
-        });
-
+        return res
+          .status(contactResponse.status)
+          .json({
+            message:
+              'Failed to fetch contact company',
+          });
       }
 
 
@@ -4399,184 +4385,214 @@ app.post(
 
 
       console.log(
-        'Associated companies:',
+        'Associated Companies:',
         companies
       );
 
 
-      const company =
-        companies.find(
-          company => company.id
-        ) || null;
-
-
-      if (!company) {
-
-        console.log(
-          'No company associated with contact'
-        );
-
+      if (!companies.length) {
 
         return res.status(200).json({
-
           message:
-            'No organization found',
+            'No organization associated with contact',
 
           tickets: [],
-
+          total: 0,
         });
 
       }
 
 
+      /*
+       * Abhi first associated company ko
+       * organization maan rahe hain.
+       */
       const companyId =
-        String(company.id);
+        String(companies[0].id);
 
 
       console.log(
-        'Company ID:',
+        'Organization Company ID:',
         companyId
       );
 
 
-      // ============================================
-// STEP 2
-// Get ALL tickets associated with company
-// PAGINATION ke saath
-// ============================================
 
-let ticketIds = [];
+      // =====================================================
+      // STEP 2
+      // COMPANY -> ALL TICKET IDS
+      // PAGINATION
+      // =====================================================
 
-let after = null;
+      let allTicketIds = [];
 
+      let after = null;
 
-do {
-
-  let associationUrl =
-    `https://api.hubapi.com/crm/v3/objects/companies/${companyId}/associations/tickets?limit=100`;
+      let pageNumber = 1;
 
 
-  if (after) {
+      do {
 
-    associationUrl +=
-      `&after=${encodeURIComponent(after)}`;
-
-  }
+        let url =
+          `https://api.hubapi.com/crm/v3/objects/companies/${companyId}/associations/tickets?limit=100`;
 
 
-  console.log(
-    'Fetching company ticket associations:',
-    associationUrl
-  );
+        if (after) {
+
+          url +=
+            `&after=${encodeURIComponent(after)}`;
+
+        }
 
 
-  const associationResponse =
-    await fetch(
-      associationUrl,
-      {
-        method: 'GET',
-
-        headers: {
-
-          Authorization:
-            `Bearer ${HUBSPOT_API_KEY}`,
-
-          'Content-Type':
-            'application/json',
-
-        },
-      }
-    );
+        console.log(
+          `Fetching association page ${pageNumber}`
+        );
 
 
-  const associationData =
-    await associationResponse.json();
+        const associationResponse =
+          await fetch(
+            url,
+            {
+              method: 'GET',
+
+              headers: {
+                Authorization:
+                  `Bearer ${HUBSPOT_API_KEY}`,
+
+                'Content-Type':
+                  'application/json',
+              },
+            }
+          );
 
 
-  console.log(
-    'Association HTTP status:',
-    associationResponse.status
-  );
+        const associationText =
+          await associationResponse.text();
 
 
-  console.log(
-    'Current page ticket count:',
-    associationData.results?.length || 0
-  );
+        let associationData = {};
 
 
-  if (!associationResponse.ok) {
+        try {
 
-    console.error(
-      'Company ticket association error:',
-      associationData
-    );
+          associationData =
+            associationText
+              ? JSON.parse(
+                  associationText
+                )
+              : {};
 
+        } catch (error) {
 
-    return res.status(
-      associationResponse.status
-    ).json({
+          console.error(
+            'Association JSON error:',
+            associationText
+          );
 
-      message:
-        'Failed to fetch organization ticket associations',
+          return res.status(500).json({
+            message:
+              'Invalid HubSpot association response',
+          });
 
-    });
-
-  }
-
-
-  const currentIds =
-    (
-      associationData.results ||
-      []
-    )
-      .map(
-        item =>
-          String(item.id)
-      )
-      .filter(Boolean);
+        }
 
 
-  ticketIds = [
-    ...ticketIds,
-    ...currentIds,
-  ];
+        console.log(
+          `Association page ${pageNumber} status:`,
+          associationResponse.status
+        );
 
 
-  console.log(
-    'Total ticket IDs collected:',
-    ticketIds.length
-  );
+        console.log(
+          `Association page ${pageNumber} count:`,
+          associationData.results?.length || 0
+        );
 
 
-  after =
-    associationData
-      ?.paging
-      ?.next
-      ?.after ||
-    null;
+        if (!associationResponse.ok) {
+
+          console.error(
+            'Company association error:',
+            associationData
+          );
+
+          return res
+            .status(
+              associationResponse.status
+            )
+            .json({
+              message:
+                'Failed to fetch organization associations',
+
+              detail:
+                associationData,
+            });
+
+        }
 
 
-  console.log(
-    'Next after:',
-    after
-  );
+        const pageIds =
+          (
+            associationData.results ||
+            []
+          )
+            .map(
+              item =>
+                String(item.id)
+            )
+            .filter(Boolean);
 
 
-} while (after);
+        allTicketIds.push(
+          ...pageIds
+        );
 
 
-console.log(
-  'FINAL ORGANIZATION TICKET IDS COUNT:',
-  ticketIds.length
-);
+        console.log(
+          'Ticket IDs collected:',
+          allTicketIds.length
+        );
 
 
-console.log(
-  'FINAL ORGANIZATION TICKET IDS:',
-  ticketIds
-);
-      
+        after =
+          associationData
+            ?.paging
+            ?.next
+            ?.after ||
+          null;
+
+
+        pageNumber += 1;
+
+
+      } while (after);
+
+
+
+      // =====================================================
+      // REMOVE DUPLICATE IDs
+      // =====================================================
+
+      const ticketIds = [
+        ...new Set(
+          allTicketIds
+        ),
+      ];
+
+
+      console.log(
+        '===================================='
+      );
+
+      console.log(
+        'FINAL UNIQUE ORGANIZATION TICKET IDS:',
+        ticketIds.length
+      );
+
+      console.log(
+        '===================================='
+      );
 
 
       if (!ticketIds.length) {
@@ -4586,134 +4602,384 @@ console.log(
           message:
             'No organization tickets found',
 
-          tickets: [],
+          total:
+            0,
+
+          tickets:
+            [],
 
         });
 
       }
 
 
-      // ============================================
+
+      // =====================================================
       // STEP 3
-      // Fetch ticket details
-      // ============================================
+      // BATCH READ TICKETS
+      //
+      // IMPORTANT:
+      // 431 separate requests NAHI.
+      //
+      // 100 tickets per batch.
+      //
+      // 431 tickets =
+      // 100
+      // 100
+      // 100
+      // 100
+      // 31
+      //
+      // Total only 5 HubSpot requests.
+      // =====================================================
 
-      const ticketPromises =
-        ticketIds.map(
-          async ticketId => {
-
-            const response =
-              await fetch(
-
-                `https://api.hubapi.com/crm/v3/objects/tickets/${ticketId}?properties=subject,createdate,hubspot_owner_id,hs_pipeline_stage,customer_portal,dealer_unread_count`,
-
-                {
-                  method: 'GET',
-
-                  headers: {
-
-                    Authorization:
-                      `Bearer ${HUBSPOT_API_KEY}`,
-
-                    'Content-Type':
-                      'application/json',
-
-                  },
-                }
-              );
+      const BATCH_SIZE =
+        100;
 
 
-            if (!response.ok) {
-
-              console.error(
-                'Organization ticket fetch failed:',
-                ticketId,
-                response.status
-              );
+      const ticketChunks =
+        [];
 
 
-              console.error(
-                await response.text()
-              );
+      for (
+        let i = 0;
+        i < ticketIds.length;
+        i += BATCH_SIZE
+      ) {
 
-
-              return null;
-
-            }
-
-
-            return await response.json();
-
-          }
+        ticketChunks.push(
+          ticketIds.slice(
+            i,
+            i + BATCH_SIZE
+          )
         );
 
-
-      const ticketResponses =
-        (
-          await Promise.all(
-            ticketPromises
-          )
-        ).filter(Boolean);
-
-
-      // ============================================
-      // STEP 4
-      // Format response
-      // ============================================
-
-      const formattedTickets =
-        ticketResponses
-
-          .filter(
-            ticket =>
-              ticket.properties
-          )
-
-          .map(ticket => ({
-
-            ticketId:
-              String(ticket.id),
-
-            subject:
-              ticket.properties
-                .subject || '',
-
-            createdDate:
-              ticket.properties
-                .createdate || '',
-
-            ownerId:
-              ticket.properties
-                .hubspot_owner_id || '',
-
-            status:
-              ticket.properties
-                .hs_pipeline_stage || '',
-
-            customer_portal:
-              ticket.properties
-                .customer_portal || '',
-
-            dealer_unread_count:
-              Number(
-                ticket.properties
-                  .dealer_unread_count ||
-                0
-              ),
-
-          }));
+      }
 
 
       console.log(
-        'Organization tickets count:',
+        'Total ticket batches:',
+        ticketChunks.length
+      );
+
+
+      let allTickets =
+        [];
+
+
+      /*
+       * IMPORTANT:
+       *
+       * Sequential processing.
+       *
+       * Promise.all(ticketChunks)
+       * intentionally use nahi kar rahe,
+       * taaki HubSpot ko ek saath
+       * bahut requests hit na karein.
+       */
+
+      for (
+        let batchIndex = 0;
+        batchIndex <
+          ticketChunks.length;
+        batchIndex++
+      ) {
+
+        const chunk =
+          ticketChunks[
+            batchIndex
+          ];
+
+
+        console.log(
+          `Fetching ticket batch ${batchIndex + 1}/${ticketChunks.length}`
+        );
+
+
+        console.log(
+          'Batch size:',
+          chunk.length
+        );
+
+
+        const batchResponse =
+          await fetch(
+
+            'https://api.hubapi.com/crm/v3/objects/tickets/batch/read',
+
+            {
+              method:
+                'POST',
+
+              headers: {
+
+                Authorization:
+                  `Bearer ${HUBSPOT_API_KEY}`,
+
+                'Content-Type':
+                  'application/json',
+
+              },
+
+
+              body:
+                JSON.stringify({
+
+                  properties: [
+
+                    'subject',
+
+                    'createdate',
+
+                    'hubspot_owner_id',
+
+                    'hs_pipeline_stage',
+
+                    'customer_portal',
+
+                    'dealer_unread_count',
+
+                  ],
+
+
+                  inputs:
+                    chunk.map(
+                      ticketId => ({
+                        id:
+                          String(
+                            ticketId
+                          ),
+                      })
+                    ),
+
+                }),
+
+            }
+
+          );
+
+
+        const batchText =
+          await batchResponse.text();
+
+
+        let batchData = {};
+
+
+        try {
+
+          batchData =
+            batchText
+              ? JSON.parse(
+                  batchText
+                )
+              : {};
+
+        } catch (error) {
+
+          console.error(
+            `Batch ${batchIndex + 1} JSON error:`,
+            batchText
+          );
+
+          return res.status(500).json({
+
+            message:
+              `Invalid response from HubSpot batch ${batchIndex + 1}`,
+
+          });
+
+        }
+
+
+        console.log(
+          `Batch ${batchIndex + 1} HTTP status:`,
+          batchResponse.status
+        );
+
+
+        console.log(
+          `Batch ${batchIndex + 1} tickets returned:`,
+          batchData.results?.length ||
+            0
+        );
+
+
+        if (!batchResponse.ok) {
+
+          console.error(
+            `Ticket batch ${batchIndex + 1} failed:`,
+            batchData
+          );
+
+
+          /*
+           * Ab silently ignore NAHI karenge.
+           *
+           * Agar koi batch fail hua,
+           * poora API proper error dega.
+           *
+           * Isi se inconsistent count
+           * khatam hoga.
+           */
+
+          return res
+            .status(
+              batchResponse.status
+            )
+            .json({
+
+              message:
+                `HubSpot ticket batch ${batchIndex + 1} failed`,
+
+              detail:
+                batchData,
+
+            });
+
+        }
+
+
+        allTickets.push(
+          ...(
+            batchData.results ||
+            []
+          )
+        );
+
+
+        console.log(
+          'Total ticket details collected:',
+          allTickets.length
+        );
+
+
+        /*
+         * Small delay between batches.
+         *
+         * Rate-limit pressure aur kam.
+         */
+
+        if (
+          batchIndex <
+          ticketChunks.length - 1
+        ) {
+
+          await new Promise(
+            resolve =>
+              setTimeout(
+                resolve,
+                150
+              )
+          );
+
+        }
+
+      }
+
+
+
+      // =====================================================
+      // STEP 4
+      // FORMAT TICKETS
+      // =====================================================
+
+      const formattedTickets =
+        allTickets
+
+          .filter(
+            ticket =>
+              ticket &&
+              ticket.properties
+          )
+
+          .map(
+            ticket => ({
+
+              ticketId:
+                String(
+                  ticket.id
+                ),
+
+              subject:
+                ticket.properties
+                  ?.subject ||
+                '',
+
+              createdDate:
+                ticket.properties
+                  ?.createdate ||
+                '',
+
+              ownerId:
+                ticket.properties
+                  ?.hubspot_owner_id ||
+                '',
+
+              status:
+                ticket.properties
+                  ?.hs_pipeline_stage ||
+                '',
+
+              customer_portal:
+                ticket.properties
+                  ?.customer_portal ??
+                '',
+
+              dealer_unread_count:
+                Number(
+                  ticket.properties
+                    ?.dealer_unread_count ||
+                  0
+                ),
+
+            })
+          );
+
+
+
+      console.log(
+        '===================================='
+      );
+
+      console.log(
+        'ASSOCIATED TICKET IDS:',
+        ticketIds.length
+      );
+
+      console.log(
+        'TICKET DETAILS RETURNED:',
+        allTickets.length
+      );
+
+      console.log(
+        'FORMATTED TICKETS:',
         formattedTickets.length
       );
 
+      console.log(
+        '===================================='
+      );
+
+
+
+      // =====================================================
+      // RESPONSE
+      // =====================================================
 
       return res.status(200).json({
 
         message:
           'Organization tickets fetched successfully',
+
+        organizationId:
+          companyId,
+
+        associatedTicketCount:
+          ticketIds.length,
+
+        total:
+          formattedTickets.length,
 
         tickets:
           formattedTickets,
@@ -4724,8 +4990,14 @@ console.log(
     } catch (error) {
 
       console.error(
-        'Get Organization Tickets Error:',
-        error
+        'GET ORGANIZATION TICKETS ERROR:',
+        {
+          message:
+            error?.message,
+
+          stack:
+            error?.stack,
+        }
       );
 
 
@@ -4733,6 +5005,10 @@ console.log(
 
         message:
           'Internal server error',
+
+        error:
+          error?.message ||
+          'Unknown error',
 
       });
 
