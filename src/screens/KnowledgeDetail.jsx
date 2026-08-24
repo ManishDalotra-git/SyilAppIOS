@@ -16,15 +16,30 @@ import RenderHTML from 'react-native-render-html';
 import ImageViewing from 'react-native-image-viewing';
 import Video from 'react-native-video';
 import { HTMLElementModel, HTMLContentModel } from 'react-native-render-html';
+import { WebView } from 'react-native-webview';
 
 const KnowledgeDetail = ({ route, navigation }) => {
 
 
+  // const customHTMLElementModels = {
+  //   video: HTMLElementModel.fromCustomModel({
+  //     tagName: 'video',
+  //     contentModel: HTMLContentModel.block, // ⚠️ important
+  //   }),
+  // };
+
   const customHTMLElementModels = {
+
     video: HTMLElementModel.fromCustomModel({
       tagName: 'video',
-      contentModel: HTMLContentModel.block, // ⚠️ important
+      contentModel: HTMLContentModel.block,
     }),
+
+    iframe: HTMLElementModel.fromCustomModel({
+      tagName: 'iframe',
+      contentModel: HTMLContentModel.block,
+    }),
+
   };
 
 
@@ -180,11 +195,88 @@ const KnowledgeDetail = ({ route, navigation }) => {
   );
 };
 
-    const renderers = useMemo(
+
+const IframeRenderer = ({ tnode }) => {
+
+  let uri =
+    tnode?.attributes?.src;
+
+  if (!uri) {
+    return null;
+  }
+
+  uri = uri.replace(
+    /&amp;/g,
+    '&'
+  );
+
+  console.log(
+    'IFRAME URL:',
+    uri
+  );
+
+
+  return (
+
+    <View
+      style={{
+        width: '100%',
+        height: 230,
+        marginVertical: 12,
+        overflow: 'hidden',
+        borderRadius: 8,
+      }}
+    >
+
+      <WebView
+
+        source={{
+          uri: uri,
+        }}
+
+        style={{
+          flex: 1,
+          backgroundColor: '#000',
+        }}
+
+        javaScriptEnabled={true}
+
+        domStorageEnabled={true}
+
+        allowsInlineMediaPlayback={true}
+
+        mediaPlaybackRequiresUserAction={true}
+
+        originWhitelist={['*']}
+
+        scrollEnabled={false}
+
+        allowsFullscreenVideo={true}
+
+      />
+
+    </View>
+
+  );
+
+};
+
+
+  const renderers = useMemo(
     () => ({
-      h3: H3Renderer,
-      img: ImageRenderer,
-      video: VideoRenderer, 
+
+      h3:
+        H3Renderer,
+
+      img:
+        ImageRenderer,
+
+      video:
+        VideoRenderer,
+
+      iframe:
+        IframeRenderer,
+
     }),
     []
   );

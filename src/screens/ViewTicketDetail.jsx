@@ -28,6 +28,7 @@ import Footer from './components/Footer';
 import { launchImageLibrary } from 'react-native-image-picker';
 import notifee from '@notifee/react-native';
 
+
 const ViewTicketDetail = ({ navigation }) => {
   StatusBar.setTranslucent(true);
   StatusBar.setBackgroundColor('transparent');

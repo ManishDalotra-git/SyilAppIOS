@@ -1137,6 +1137,9 @@ const ViewTicket = ({ navigation }) => {
         case '2101352153':
           return 'Vaibhav Bhujbal';
 
+        case '96188330':
+          return 'Fay Zhu';
+
         default:
           return 'In Progress';
 
