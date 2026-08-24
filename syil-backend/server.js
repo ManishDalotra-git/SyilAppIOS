@@ -4440,82 +4440,143 @@ app.post(
 
 
       // ============================================
-      // STEP 2
-      // Get tickets associated with company
-      // ============================================
+// STEP 2
+// Get ALL tickets associated with company
+// PAGINATION ke saath
+// ============================================
 
-      const companyResponse =
-        await fetch(
+let ticketIds = [];
 
-          `https://api.hubapi.com/crm/v3/objects/companies/${companyId}?associations=tickets`,
-
-          {
-            method: 'GET',
-
-            headers: {
-
-              Authorization:
-                `Bearer ${HUBSPOT_API_KEY}`,
-
-              'Content-Type':
-                'application/json',
-
-            },
-          }
-        );
+let after = null;
 
 
-      const companyData =
-        await companyResponse.json();
+do {
+
+  let associationUrl =
+    `https://api.hubapi.com/crm/v3/objects/companies/${companyId}/associations/tickets?limit=100`;
 
 
-      if (!companyResponse.ok) {
+  if (after) {
 
-        console.error(
-          'Company ticket fetch error:',
-          companyData
-        );
+    associationUrl +=
+      `&after=${encodeURIComponent(after)}`;
+
+  }
 
 
-        return res.status(
-          companyResponse.status
-        ).json({
+  console.log(
+    'Fetching company ticket associations:',
+    associationUrl
+  );
 
-          message:
-            'Failed to fetch organization tickets',
 
-        });
+  const associationResponse =
+    await fetch(
+      associationUrl,
+      {
+        method: 'GET',
 
+        headers: {
+
+          Authorization:
+            `Bearer ${HUBSPOT_API_KEY}`,
+
+          'Content-Type':
+            'application/json',
+
+        },
       }
+    );
 
 
-      const associatedTickets =
-        companyData
-          ?.associations
-          ?.tickets
-          ?.results || [];
+  const associationData =
+    await associationResponse.json();
 
 
-      /*
-       * Important:
-       * Sirf ID use kar rahe hain.
-       *
-       * t.type === 'company_to_ticket'
-       * par depend nahi karenge.
-       */
-
-      const ticketIds =
-        associatedTickets
-          .map(ticket =>
-            String(ticket.id)
-          )
-          .filter(Boolean);
+  console.log(
+    'Association HTTP status:',
+    associationResponse.status
+  );
 
 
-      console.log(
-        'Organization Ticket IDs:',
-        ticketIds
-      );
+  console.log(
+    'Current page ticket count:',
+    associationData.results?.length || 0
+  );
+
+
+  if (!associationResponse.ok) {
+
+    console.error(
+      'Company ticket association error:',
+      associationData
+    );
+
+
+    return res.status(
+      associationResponse.status
+    ).json({
+
+      message:
+        'Failed to fetch organization ticket associations',
+
+    });
+
+  }
+
+
+  const currentIds =
+    (
+      associationData.results ||
+      []
+    )
+      .map(
+        item =>
+          String(item.id)
+      )
+      .filter(Boolean);
+
+
+  ticketIds = [
+    ...ticketIds,
+    ...currentIds,
+  ];
+
+
+  console.log(
+    'Total ticket IDs collected:',
+    ticketIds.length
+  );
+
+
+  after =
+    associationData
+      ?.paging
+      ?.next
+      ?.after ||
+    null;
+
+
+  console.log(
+    'Next after:',
+    after
+  );
+
+
+} while (after);
+
+
+console.log(
+  'FINAL ORGANIZATION TICKET IDS COUNT:',
+  ticketIds.length
+);
+
+
+console.log(
+  'FINAL ORGANIZATION TICKET IDS:',
+  ticketIds
+);
+      
 
 
       if (!ticketIds.length) {
