@@ -77,8 +77,8 @@ const ViewTicket = ({ navigation }) => {
    * karne ke liye.
    */
 
-  const [refreshKey, setRefreshKey] =
-    useState(0);
+  // const [refreshKey, setRefreshKey] =
+  //   useState(0);
 
 
   const [showTicketTypeModal, setShowTicketTypeModal] =
@@ -596,10 +596,10 @@ const ViewTicket = ({ navigation }) => {
                * API refresh karega.
                */
 
-              setRefreshKey(
-                previous =>
-                  previous + 1
-              );
+              // setRefreshKey(
+              //   previous =>
+              //     previous + 1
+              // );
 
 
             } catch (
@@ -673,10 +673,10 @@ const ViewTicket = ({ navigation }) => {
         ticketType
       );
 
-      console.log(
-        'Refresh Key:',
-        refreshKey
-      );
+      // console.log(
+      //   'Refresh Key:',
+      //   refreshKey
+      // );
 
 
       if (
@@ -709,7 +709,7 @@ const ViewTicket = ({ navigation }) => {
     [
       contactID,
       ticketType,
-      refreshKey,
+      // refreshKey,
     ]
   );
 
