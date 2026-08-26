@@ -365,13 +365,6 @@ app.post(
  /*
  * =====================================================
  * SAME DEVICE TOKEN CLEANUP
- *
- * Current FCM token kisi aur contact par saved ho
- * to wahan se remove karo.
- *
- * Direct EQ search ke bajaye sab contacts jinke paas
- * dealer_fcm_token hai fetch karke Node me exact compare
- * karenge.
  * =====================================================
  */
 
@@ -491,7 +484,7 @@ console.log(
 
 
 /*
- * Purane contacts se token remove.
+ * remove token from old contacts, if any.
  */
 for (const oldContact of oldContacts) {
 
@@ -617,7 +610,7 @@ const getDealerTotalUnreadCount =
 
     try {
       /*
-       * Contact ke saath associated tickets.
+       * Contact associated with tickets.
        */
       const associationResponse =
         await fetch(
@@ -657,7 +650,7 @@ const getDealerTotalUnreadCount =
       }
 
       /*
-       * Har associated ticket ka
+       * Get each associated ticket
        * customer_portal + dealer_unread_count.
        */
       const ticketRequests =
@@ -703,7 +696,7 @@ const getDealerTotalUnreadCount =
 
       /*
        * customer_portal true tickets
-       * Dealer App total me include nahi honge.
+       * Dealer App total not include
        */
       const dealerTickets =
         tickets.filter(ticket => {
@@ -773,363 +766,158 @@ const getDealerTotalUnreadCount =
   const getSupportOwnerTotalUnreadCount =
 
   async (
-
     ownerId,
-
     fetch,
-
   ) => {
-
-
-
     try {
-
-
-
       let allTickets = [];
-
       let after = null;
-
-
-
-
-
       do {
-
-
-
         const response =
-
           await fetch(
-
             'https://api.hubapi.com/crm/v3/objects/tickets/search',
-
             {
-
               method:
-
                 'POST',
-
-
-
               headers: {
-
                 Authorization:
-
                   `Bearer ${HUBSPOT_API_KEY}`,
-
-
-
                 'Content-Type':
-
                   'application/json',
-
               },
-
-
-
               body:
-
                 JSON.stringify({
-
                   filterGroups: [
-
                     {
-
                       filters: [
-
                         {
-
                           propertyName:
-
                             'hubspot_owner_id',
-
-
-
                           operator:
-
                             'EQ',
-
-
-
                           value:
-
                             String(
-
                               ownerId,
-
                             ),
-
                         },
-
                       ],
-
                     },
-
                   ],
-
-
 
                   properties: [
-
                     'customer_portal',
-
                     'dealer_unread_count',
-
                   ],
 
-
-
                   limit:
-
                     100,
-
-
-
                   ...(after
-
                     ? { after }
-
                     : {}),
-
                 }),
-
             },
-
           );
-
-
-
-
 
         const data =
-
           await response.json();
-
-
-
-
-
         if (!response.ok) {
-
-
-
           console.error(
-
             'Support unread ticket search failed:',
-
             data,
-
           );
 
-
-
           return 0;
-
         }
 
-
-
-
-
         allTickets = [
-
           ...allTickets,
-
           ...(data.results || []),
-
         ];
 
 
-
-
-
         after =
-
           data?.paging
-
             ?.next
-
             ?.after ||
-
           null;
-
-
-
-
 
       } while (after);
 
-
-
-
-
       const totalUnread =
-
         allTickets.reduce(
-
           (
-
             total,
-
             ticket,
-
           ) => {
-
-
-
             const rawPortal =
-
               String(
-
                 ticket.properties
-
                   ?.customer_portal ||
-
                   '',
-
               )
-
                 .trim()
-
                 .toLowerCase();
 
-
-
-
-
             const isCustomerPortal =
-
               rawPortal ===
-
                 'true' ||
-
               rawPortal ===
-
                 'yes' ||
-
               rawPortal ===
-
                 '1';
 
 
-
-
-
             if (isCustomerPortal) {
-
               return total;
-
             }
 
-
-
-
-
             const unread =
-
               Number(
-
                 ticket.properties
-
                   ?.dealer_unread_count ||
-
                   0,
-
               );
 
-
-
-
-
             return (
-
               total +
-
               (
-
                 Number.isFinite(
-
                   unread,
-
                 )
-
                   ? unread
-
                   : 0
-
               )
-
             );
-
           },
-
-
-
           0,
-
         );
 
 
-
-
-
       console.log(
-
         `Support Owner ${ownerId} total unread:`,
-
         totalUnread,
-
       );
-
-
-
-
 
       return totalUnread;
-
-
-
     } catch (error) {
-
-
-
       console.error(
-
         'getSupportOwnerTotalUnreadCount error:',
-
         error,
-
       );
-
-
-
       return 0;
-
     }
-
   };
 
-
-
-
 app.post('/hubspot-webhook', async (req, res) => {
-  /*
-   * HubSpot ko turant 200 response dena zaroori hai,
-   * warna webhook dobara retry ho sakta hai.
-   */
   res.sendStatus(200);
-
   try {
     console.log(
       '========== HUBSPOT WEBHOOK RECEIVED ==========',
     );
-
     console.log(
       'Webhook body:',
       JSON.stringify(req.body, null, 2),
     );
-
     const events = Array.isArray(req.body)
       ? req.body
       : [];
@@ -1168,7 +956,7 @@ app.post('/hubspot-webhook', async (req, res) => {
 
     /*
      * =====================================================
-     * STEP 1: Current thread ke messages fetch karo
+     * STEP 1: Current thread messages fetch
      * =====================================================
      */
 
@@ -1228,9 +1016,7 @@ app.post('/hubspot-webhook', async (req, res) => {
       latestMessage.text,
     );
 
-    /*
-     * Sirf actual incoming/outgoing messages process karne hain.
-     */
+    
     const allowedDirections = [
       'INCOMING',
       'OUTGOING',
@@ -1249,7 +1035,7 @@ app.post('/hubspot-webhook', async (req, res) => {
 
     /*
      * =====================================================
-     * STEP 2: Thread ke saath associated ticket find karo
+     * STEP 2: find the thread associated with ticket
      * =====================================================
      */
 
@@ -1345,10 +1131,6 @@ app.post('/hubspot-webhook', async (req, res) => {
         .trim()
         .toLowerCase();
 
-    /*
-     * true / yes / 1 ka matlab Customer App ticket.
-     * false / empty / missing ka matlab Dealer App ticket.
-     */
     const isCustomerPortalTicket =
       rawCustomerPortal === true ||
       normalizedCustomerPortal === 'true' ||
@@ -1375,10 +1157,6 @@ app.post('/hubspot-webhook', async (req, res) => {
       isCustomerPortalTicket,
     );
 
-    /*
-     * Dealer app me customer_portal=true ticket ki
-     * notification nahi bhejni.
-     */
     if (isCustomerPortalTicket) {
       console.log(
         'Dealer push skipped: customer_portal is true',
@@ -1394,7 +1172,7 @@ app.post('/hubspot-webhook', async (req, res) => {
 
     /*
  * =====================================================
- * Ticket Owner identify karo
+ * Ticket Owner identify
  * =====================================================
  */
 
@@ -1484,7 +1262,6 @@ const ticketUnreadUpdateResponse =
         properties: {
           /*
            * dealer_unread_count Single-line text
-           * property hai, isliye String save kar rahe hain.
            */
           dealer_unread_count:
             String(
@@ -1516,7 +1293,7 @@ console.log(
 
     /*
      * =====================================================
-     * STEP 3: Message sender identify karo
+     * STEP 3: Message sender identify
      * =====================================================
      */
 
@@ -1532,8 +1309,8 @@ console.log(
     );
 
     /*
-     * Sender contact ki app_support_team_member
-     * property check karenge.
+     * Sender contact app_support_team_member
+     * property check.
      */
     let senderIsSupport = false;
     let senderContactName = '';
@@ -1608,8 +1385,8 @@ console.log(
             .toLowerCase();
 
         /*
-         * Sirf Yes ka matlab support.
-         * No / empty / missing ka matlab customer.
+         * if app_support_team_member = yes it means support team member.
+         * No / empty / missing it means customer.
          */
         senderIsSupport =
           supportValue === 'yes';
@@ -1635,7 +1412,7 @@ console.log(
     }
 
     /*
-     * Sender contact nahi mila to direction fallback:
+     * if sender contact not found, use direction as fallback:
      * OUTGOING = support
      * INCOMING = customer
      */
@@ -1691,140 +1468,12 @@ console.log(
       notificationTitle,
     );
 
-    /*
-     * =====================================================
-     * STEP 4: Dealer FCM tokens find karo
-     * =====================================================
-     */
-
-    // const dealerSearchResponse = await fetch(
-    //   'https://api.hubapi.com/crm/v3/objects/contacts/search',
-    //   {
-    //     method: 'POST',
-    //     headers: {
-    //       Authorization:
-    //         `Bearer ${HUBSPOT_API_KEY}`,
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({
-    //       filterGroups: [
-    //         {
-    //           filters: [
-    //             {
-    //               propertyName:
-    //                 'dealer_fcm_token',
-    //               operator: 'HAS_PROPERTY',
-    //             },
-    //           ],
-    //         },
-    //       ],
-    //       properties: [
-    //         'email',
-    //         'firstname',
-    //         'lastname',
-    //         'dealer_fcm_token',
-    //       ],
-    //       limit: 100,
-    //     }),
-    //   },
-    // );
-
-    // const dealerSearchData =
-    //   await dealerSearchResponse.json();
-
-    // console.log(
-    //   'Dealer contact search status:',
-    //   dealerSearchResponse.status,
-    // );
-
-    // if (!dealerSearchResponse.ok) {
-    //   console.error(
-    //     'Dealer contact search error:',
-    //     JSON.stringify(
-    //       dealerSearchData,
-    //       null,
-    //       2,
-    //     ),
-    //   );
-    //   return;
-    // }
-
-    // const dealerContacts =
-    //   dealerSearchData.results || [];
-
-    // console.log(
-    //   'Dealer contacts with token:',
-    //   dealerContacts.map(contact => ({
-    //     contactId: contact.id,
-    //     email:
-    //       contact.properties?.email,
-    //     hasToken: Boolean(
-    //       contact.properties
-    //         ?.dealer_fcm_token,
-    //     ),
-    //   })),
-    // );
-
-    // const tokens = [
-    //   ...new Set(
-    //     dealerContacts
-    //       .map(
-    //         contact =>
-    //           contact.properties
-    //             ?.dealer_fcm_token,
-    //       )
-    //       .filter(Boolean),
-    //   ),
-    // ];
-
-    // console.log(
-    //   'Unique dealer tokens found:',
-    //   tokens.length,
-    // );
-
-    // if (!tokens.length) {
-    //   console.log(
-    //     'No dealer FCM token found',
-    //   );
-    //   return;
-    // }
-
-
-
-    /*
- * =====================================================
- * STEP 4:
- * Current ticket ke associated contact(s) find karo
- * aur sirf unka Dealer FCM token use karo.
- * =====================================================
- */
-
-
-    /*
- * =====================================================
- * STEP 4:
- * Ticket Owner ke HubSpot contact ka
- * Dealer FCM token find karo.
- * =====================================================
- */
-
-    /*
- * =====================================================
- * STEP 4:
- * Notification recipient decide karo
- *
- * INCOMING = Customer -> Ticket Owner
- * OUTGOING = Support  -> Associated Customer
- * =====================================================
- */
-
 let dealerRecipients = [];
-
 
 /*
  * =====================================================
  * CASE 1:
- * Customer replied -> Ticket Owner ko notification
+ * Customer replied -> Ticket Owner get notification
  * =====================================================
  */
 if (latestMessage.direction === 'INCOMING') {
@@ -2184,174 +1833,9 @@ console.log(
 
     /*
      * =====================================================
-     * STEP 5: Push notification send karo
+     * STEP 5: Send Push notification
      * =====================================================
      */
-
-  //   const pushResults =
-  // await Promise.allSettled(
-  //   dealerRecipients.map(
-  //     async recipient => {
-
-  //       /*
-  //        * Current unread + 1
-  //        */
-  //       const newUnreadCount =
-  //         recipient.currentUnreadCount + 1;
-
-  //       console.log(
-  //         `Unread count ${recipient.email}: ${recipient.currentUnreadCount} -> ${newUnreadCount}`,
-  //       );
-
-  //       /*
-  //        * New unread count HubSpot contact me save.
-  //        */
-  //       const countUpdateResponse =
-  //         await fetch(
-  //           `https://api.hubapi.com/crm/v3/objects/contacts/${recipient.contactId}`,
-  //           {
-  //             method: 'PATCH',
-
-  //             headers: {
-  //               Authorization:
-  //                 `Bearer ${HUBSPOT_API_KEY}`,
-
-  //               'Content-Type':
-  //                 'application/json',
-  //             },
-
-  //             body: JSON.stringify({
-  //               properties: {
-  //                 dealer_unread_notification_count:
-  //                   String(
-  //                     newUnreadCount,
-  //                   ),
-  //               },
-  //             }),
-  //           },
-  //         );
-
-  //       const countUpdateText =
-  //         await countUpdateResponse.text();
-
-  //       if (!countUpdateResponse.ok) {
-  //         throw new Error(
-  //           `Unread count update failed: ${countUpdateText}`,
-  //         );
-  //       }
-
-  //       /*
-  //        * Push notification.
-  //        */
-  //       return getMessaging().send({
-  //         token:
-  //           recipient.token,
-
-  //         notification: {
-  //           title:
-  //             notificationTitle,
-
-  //           body:
-  //             notificationBody.slice(
-  //               0,
-  //               200,
-  //             ),
-  //         },
-
-  //         data: {
-  //           ticketId:
-  //             String(ticketId),
-
-  //           threadId:
-  //             String(threadId),
-
-  //           messageId:
-  //             String(
-  //               latestMessage.id,
-  //             ),
-
-  //           ticketSubject:
-  //             String(
-  //               ticketSubject,
-  //             ),
-
-  //           senderEmail:
-  //             String(
-  //               senderEmail,
-  //             ),
-
-  //           senderRole:
-  //             String(
-  //               senderRole,
-  //             ),
-
-  //           appSupportTeamMember:
-  //             senderIsSupport
-  //               ? 'Yes'
-  //               : 'No',
-
-  //           direction:
-  //             String(
-  //               latestMessage.direction,
-  //             ),
-
-  //           targetScreen:
-  //             'ViewTicketDetail',
-
-  //           type:
-  //             senderIsSupport
-  //               ? 'support_message'
-  //               : 'customer_message',
-
-  //           /*
-  //            * Badge decrement ke waqt
-  //            * isi contact ka count update hoga.
-  //            */
-  //           recipientContactId:
-  //             String(
-  //               recipient.contactId,
-  //             ),
-
-  //           badgeCount:
-  //             String(
-  //               newUnreadCount,
-  //             ),
-  //         },
-
-  //         apns: {
-  //           headers: {
-  //             'apns-priority':
-  //               '10',
-  //           },
-
-  //           payload: {
-  //             aps: {
-  //               alert: {
-  //                 title:
-  //                   notificationTitle,
-
-  //                 body:
-  //                   notificationBody.slice(
-  //                     0,
-  //                     200,
-  //                   ),
-  //               },
-
-  //               sound:
-  //                 'default',
-
-  //               /*
-  //                * Fixed badge: 1 nahi.
-  //                */
-  //               badge:
-  //                 newUnreadCount,
-  //             },
-  //           },
-  //         },
-  //       });
-  //     },
-  //   ),
-  // );
 
 
   const pushResults =
@@ -2360,158 +1844,133 @@ console.log(
     dealerRecipients.map(
       async recipient => {
 
-        /*
-         * Is Dealer ke saare Dealer tickets
-         * ka total unread.
-         */
-let totalUnreadCount = 0;
+      let totalUnreadCount = 0;
+
+      if (
+        recipient.recipientType ===
+        'support'
+      ) {
+
+        totalUnreadCount =
+          await getSupportOwnerTotalUnreadCount(
+            recipient.ownerId,
+            fetch,
+          );
+      }
 
 
-/*
- * Support user:
- * owned tickets ka total.
- */
-if (
-  recipient.recipientType ===
-  'support'
-) {
+  else {
 
-  totalUnreadCount =
-    await getSupportOwnerTotalUnreadCount(
-      recipient.ownerId,
-      fetch,
-    );
-}
+    totalUnreadCount =
+      await getDealerTotalUnreadCount(
+        recipient.contactId,
+        fetch,
+      );
+  }
+          console.log(
+            `Push badge for ${recipient.email}:`,
+            totalUnreadCount,
+          );
 
+          return getMessaging().send({
+            token:
+              recipient.token,
+            notification: {
+              title:
+                notificationTitle,
+              body:
+                notificationBody.slice(
+                  0,
+                  200,
+                ),
+            },
+            data: {
+              ticketId:
+                String(ticketId),
+              threadId:
+                String(threadId),
+              messageId:
+                String(
+                  latestMessage.id,
+                ),
+              ticketSubject:
+                String(
+                  ticketSubject,
+                ),
+              senderEmail:
+                String(
+                  senderEmail,
+                ),
+              senderRole:
+                String(
+                  senderRole,
+                ),
+              appSupportTeamMember:
+                senderIsSupport
+                  ? 'Yes'
+                  : 'No',
+              direction:
+                String(
+                  latestMessage.direction,
+                ),
+              targetScreen:
+                'ViewTicketDetail',
+              type:
+                senderIsSupport
+                  ? 'support_message'
+                  : 'customer_message',
 
-/*
- * Normal/customer user:
- * associated tickets ka total.
- */
-else {
+              /*
+              * Specific ticket unread.
+              */
+              ticketUnreadCount:
+                String(
+                  newTicketUnreadCount,
+                ),
 
-  totalUnreadCount =
-    await getDealerTotalUnreadCount(
-      recipient.contactId,
-      fetch,
-    );
-}
-        console.log(
-          `Push badge for ${recipient.email}:`,
-          totalUnreadCount,
-        );
-
-        return getMessaging().send({
-          token:
-            recipient.token,
-
-          notification: {
-            title:
-              notificationTitle,
-
-            body:
-              notificationBody.slice(
-                0,
-                200,
-              ),
-          },
-
-          data: {
-            ticketId:
-              String(ticketId),
-
-            threadId:
-              String(threadId),
-
-            messageId:
-              String(
-                latestMessage.id,
-              ),
-
-            ticketSubject:
-              String(
-                ticketSubject,
-              ),
-
-            senderEmail:
-              String(
-                senderEmail,
-              ),
-
-            senderRole:
-              String(
-                senderRole,
-              ),
-
-            appSupportTeamMember:
-              senderIsSupport
-                ? 'Yes'
-                : 'No',
-
-            direction:
-              String(
-                latestMessage.direction,
-              ),
-
-            targetScreen:
-              'ViewTicketDetail',
-
-            type:
-              senderIsSupport
-                ? 'support_message'
-                : 'customer_message',
-
-            /*
-             * Specific ticket unread.
-             */
-            ticketUnreadCount:
-              String(
-                newTicketUnreadCount,
-              ),
-
-            /*
-             * App icon total unread.
-             */
-            totalUnreadCount:
-              String(
-                totalUnreadCount,
-              ),
-          },
-
-          apns: {
-            headers: {
-              'apns-priority':
-                '10',
+              /*
+              * App icon total unread.
+              */
+              totalUnreadCount:
+                String(
+                  totalUnreadCount,
+                ),
             },
 
-            payload: {
-              aps: {
-                alert: {
-                  title:
-                    notificationTitle,
+            apns: {
+              headers: {
+                'apns-priority':
+                  '10',
+              },
 
-                  body:
-                    notificationBody.slice(
-                      0,
-                      200,
-                    ),
+              payload: {
+                aps: {
+                  alert: {
+                    title:
+                      notificationTitle,
+
+                    body:
+                      notificationBody.slice(
+                        0,
+                        200,
+                      ),
+                  },
+
+                  sound:
+                    'default',
+
+                  /*
+                  * iPhone App icon badge.
+                  */
+                  badge:
+                    totalUnreadCount,
                 },
-
-                sound:
-                  'default',
-
-                /*
-                 * iPhone App icon badge.
-                 */
-                badge:
-                  totalUnreadCount,
               },
             },
-          },
-        });
-      },
-    ),
-  );
+          });
+        },
+      ),
+    );
 
     pushResults.forEach(
       (result, index) => {
@@ -2629,27 +2088,6 @@ app.post(
         });
       }
 
-      // const associatedTicketIds =
-      //   (associationData.results || [])
-      //     .map(item =>
-      //       String(item.id),
-      //     );
-
-      // if (
-      //   !associatedTicketIds.includes(
-      //     String(ticketId),
-      //   )
-      // ) {
-      //   return res.status(403).json({
-      //     success: false,
-      //     message:
-      //       'Ticket is not associated with this contact',
-      //   });
-      // }
-
-
-
-
       const associatedTicketIds =
   (associationData.results || [])
     .map(item =>
@@ -2666,18 +2104,11 @@ console.log(
   isAssociatedContact,
 );
 
-/*
- * Agar ticket contact ke saath associated nahi hai,
- * to check karo logged-in contact actually
- * us ticket ka HubSpot Owner hai ya nahi.
- */
+
 let isTicketOwner = false;
 
 if (!isAssociatedContact) {
 
-  /*
-   * Logged-in contact ka email fetch karo.
-   */
   const loggedInContactResponse =
     await fetch(
       `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?properties=email`,
@@ -2709,7 +2140,7 @@ if (!isAssociatedContact) {
     );
 
     /*
-     * HubSpot owners fetch karo.
+     * HubSpot owners fetch.
      */
     const ownersResponse =
       await fetch(
@@ -2751,7 +2182,7 @@ if (!isAssociatedContact) {
         );
 
         /*
-         * Current ticket ka owner fetch karo.
+         * Fetch Current ticket owner.
          */
         const ticketOwnerResponse =
           await fetch(
@@ -2799,13 +2230,6 @@ if (!isAssociatedContact) {
 }
 
 
-/*
- * User allowed hai agar:
- *
- * 1. Contact ticket ke saath associated hai
- * OR
- * 2. User current ticket ka HubSpot Owner hai
- */
 if (
   !isAssociatedContact &&
   !isTicketOwner
@@ -2863,19 +2287,10 @@ if (
        * Remaining total unread
        * across all dealer tickets.
        */
-      // const totalUnreadCount =
-      //   await getDealerTotalUnreadCount(
-      //     String(contactId),
-      //     fetch,
-      //   );
-
+ 
       let totalUnreadCount = 0;
 
 if (isTicketOwner && !isAssociatedContact) {
-
-  /*
-   * Owner ke remaining unread tickets calculate karo.
-   */
 
   const loggedInContactResponse =
     await fetch(
@@ -3053,169 +2468,6 @@ if (isTicketOwner && !isAssociatedContact) {
     }
   },
 );
-
-
-// app.post(
-//   '/dealer-notification-read',
-//   async (req, res) => {
-
-//     const {
-//       contactId,
-//     } = req.body;
-
-//     if (!contactId) {
-//       return res
-//         .status(400)
-//         .json({
-//           success: false,
-//           message:
-//             'contactId is required',
-//         });
-//     }
-
-//     try {
-//       const fetch = (...args) =>
-//         import('node-fetch').then(
-//           ({
-//             default: fetch,
-//           }) => fetch(...args),
-//         );
-
-//       /*
-//        * Current unread count.
-//        */
-//       const contactResponse =
-//         await fetch(
-//           `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?properties=dealer_unread_notification_count`,
-//           {
-//             method: 'GET',
-
-//             headers: {
-//               Authorization:
-//                 `Bearer ${HUBSPOT_API_KEY}`,
-
-//               'Content-Type':
-//                 'application/json',
-//             },
-//           },
-//         );
-
-//       const contactData =
-//         await contactResponse.json();
-
-//       if (!contactResponse.ok) {
-//         console.error(
-//           'Unread count fetch error:',
-//           contactData,
-//         );
-
-//         return res
-//           .status(
-//             contactResponse.status,
-//           )
-//           .json({
-//             success: false,
-//             message:
-//               'Unable to fetch unread count',
-//           });
-//       }
-
-//       const currentCount =
-//         Number(
-//           contactData.properties
-//             ?.dealer_unread_notification_count ||
-//             0,
-//         );
-
-//       /*
-//        * One notification opened = -1
-//        */
-//       const newCount =
-//         Math.max(
-//           currentCount - 1,
-//           0,
-//         );
-
-//       /*
-//        * Save latest count.
-//        */
-//       const updateResponse =
-//         await fetch(
-//           `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}`,
-//           {
-//             method: 'PATCH',
-
-//             headers: {
-//               Authorization:
-//                 `Bearer ${HUBSPOT_API_KEY}`,
-
-//               'Content-Type':
-//                 'application/json',
-//             },
-
-//             body: JSON.stringify({
-//               properties: {
-//                 dealer_unread_notification_count:
-//                   String(
-//                     newCount,
-//                   ),
-//               },
-//             }),
-//           },
-//         );
-
-//       const updateText =
-//         await updateResponse.text();
-
-//       if (!updateResponse.ok) {
-//         console.error(
-//           'Unread count update error:',
-//           updateText,
-//         );
-
-//         return res
-//           .status(
-//             updateResponse.status,
-//           )
-//           .json({
-//             success: false,
-//             message:
-//               'Unable to update unread count',
-//           });
-//       }
-
-//       console.log(
-//         `Dealer badge count ${contactId}: ${currentCount} -> ${newCount}`,
-//       );
-
-//       return res.json({
-//         success: true,
-//         count:
-//           newCount,
-//       });
-
-//     } catch (error) {
-
-//       console.error(
-//         'dealer-notification-read error:',
-//         error,
-//       );
-
-//       return res
-//         .status(500)
-//         .json({
-//           success: false,
-//           message:
-//             'Internal server error',
-//         });
-//     }
-//   },
-// );
-
-
-
-// Step 1: Search contact by email
-
 
 app.post('/get-contact-id', async (req, res) => {
   const { email } = req.body;
@@ -4170,90 +3422,64 @@ app.post('/get-my-tickets', async (req, res) => {
           associationUrl,
           {
             method: 'GET',
-
             headers: {
-
               Authorization:
                 `Bearer ${HUBSPOT_API_KEY}`,
-
               'Content-Type':
                 'application/json',
-
             },
           }
         );
 
-
       const associationText =
         await associationResponse.text();
-
-
       let associationData = {};
-
-
       try {
-
         associationData =
           associationText
             ? JSON.parse(
                 associationText
               )
             : {};
-
       } catch (error) {
-
         console.error(
           'My Tickets association JSON error:',
           associationText
         );
 
-
         return res.status(500).json({
-
           message:
             'Invalid HubSpot association response',
-
         });
-
       }
-
 
       console.log(
         `My Tickets page ${pageNumber} HTTP status:`,
         associationResponse.status
       );
 
-
       console.log(
         `My Tickets page ${pageNumber} count:`,
         associationData.results?.length || 0
       );
 
-
       if (!associationResponse.ok) {
-
         console.error(
           'My Tickets association error:',
           associationData
         );
-
 
         return res
           .status(
             associationResponse.status
           )
           .json({
-
             message:
               'Failed to fetch contact ticket associations',
-
             detail:
               associationData,
-
           });
-
       }
-
 
       const pageIds =
         (
@@ -4265,39 +3491,27 @@ app.post('/get-my-tickets', async (req, res) => {
               String(item.id)
           )
           .filter(Boolean);
-
-
       allTicketIds.push(
         ...pageIds
       );
-
 
       console.log(
         'My Ticket IDs collected:',
         allTicketIds.length
       );
-
-
       after =
         associationData
           ?.paging
           ?.next
           ?.after ||
         null;
-
-
       console.log(
         'My Tickets next after:',
         after
       );
 
-
       pageNumber += 1;
-
-
     } while (after);
-
-
 
     // =====================================================
     // REMOVE DUPLICATE TICKET IDS
@@ -4308,40 +3522,27 @@ app.post('/get-my-tickets', async (req, res) => {
         allTicketIds
       ),
     ];
-
-
     console.log(
       '===================================='
     );
-
     console.log(
       'FINAL UNIQUE MY TICKET IDS:',
       ticketIds.length
     );
-
     console.log(
       '===================================='
     );
 
-
     if (!ticketIds.length) {
-
       return res.status(200).json({
-
         message:
           'No tickets found',
-
         total:
           0,
-
         tickets:
           [],
-
       });
-
     }
-
-
 
     // =====================================================
     // STEP 2
@@ -4359,59 +3560,41 @@ app.post('/get-my-tickets', async (req, res) => {
 
     const BATCH_SIZE =
       100;
-
-
     const ticketChunks =
       [];
-
-
     for (
       let i = 0;
       i < ticketIds.length;
       i += BATCH_SIZE
     ) {
-
       ticketChunks.push(
         ticketIds.slice(
           i,
           i + BATCH_SIZE
         )
       );
-
     }
-
 
     console.log(
       'Total My Ticket batches:',
       ticketChunks.length
     );
-
-
     let allTickets =
       [];
-
-
-    /*
-     * Sequentially batches fetch karenge
-     * taaki HubSpot rate-limit pressure kam rahe.
-     */
 
     for (
       let batchIndex = 0;
       batchIndex < ticketChunks.length;
       batchIndex++
     ) {
-
       const chunk =
         ticketChunks[
           batchIndex
         ];
 
-
       console.log(
         `Fetching My Ticket batch ${batchIndex + 1}/${ticketChunks.length}`
       );
-
 
       console.log(
         'My Ticket batch size:',
@@ -4427,132 +3610,78 @@ app.post('/get-my-tickets', async (req, res) => {
           {
             method:
               'POST',
-
             headers: {
-
               Authorization:
                 `Bearer ${HUBSPOT_API_KEY}`,
-
               'Content-Type':
                 'application/json',
-
             },
-
-
             body:
               JSON.stringify({
-
                 properties: [
-
                   'subject',
-
                   'createdate',
-
                   'hubspot_owner_id',
-
                   'hs_pipeline_stage',
-
                   'customer_portal',
-
                   'dealer_unread_count',
-
                 ],
-
-
                 inputs:
                   chunk.map(
                     ticketId => ({
-
                       id:
                         String(
                           ticketId
                         ),
-
                     })
                   ),
-
               }),
-
           }
-
         );
-
-
       const batchText =
         await batchResponse.text();
-
-
       let batchData = {};
-
-
       try {
-
         batchData =
           batchText
             ? JSON.parse(
                 batchText
               )
             : {};
-
       } catch (error) {
-
         console.error(
           `My Ticket batch ${batchIndex + 1} JSON error:`,
           batchText
         );
-
-
         return res.status(500).json({
-
           message:
             `Invalid HubSpot response for My Ticket batch ${batchIndex + 1}`,
-
         });
-
       }
-
-
       console.log(
         `My Ticket batch ${batchIndex + 1} HTTP status:`,
         batchResponse.status
       );
-
-
       console.log(
         `My Ticket batch ${batchIndex + 1} returned:`,
         batchData.results?.length || 0
       );
-
-
       if (!batchResponse.ok) {
-
         console.error(
           `My Ticket batch ${batchIndex + 1} failed:`,
           batchData
         );
-
-
-        /*
-         * Failed batch ko silently ignore nahi karenge.
-         * Isse random/incomplete count nahi aayega.
-         */
-
         return res
           .status(
             batchResponse.status
           )
           .json({
-
             message:
               `HubSpot My Ticket batch ${batchIndex + 1} failed`,
-
             detail:
               batchData,
-
           });
-
       }
-
 
       allTickets.push(
         ...(
@@ -4560,7 +3689,6 @@ app.post('/get-my-tickets', async (req, res) => {
           []
         )
       );
-
 
       console.log(
         'Total My Ticket details collected:',
@@ -4576,7 +3704,6 @@ app.post('/get-my-tickets', async (req, res) => {
         batchIndex <
         ticketChunks.length - 1
       ) {
-
         await new Promise(
           resolve =>
             setTimeout(
@@ -4584,9 +3711,7 @@ app.post('/get-my-tickets', async (req, res) => {
               150
             )
         );
-
       }
-
     }
 
 
@@ -4598,56 +3723,45 @@ app.post('/get-my-tickets', async (req, res) => {
 
     const formattedTickets =
       allTickets
-
         .filter(
           ticket =>
             ticket &&
             ticket.properties
         )
-
         .map(
           ticket => ({
-
             ticketId:
               String(
                 ticket.id
               ),
-
             subject:
               ticket.properties
                 ?.subject ||
               '',
-
             createdDate:
               ticket.properties
                 ?.createdate ||
               '',
-
             ownerId:
               ticket.properties
                 ?.hubspot_owner_id ||
               '',
-
             status:
               ticket.properties
                 ?.hs_pipeline_stage ||
               '',
-
             customer_portal:
               ticket.properties
                 ?.customer_portal ??
               '',
-
             dealer_unread_count:
               Number(
                 ticket.properties
                   ?.dealer_unread_count ||
                 0
               ),
-
           })
         );
-
 
 
     // =====================================================
@@ -4657,26 +3771,21 @@ app.post('/get-my-tickets', async (req, res) => {
     console.log(
       '===================================='
     );
-
     console.log(
       'MY ASSOCIATED TICKET IDS:',
       ticketIds.length
     );
-
     console.log(
       'MY TICKET DETAILS RETURNED:',
       allTickets.length
     );
-
     console.log(
       'MY FORMATTED TICKETS:',
       formattedTickets.length
     );
-
     console.log(
       '===================================='
     );
-
 
 
     // =====================================================
@@ -4684,86 +3793,60 @@ app.post('/get-my-tickets', async (req, res) => {
     // =====================================================
 
     return res.status(200).json({
-
       message:
         'My tickets fetched successfully',
-
       contactId:
         String(contactId),
-
       associatedTicketCount:
         ticketIds.length,
-
       total:
         formattedTickets.length,
-
       tickets:
         formattedTickets,
-
     });
-
-
   } catch (error) {
-
     console.error(
       'GET MY TICKETS ERROR:',
       {
         message:
           error?.message,
-
         stack:
           error?.stack,
       }
     );
 
-
     return res.status(500).json({
-
       message:
         'Internal server error',
-
       error:
         error?.message ||
         'Unknown error',
-
     });
-
   }
-
 });
-
-
 
 
 app.post(
   '/get-organization-tickets',
   async (req, res) => {
-
     const { contactId } = req.body;
-
     if (!contactId) {
       return res.status(400).json({
         message: 'Contact ID is required',
       });
     }
-
     try {
-
       const fetch = (...args) =>
         import('node-fetch').then(
           ({ default: fetch }) => fetch(...args)
         );
-
-
       console.log(
         '========== GET ORGANIZATION TICKETS =========='
       );
-
       console.log(
         'Contact ID:',
         contactId
       );
-
 
       // =====================================================
       // STEP 1
@@ -4774,29 +3857,22 @@ app.post(
         `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?associations=companies`,
         {
           method: 'GET',
-
           headers: {
             Authorization:
               `Bearer ${HUBSPOT_API_KEY}`,
-
             'Content-Type':
               'application/json',
           },
         }
       );
 
-
       const contactData =
         await contactResponse.json();
-
-
       if (!contactResponse.ok) {
-
         console.error(
           'Contact company fetch failed:',
           contactData
         );
-
         return res
           .status(contactResponse.status)
           .json({
@@ -4805,46 +3881,32 @@ app.post(
           });
       }
 
-
       const companies =
         contactData
           ?.associations
           ?.companies
           ?.results || [];
-
-
       console.log(
         'Associated Companies:',
         companies
       );
 
-
       if (!companies.length) {
-
         return res.status(200).json({
           message:
             'No organization associated with contact',
-
           tickets: [],
           total: 0,
         });
-
       }
 
-
-      /*
-       * Abhi first associated company ko
-       * organization maan rahe hain.
-       */
-      const companyId =
+    const companyId =
         String(companies[0].id);
-
 
       console.log(
         'Organization Company ID:',
         companyId
       );
-
 
 
       // =====================================================
@@ -4854,98 +3916,66 @@ app.post(
       // =====================================================
 
       let allTicketIds = [];
-
       let after = null;
-
       let pageNumber = 1;
-
-
       do {
-
         let url =
           `https://api.hubapi.com/crm/v3/objects/companies/${companyId}/associations/tickets?limit=100`;
-
-
         if (after) {
-
           url +=
             `&after=${encodeURIComponent(after)}`;
-
         }
-
-
         console.log(
           `Fetching association page ${pageNumber}`
         );
-
 
         const associationResponse =
           await fetch(
             url,
             {
               method: 'GET',
-
               headers: {
                 Authorization:
                   `Bearer ${HUBSPOT_API_KEY}`,
-
                 'Content-Type':
                   'application/json',
               },
             }
           );
 
-
         const associationText =
           await associationResponse.text();
-
-
         let associationData = {};
-
-
         try {
-
           associationData =
             associationText
               ? JSON.parse(
                   associationText
                 )
               : {};
-
         } catch (error) {
-
           console.error(
             'Association JSON error:',
             associationText
           );
-
           return res.status(500).json({
             message:
               'Invalid HubSpot association response',
           });
-
         }
-
-
         console.log(
           `Association page ${pageNumber} status:`,
           associationResponse.status
         );
-
-
         console.log(
           `Association page ${pageNumber} count:`,
           associationData.results?.length || 0
         );
-
-
         if (!associationResponse.ok) {
-
           console.error(
             'Company association error:',
             associationData
           );
-
           return res
             .status(
               associationResponse.status
@@ -4953,13 +3983,10 @@ app.post(
             .json({
               message:
                 'Failed to fetch organization associations',
-
               detail:
                 associationData,
             });
-
         }
-
 
         const pageIds =
           (
@@ -4971,33 +3998,21 @@ app.post(
                 String(item.id)
             )
             .filter(Boolean);
-
-
         allTicketIds.push(
           ...pageIds
         );
-
-
         console.log(
           'Ticket IDs collected:',
           allTicketIds.length
         );
-
-
         after =
           associationData
             ?.paging
             ?.next
             ?.after ||
           null;
-
-
         pageNumber += 1;
-
-
       } while (after);
-
-
 
       // =====================================================
       // REMOVE DUPLICATE IDs
@@ -5008,169 +4023,95 @@ app.post(
           allTicketIds
         ),
       ];
-
-
       console.log(
         '===================================='
       );
-
       console.log(
         'FINAL UNIQUE ORGANIZATION TICKET IDS:',
         ticketIds.length
       );
-
       console.log(
         '===================================='
       );
 
-
       if (!ticketIds.length) {
-
         return res.status(200).json({
-
           message:
             'No organization tickets found',
-
           total:
             0,
-
           tickets:
             [],
-
         });
-
       }
-
-
 
       // =====================================================
       // STEP 3
       // BATCH READ TICKETS
-      //
-      // IMPORTANT:
-      // 431 separate requests NAHI.
-      //
-      // 100 tickets per batch.
-      //
-      // 431 tickets =
-      // 100
-      // 100
-      // 100
-      // 100
-      // 31
-      //
-      // Total only 5 HubSpot requests.
       // =====================================================
 
       const BATCH_SIZE =
         100;
-
-
       const ticketChunks =
         [];
-
-
       for (
         let i = 0;
         i < ticketIds.length;
         i += BATCH_SIZE
       ) {
-
         ticketChunks.push(
           ticketIds.slice(
             i,
             i + BATCH_SIZE
           )
         );
-
       }
-
-
       console.log(
         'Total ticket batches:',
         ticketChunks.length
       );
-
-
       let allTickets =
         [];
-
-
-      /*
-       * IMPORTANT:
-       *
-       * Sequential processing.
-       *
-       * Promise.all(ticketChunks)
-       * intentionally use nahi kar rahe,
-       * taaki HubSpot ko ek saath
-       * bahut requests hit na karein.
-       */
-
+    
       for (
         let batchIndex = 0;
         batchIndex <
           ticketChunks.length;
         batchIndex++
       ) {
-
         const chunk =
           ticketChunks[
             batchIndex
           ];
-
-
         console.log(
           `Fetching ticket batch ${batchIndex + 1}/${ticketChunks.length}`
         );
-
-
         console.log(
           'Batch size:',
           chunk.length
         );
-
-
         const batchResponse =
           await fetch(
-
             'https://api.hubapi.com/crm/v3/objects/tickets/batch/read',
-
             {
               method:
                 'POST',
-
               headers: {
-
                 Authorization:
                   `Bearer ${HUBSPOT_API_KEY}`,
-
                 'Content-Type':
                   'application/json',
-
               },
-
-
               body:
                 JSON.stringify({
-
                   properties: [
-
                     'subject',
-
                     'createdate',
-
                     'hubspot_owner_id',
-
                     'hs_pipeline_stage',
-
                     'customer_portal',
-
                     'dealer_unread_count',
-
                   ],
-
-
                   inputs:
                     chunk.map(
                       ticketId => ({
@@ -5180,94 +4121,55 @@ app.post(
                           ),
                       })
                     ),
-
                 }),
-
             }
-
           );
-
 
         const batchText =
           await batchResponse.text();
-
-
         let batchData = {};
-
-
         try {
-
           batchData =
             batchText
               ? JSON.parse(
                   batchText
                 )
               : {};
-
         } catch (error) {
-
           console.error(
             `Batch ${batchIndex + 1} JSON error:`,
             batchText
           );
-
           return res.status(500).json({
-
             message:
               `Invalid response from HubSpot batch ${batchIndex + 1}`,
-
           });
-
         }
-
-
         console.log(
           `Batch ${batchIndex + 1} HTTP status:`,
           batchResponse.status
         );
-
-
         console.log(
           `Batch ${batchIndex + 1} tickets returned:`,
           batchData.results?.length ||
             0
         );
-
-
         if (!batchResponse.ok) {
-
           console.error(
             `Ticket batch ${batchIndex + 1} failed:`,
             batchData
           );
-
-
-          /*
-           * Ab silently ignore NAHI karenge.
-           *
-           * Agar koi batch fail hua,
-           * poora API proper error dega.
-           *
-           * Isi se inconsistent count
-           * khatam hoga.
-           */
-
           return res
             .status(
               batchResponse.status
             )
             .json({
-
               message:
                 `HubSpot ticket batch ${batchIndex + 1} failed`,
-
               detail:
                 batchData,
-
             });
-
         }
-
 
         allTickets.push(
           ...(
@@ -5275,25 +4177,15 @@ app.post(
             []
           )
         );
-
-
         console.log(
           'Total ticket details collected:',
           allTickets.length
         );
 
-
-        /*
-         * Small delay between batches.
-         *
-         * Rate-limit pressure aur kam.
-         */
-
         if (
           batchIndex <
           ticketChunks.length - 1
         ) {
-
           await new Promise(
             resolve =>
               setTimeout(
@@ -5301,9 +4193,7 @@ app.post(
                 150
               )
           );
-
         }
-
       }
 
 

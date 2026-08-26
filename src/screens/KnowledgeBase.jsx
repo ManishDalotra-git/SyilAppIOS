@@ -429,7 +429,7 @@ const [activeTab, setActiveTab] = useState('all'); // 'all' | 'new'
               renderItem={renderItem}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.articleListContent}
-              ListFooterComponent={<View style={{ height: 580 }} />}
+              ListFooterComponent={<View style={{ height: 640 }} />}
             />
           </View>
         </View>
