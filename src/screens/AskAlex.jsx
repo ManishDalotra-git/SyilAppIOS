@@ -23,8 +23,6 @@ const defaultMessages = [
   }
 ];
 
-
-
 const renderFormattedText = (text, isTyping = false) => {
   if (!text) return null;
   if (isTyping) {
@@ -51,7 +49,6 @@ const renderFormattedText = (text, isTyping = false) => {
   });
 
   
-
   return lines.map((line, index) => {
     const trimmed = line.trim();
     const isLastLine = index === lines.length - 1;
@@ -59,33 +56,24 @@ const renderFormattedText = (text, isTyping = false) => {
 
     if (index === 0 && trimmed.startsWith('📘')) {
       return (
-        <Text allowFontScaling={false} key={index} style={{ fontWeight: '700' }}>
-          {line + suffix}
-        </Text>
+        <Text allowFontScaling={false} key={index} style={{ fontWeight: '700' }}>{line + suffix}</Text>
       );
     }
 
     if (boldIndices.has(index)) {
       return (
-        <Text allowFontScaling={false} key={index} style={{ fontWeight: '700', color: '#000' }}>
-          {line + suffix}
-        </Text>
+        <Text allowFontScaling={false} key={index} style={{ fontWeight: '700', color: '#000' }}>{line + suffix}</Text>
       );
     }
 
     if (trimmed.startsWith('- ')) {
       return (
-        <Text allowFontScaling={false} key={index} style={{ fontWeight: '400', color: '#000' }}>
-          {line + suffix}
-        </Text>
+        <Text allowFontScaling={false} key={index} style={{ fontWeight: '400', color: '#000' }}>{line + suffix}</Text>
       );
     }
 
-    // Normal lines
     return (
-      <Text allowFontScaling={false} key={index} style={{ fontWeight: '400', color: '#000' }}>
-        {line + suffix}
-      </Text>
+      <Text allowFontScaling={false} key={index} style={{ fontWeight: '400', color: '#000' }}>{line + suffix}</Text>
     );
   });
 };
@@ -123,7 +111,7 @@ const AskAlex = () => {
 
   const navigation = useNavigation();
   const route = useRoute();
-  //const currentRoute = route.name;
+
   const flatListRef = useRef(null);
 
   const [messages, setMessages] = useState(defaultMessages);
@@ -286,10 +274,9 @@ const AskAlex = () => {
       <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0} // adjust if you have headers
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
 
-        
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Image
@@ -343,113 +330,28 @@ const AskAlex = () => {
 
 export default AskAlex;
 
-// 🎨 Styles
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#fff',
-    paddingBottom: 0,
-  },
-  header: {
-    height: 45,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  arrowIcon: {
-    width: 32,
-    height: 32,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    textAlign: 'center',
-    width: '81%',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#fff'
-  },
-  chatContainer: {
-    padding: 16
-  },
-  messageBubble: {
-    maxWidth: '90%',
-    padding: 12,
-    borderRadius: 12,
-    marginVertical: 6
-  },
-  
-  botBubble: {
-    adding: 12,
-    alignSelf: 'flex-start',
-    backgroundColor: '#F2F2F2'
-  },
-  userBubble: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#FFEA00'
-  },
-  messageText: {
-    fontSize: 14,
-    color: '#000',
-    lineHeight:18,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    padding: 12,
-    borderTopWidth: 1,
-    borderColor: '#eee',
-    backgroundColor: '#fff',
-    alignItems: 'center',
-  },
-  loadingIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 0,
-  },
-  loadingIndicatorUser:{
-    justifyContent:'flex-end',
-    alignContent:'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 0,
-  },
+  safeArea: { flex: 1, backgroundColor: '#fff', paddingBottom: 0, },
+  header: { height: 45, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, },
+  arrowIcon: { width: 32, height: 32, },
+  headerTitle: { fontSize: 24, fontWeight: '700', textAlign: 'center', width: '81%', },
+  container: { flex: 1, backgroundColor: '#fff' },
+  chatContainer: { padding: 16 },
+  messageBubble: { maxWidth: '90%', padding: 12, borderRadius: 12, marginVertical: 6 },
+  botBubble: { adding: 12, alignSelf: 'flex-start', backgroundColor: '#F2F2F2' },
+  userBubble: { alignSelf: 'flex-end', backgroundColor: '#FFEA00' },
+  messageText: { fontSize: 14, color: '#000', lineHeight:18, },
+  inputContainer: { flexDirection: 'row', padding: 12, borderTopWidth: 1, borderColor: '#eee', backgroundColor: '#fff', alignItems: 'center', },
+  loadingIndicator: { flexDirection: 'row', alignItems: 'center', marginRight: 0, },
+  loadingIndicatorUser:{ justifyContent:'flex-end', alignContent:'flex-start', flexDirection: 'row',alignItems: 'center', marginRight: 0, },
   initialsAvatar:{width:30,height:30,backgroundColor:'#000',borderRadius:100,justifyContent:'center',alignItems:'center',},
   initialsText:{fontSize:14,fontWeight:500,color:'#FFEA00'},
   alexaText:{marginLeft:5,fontSize:16,fontWeight:700,},
-  loadingIcon: {
-    width: 32,
-    height: 32,
-  },
-  loadingDots: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 6,
-    color: '#666',
-  },
-  input: {
-    flex: 1,
-    backgroundColor: '#F2F2F2',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    height: 100,
-    textAlignVertical: 'top'
-  },
-  sendButton: {
-    marginLeft: 10,
-    backgroundColor: '#FFEA00',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: 100,
-  },
-  inputDisabled:{
-    opacity:0.5,
-  },
-  sendText: {
-    fontSize: 18,
-    fontWeight: 'bold'
-  },
+  loadingIcon: {width: 32,height: 32, },
+  loadingDots: { fontSize: 18, fontWeight: 'bold', marginLeft: 6, color: '#666', },
+  input: { flex: 1, backgroundColor: '#F2F2F2', borderRadius: 8, paddingHorizontal: 12, height: 100, textAlignVertical: 'top' },
+  sendButton: { marginLeft: 10, backgroundColor: '#FFEA00', borderRadius: 8, paddingHorizontal: 16, justifyContent: 'center', alignItems: 'center', height: 100, },
+  inputDisabled:{ opacity:0.5, },
+  sendText: { fontSize: 18, fontWeight: 'bold'},
 
 });

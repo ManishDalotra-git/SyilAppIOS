@@ -40,6 +40,8 @@
 #import "react/renderer/components/safeareacontext/States.h"
 #import "rnasyncstorage/rnasyncstorage.h"
 #import "rnasyncstorageJSI.h"
+#import "rncameraroll/rncameraroll.h"
+#import "rncamerarollJSI.h"
 #import "RNCWebViewSpec/RNCWebViewSpec.h"
 #import "RNCWebViewSpecJSI.h"
 #import "rndocumentpickerCGen/rndocumentpickerCGen.h"

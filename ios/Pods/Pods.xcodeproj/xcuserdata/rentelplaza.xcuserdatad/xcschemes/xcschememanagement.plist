@@ -574,6 +574,16 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>react-native-cameraroll-RNCameraRollPrivacyInfo.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>react-native-cameraroll.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>react-native-document-picker.xcscheme</key>
 		<dict>
 			<key>isShown</key>

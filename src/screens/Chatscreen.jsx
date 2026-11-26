@@ -24,7 +24,6 @@ const Chatscreen = () => {
       }
       openChat();
     }, 2000);
-
     true;
   `;
 
@@ -53,22 +52,17 @@ const Chatscreen = () => {
       {/* WEBVIEW */}
       <WebView
         source={{ uri: 'https://syil.com/mobile-chat-support-for-kb' }}
-
         javaScriptEnabled={true}
         domStorageEnabled={true}
-
         injectedJavaScript={injectedJS}
-
         onLoadEnd={() => {
           // show loading for 3 sec minimum
           setTimeout(() => {
             setChatReady(true);
           }, 3000);
         }}
-
         style={{ flex: 1 }}
       />
-
     </View>
   )
 }
@@ -76,44 +70,9 @@ const Chatscreen = () => {
 export default Chatscreen
 
 const styles = StyleSheet.create({
-
-  header: {
-    height: 100,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    backgroundColor: '#fff',
-    paddingTop: 50,
-  },
-
-  arrowIcon: {
-    width: 32,
-    height: 32,
-  },
-
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    textAlign: 'center',
-    width: '81%',
-  },
-
-  loadingBox: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10
-  },
-
-  loadingText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#555'
-  }
-
+  header: {height: 100,flexDirection: 'row',alignItems: 'center',paddingHorizontal: 16,backgroundColor: '#fff',paddingTop: 50,},
+  arrowIcon: {width: 32,height: 32,},
+  headerTitle: { fontSize: 24,fontWeight: '700',textAlign: 'center',width: '81%',},
+  loadingBox: { position: 'absolute',top: 0,left: 0,right: 0,bottom: 0,backgroundColor: '#fff',justifyContent: 'center',alignItems: 'center',zIndex: 10},
+  loadingText: {fontSize: 16,fontWeight: '600',color: '#555'}
 })

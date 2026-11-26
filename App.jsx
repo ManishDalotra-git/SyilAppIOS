@@ -23,6 +23,9 @@ import CustomerNewsListing from './src/screens/CustomerNewsListing';
 import CustomerNewsDetail from './src/screens/CustomerNewsDetail';
 import WebViewScreen from './src/screens/WebViewScreen';
 
+import Announcements from './src/screens/Announcements';
+import AnnouncementsListing from './src/screens/AnnouncementsListing';
+
 
 import { NavigationContainer } from '@react-navigation/native';
 
@@ -83,6 +86,10 @@ const App = () => {
         <Stack.Screen name="CustomerNewsListing" component={CustomerNewsListing} options={{ headerShown: false }} />
         <Stack.Screen name="CustomerNewsDetail" component={CustomerNewsDetail} options={{ headerShown: false }} />
         <Stack.Screen name="WebViewScreen" component={WebViewScreen} options={{ headerShown: false }} />
+
+        <Stack.Screen name="Announcements" component={Announcements} options={{ headerShown: false }} />
+        <Stack.Screen name="AnnouncementsListing" component={AnnouncementsListing} options={{ headerShown: false }} />
+
       </Stack.Navigator>
     </NavigationContainer>
   )

@@ -226,6 +226,26 @@ const More = ({ navigation }) => {
                 <Image source={require('../../images/left_arrow.png')} style={styles.Leftarrow} />
             </TouchableOpacity>
 
+
+            {['manish.dalotra@techstriker.com', 'fabuikema@gmail.com'].includes(email?.toLowerCase()) && (
+            <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('Announcements')} >
+                <View style={styles.left}>
+                <Image source={require('../../images/ArticleIcon.png')} style={styles.icon} />
+                <Text allowFontScaling={false} style={styles.text}>Manage Announcements</Text>
+                </View>
+                <Image source={require('../../images/left_arrow.png')} style={styles.Leftarrow} />
+            </TouchableOpacity>
+            )}
+
+
+            <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('AnnouncementsListing')} >
+                <View style={styles.left}>
+                    <Image source={require('../../images/customer_listing_blog.png')} style={styles.icon} />
+                    <Text allowFontScaling={false} style={styles.text}>Announcements Listing</Text>
+                </View>
+                <Image source={require('../../images/left_arrow.png')} style={styles.Leftarrow} />
+            </TouchableOpacity>
+
         </View>
     </View>
 
